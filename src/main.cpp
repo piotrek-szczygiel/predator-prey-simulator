@@ -10,7 +10,6 @@ int main() {
         ClearBackground(BLACK);
 
         DrawText("simulation", 50, 50, 20, YELLOW);
-
         EndDrawing();
     }
 

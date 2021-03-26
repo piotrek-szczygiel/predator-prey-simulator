@@ -1,15 +1,18 @@
 #include <raylib.h>
+#include "map/Map.h"
 
 int main() {
     SetTraceLogLevel(LOG_ERROR);
     InitWindow(800, 600, "sim");
 
     SetTargetFPS(60);
+
+    Map map;
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
-
-        DrawText("simulation", 50, 50, 20, YELLOW);
+        map.draw();
         EndDrawing();
     }
 

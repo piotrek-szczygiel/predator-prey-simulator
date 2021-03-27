@@ -4,10 +4,15 @@
 #include <raymath.h>
 #include <memory>
 
-#include "AbstractAgent.h"
-class Cabbage : public AbstractAgent {
+class Cabbage {
+   protected:
+    int m_x;
+    int m_y;
+
+    std::shared_ptr<Texture2D> m_texture;
+
    public:
     explicit Cabbage(int x, int y);
-    ~Cabbage() override;
-    void draw() override;
+    ~Cabbage();
+    void draw();
 };

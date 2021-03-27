@@ -10,11 +10,11 @@ Map::Map() {
         auto x = GetRandomValue(0, WIDTH - 1);
         auto y = GetRandomValue(0, HEIGHT - 1);
 
-        agents[y][x] = std::make_shared<Cabbage>(Cabbage(x, y));
+        cabbages.push_back(std::make_shared<Cabbage>(x, y));
     }
 
-    agents[18][7] = std::make_shared<Chicken>(Chicken(7, 18));
-    agents[18][8] = std::make_shared<Wolf>(Wolf(8, 18));
+    agents.push_back(std::make_shared<Chicken>(7, 18));
+    agents.push_back(std::make_shared<Wolf>(8, 18));
 }
 
 void Map::draw() {
@@ -24,11 +24,11 @@ void Map::draw() {
         }
     }
 
-    for (int y = 0; y < HEIGHT; ++y) {
-        for (int x = 0; x < WIDTH; ++x) {
-            if (agents[y][x]) {
-                agents[y][x]->draw();
-            }
-        }
+    for (const auto& cabbage: cabbages) {
+        cabbage->draw();
+    }
+
+    for (const auto& agent : agents) {
+        agent->draw();
     }
 }

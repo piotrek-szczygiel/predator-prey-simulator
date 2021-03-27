@@ -1,9 +1,11 @@
 #pragma once
 
-#include "AnimatedAgent.h"
+#include "AbstractAgent.h"
 #include "../Util.h"
 
-void AnimatedAgent::draw() {
+AbstractAgent::~AbstractAgent() = default;
+
+void AbstractAgent::draw() {
     auto width = static_cast<float>(m_texture->width) / 4;
     auto height = static_cast<float>(m_texture->height) / 4;
 

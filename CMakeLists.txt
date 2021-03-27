@@ -37,8 +37,7 @@ add_executable(
         src/agent/Chicken.h
         src/agent/Wolf.cpp
         src/agent/Wolf.h
-        src/agent/AnimatedAgent.h
-        src/agent/AnimatedAgent.cpp
+        src/agent/AbstractAgent.cpp
         src/Util.cpp
         src/Util.h
 )

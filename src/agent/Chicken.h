@@ -3,9 +3,9 @@
 #include <raylib.h>
 #include <memory>
 
-#include "AnimatedAgent.h"
+#include "AbstractAgent.h"
 
-class Chicken : public AnimatedAgent {
+class Chicken : public AbstractAgent {
    public:
     explicit Chicken(int x, int y);
     ~Chicken() override;

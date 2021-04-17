@@ -28,18 +28,18 @@ endif ()
 add_executable(
         ${PROJECT_NAME}
         src/main.cpp
-        src/map/Map.cpp
-        src/map/Map.h
-        src/agent/AbstractAgent.h
+        src/Util.cpp
+        src/Util.h
+        src/simulation/Simulation.cpp
+        src/simulation/Simulation.h
+        src/agent/Agent.h
         src/agent/Cabbage.cpp
         src/agent/Cabbage.h
         src/agent/Chicken.cpp
         src/agent/Chicken.h
         src/agent/Wolf.cpp
         src/agent/Wolf.h
-        src/agent/AbstractAgent.cpp
-        src/Util.cpp
-        src/Util.h
-)
+        src/map/Field.cpp
+        src/map/Field.h src/agent/Agent.cpp)
 
 target_link_libraries(${PROJECT_NAME} raylib)

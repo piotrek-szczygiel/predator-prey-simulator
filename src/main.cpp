@@ -1,18 +1,22 @@
 #include <raylib.h>
-#include "map/Map.h"
+#include "simulation/Simulation.h"
 
 int main() {
     SetTraceLogLevel(LOG_ERROR);
-    InitWindow(800, 600, "sim");
-
+    InitWindow(1024, 720, "sim");
     SetTargetFPS(60);
+    Camera2D camera {};
+    camera.zoom = 1.5f;
 
-    Map map;
+    Simulation simulation;
 
     while (!WindowShouldClose()) {
+        simulation.update();
         BeginDrawing();
         ClearBackground(BLACK);
-        map.draw();
+        BeginMode2D(camera);
+        simulation.draw();
+        EndMode2D();
         EndDrawing();
     }
 

@@ -1,18 +1,16 @@
 #pragma once
 
-#include <raylib.h>
-#include <raymath.h>
-#include <memory>
+#include "Agent.h"
 
-class Cabbage {
-   protected:
-    int m_x;
-    int m_y;
+constexpr int CABBAGE_SENSOR {1};
+constexpr float CABBAGE_UPDATE_TIME {0.1f};
 
-    std::shared_ptr<Texture2D> m_texture;
-
+class Cabbage : public Agent {
    public:
-    explicit Cabbage(int x, int y);
-    ~Cabbage();
-    void draw();
+    Cabbage();
+    ~Cabbage() override;
+    void draw(int x, int y) override;
+    bool need_update() override;
+    std::pair<int, int> calculate_move(std::vector<std::shared_ptr<Field>> surroundings, std::shared_ptr<Field> start_field) override;
+    double calculate_metric(std::shared_ptr<HeatField> field) const override;
 };

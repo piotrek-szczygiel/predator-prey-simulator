@@ -14,7 +14,7 @@ constexpr int WIDTH{42};
 constexpr int HEIGHT{29};
 constexpr int START_CABBAGES{48};
 constexpr int START_CHICKENS{24};
-constexpr int START_WOLVES{8};
+constexpr int START_WOLVES{16};
 constexpr float CABBAGE_SPAWN_TIME{6.0f};
 
 class Simulation {

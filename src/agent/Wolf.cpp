@@ -27,7 +27,7 @@ std::pair<int, int> Wolf::calculate_move(std::vector<std::shared_ptr<Field>> sur
         }
         if (!field->empty()) {
             auto agent = field->agent;
-            if (agent->get_type() == AgentType::CHICKEN && !agent->want_to_breed()) {
+            if (agent->get_type() == AgentType::WOLF && (!want_to_breed() || !agent->want_to_breed())) {
                 continue;
             }
         }

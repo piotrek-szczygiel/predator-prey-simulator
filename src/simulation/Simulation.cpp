@@ -1,5 +1,4 @@
 #include "Simulation.h"
-#include <iostream>
 #include <utility>
 
 #include "../Util.h"
@@ -33,7 +32,7 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
 Simulation::~Simulation() = default;
 
 void Simulation::update() {
-    if(GetTime() - m_last_cabbages_spawn >= CABBAGE_SPAWN_TIME){
+    if (GetTime() - m_last_cabbages_spawn >= CABBAGE_SPAWN_TIME) {
         spawn_random_cabbages();
         m_last_cabbages_spawn = GetTime();
     }
@@ -114,7 +113,10 @@ std::vector<std::shared_ptr<Field>> Simulation::surroundings(int x, int y, int s
 }
 
 void Simulation::move_and_eat(std::shared_ptr<Agent>& agent, std::shared_ptr<Agent>& target_agent) {
-    agent->eat(target_agent);
+    if ((agent->get_type() == AgentType::CHICKEN && target_agent->get_type() == AgentType::CABBAGE) ||
+        (agent->get_type() == AgentType::WOLF && target_agent->get_type() == AgentType::CHICKEN)) {
+        agent->eat(target_agent);
+    }
     target_agent = agent;
     agent.reset();
 }

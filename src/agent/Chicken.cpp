@@ -29,7 +29,7 @@ std::pair<int, int> Chicken::calculate_move(std::vector<std::shared_ptr<Field>> 
             auto agent = field->agent;
             if (agent->get_type() == AgentType::WOLF) {
                 continue;
-            } else if (agent->get_type() == AgentType::CHICKEN && !agent->want_to_breed()) {
+            } else if (agent->get_type() == AgentType::CHICKEN && (!agent->want_to_breed() || !want_to_breed())) {
                 continue;
             }
         }

@@ -8,22 +8,9 @@
 
 enum class AgentType { CABBAGE, CHICKEN, WOLF };
 
-constexpr double BASE_METRIC_VALUE{999};
-constexpr float BASE_ENERGY_VALUE{9.0f};
+constexpr float BASE_ENERGY_VALUE{20.0f};
 constexpr float MAX_ENERGY_VALUE{20.0f};
 constexpr float DYNAMIC_AGENT_UPDATE_TIME {0.1f};
-
-struct HeatField {
-    int m_x;
-    int m_y;
-    double distance{BASE_METRIC_VALUE};
-    double ca_dist{BASE_METRIC_VALUE};
-    double ch_dist{BASE_METRIC_VALUE};
-    double fo_dist{BASE_METRIC_VALUE};
-
-    HeatField(int x, int y) : m_x{x}, m_y{y} {}
-    std::pair<int, int> get_pos() { return {m_x, m_y}; }
-};
 
 class Field;
 
@@ -35,7 +22,7 @@ class Agent {
     virtual void draw(int x, int y) = 0;
     virtual void eat(std::shared_ptr<Agent>& prey);
     virtual bool need_update();
-    virtual std::pair<int, int> calculate_move(std::vector<std::shared_ptr<Field>> surroundings, std::shared_ptr<Field> start_field) = 0;
+    virtual void update(std::vector<std::shared_ptr<Field>> surroundings, std::shared_ptr<Field>& start_field) = 0;
     AgentType get_type() { return m_type; }
     int sensor() { return m_sensor; }
     bool is_alive() { return m_energy > 0; }
@@ -54,7 +41,7 @@ class Agent {
     AgentType m_type;
     float m_energy;
 
-    virtual double calculate_metric(std::shared_ptr<HeatField> field) const = 0;
+    virtual double calculate_metric(std::shared_ptr<Field> field) const = 0;
 };
 
 inline Agent::~Agent() = default;

@@ -3,6 +3,8 @@
 #include <raylib.h>
 #include <memory>
 
+#include "map/Field.h"
+
 constexpr int TILE_SIZE {16};
 
 Vector2 convert_to_pos(int x, int y);

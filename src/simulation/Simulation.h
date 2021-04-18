@@ -10,11 +10,11 @@
 #include "../agent/Wolf.h"
 #include "../map/Field.h"
 
-constexpr int WIDTH{42};
-constexpr int HEIGHT{29};
-constexpr int START_CABBAGES{48};
-constexpr int START_CHICKENS{24};
-constexpr int START_WOLVES{16};
+constexpr int WIDTH{10};
+constexpr int HEIGHT{10};
+constexpr int START_CABBAGES{0};
+constexpr int START_CHICKENS{0};
+constexpr int START_WOLVES{2};
 constexpr float CABBAGE_SPAWN_TIME{6.0f};
 
 class Simulation {
@@ -31,8 +31,5 @@ class Simulation {
 
     void update_field(std::shared_ptr<Field>& field);
     std::vector<std::shared_ptr<Field>> surroundings(int x, int y, int sensor);
-    void move_and_eat(std::shared_ptr<Agent>& agent, std::shared_ptr<Agent>& target_agent);
-    void breed(std::shared_ptr<Field>& agent, std::shared_ptr<Field>& target_agent);
-    std::shared_ptr<Field> nearest_breeding_field(const std::shared_ptr<Field>& first_field, const std::shared_ptr<Field>& second_field);
     void spawn_random_cabbages();
 };

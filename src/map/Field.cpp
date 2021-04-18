@@ -8,8 +8,19 @@ void Field::draw() const {
     }
 }
 
+void Field::reset_metrics() {
+    distance = BASE_METRIC_VALUE;
+    ca_dist = BASE_METRIC_VALUE;
+    ch_dist = BASE_METRIC_VALUE;
+    fo_dist = BASE_METRIC_VALUE;
+}
+
 std::pair<int, int> Field::get_pos() {
     return {m_x, m_y};
+}
+
+double Field::distance_to(const std::shared_ptr<Field>& field) {
+    return sqrt(pow(m_x - field->m_x, 2) + pow(m_y - field->m_y, 2));;
 }
 
 bool Field::agent_need_update() const {

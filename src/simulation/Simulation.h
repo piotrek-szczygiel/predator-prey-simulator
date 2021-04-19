@@ -10,12 +10,12 @@
 #include "../agent/Wolf.h"
 #include "../map/Field.h"
 
-constexpr int WIDTH{10};
-constexpr int HEIGHT{10};
-constexpr int START_CABBAGES{0};
-constexpr int START_CHICKENS{0};
-constexpr int START_WOLVES{2};
-constexpr float CABBAGE_SPAWN_TIME{6.0f};
+constexpr int WIDTH{20};
+constexpr int HEIGHT{20};
+constexpr int START_CABBAGES{8};
+constexpr int START_CHICKENS{10};
+constexpr int START_WOLVES{8};
+constexpr float CABBAGE_SPAWN_TIME{1.0f};
 
 class Simulation {
    public:

@@ -15,7 +15,8 @@ class Field {
     void reset_metrics();
     std::pair<int ,int> get_pos();
     double distance_to(const std::shared_ptr<Field>& field);
-    bool empty() const;
+    bool is_empty() const;
+    bool is_walkable() const;
     bool agent_need_update() const;
     bool operator==(const Field & rhs) const;
 

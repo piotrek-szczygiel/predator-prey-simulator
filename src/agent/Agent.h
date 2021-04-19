@@ -32,6 +32,7 @@ class Agent {
     void reduce_energy(float divider) { m_energy *= divider; }
     void set_field(const std::shared_ptr<Field>& field) { m_field = field; }
     std::shared_ptr<Field> get_field() {return m_field;}
+    float convert_energy(std::shared_ptr<Agent>& partner);
 
    protected:
     std::shared_ptr<Texture2D> m_texture;

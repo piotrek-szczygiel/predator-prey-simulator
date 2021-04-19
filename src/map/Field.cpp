@@ -3,7 +3,7 @@
 Field::Field(int x, int y) : m_x{x}, m_y{y}, agent{} {}
 
 void Field::draw() const {
-    if(!empty()){
+    if(!is_empty()){
         agent->draw(m_x, m_y);
     }
 }
@@ -24,19 +24,23 @@ double Field::distance_to(const std::shared_ptr<Field>& field) {
 }
 
 bool Field::agent_need_update() const {
-    if(empty()){
+    if(is_empty()){
         return false;
     }
 
     return agent->need_update();
 }
 
-bool Field::empty() const {
+bool Field::is_empty() const {
     if(agent){
         return false;
     }
 
     return true;
+}
+
+bool Field::is_walkable() const {
+    return (!is_empty() && agent->get_type() == AgentType::CABBAGE) || is_empty();
 }
 
 bool Field::operator==(const Field& rhs) const {

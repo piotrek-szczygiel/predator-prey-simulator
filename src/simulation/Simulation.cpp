@@ -12,7 +12,7 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
         }
     }
 
-//    spawn_random_cabbages();
+    spawn_random_cabbages();
 
     for (int i = 0; i < START_CHICKENS; ++i) {
         auto x = GetRandomValue(0, WIDTH - 1);
@@ -33,7 +33,7 @@ Simulation::~Simulation() = default;
 
 void Simulation::update() {
     if (GetTime() - m_last_cabbages_spawn >= CABBAGE_SPAWN_TIME) {
-//        spawn_random_cabbages();
+        spawn_random_cabbages();
         m_last_cabbages_spawn = GetTime();
     }
     for (int y = 0; y < HEIGHT; ++y) {
@@ -92,7 +92,7 @@ void Simulation::spawn_random_cabbages() {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         auto& field = m_grid[y][x];
-        if (field->empty()) {
+        if (field->is_empty()) {
             field->agent = std::make_shared<Cabbage>();
         }
     }

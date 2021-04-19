@@ -30,7 +30,7 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         if (field == start_field) {
             continue;
         }
-        if (!field->empty()) {
+        if (!field->is_empty()) {
             auto agent = field->agent;
             if (agent->get_type() == AgentType::WOLF) {
                 continue;
@@ -41,7 +41,7 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         field->reset_metrics();
         field->distance = field->distance_to(start_field);
         for (auto& compare_field : surroundings) {
-            if (!compare_field->empty()) {
+            if (!compare_field->is_empty()) {
                 auto compare_agent = compare_field->agent;
                 auto distance = field->distance_to(compare_field);
                 switch (compare_agent->get_type()) {
@@ -67,17 +67,15 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         auto index = GetRandomValue(0, heat_vector.size() - 1);
         auto target = heat_vector[index];
 
-        if(!target->empty()) {
+        if(!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
                 eat(target->agent);
                 target->agent = std::make_shared<Chicken>(*this);
                 start_field->agent.reset();
             }else if(target->agent->get_type() == AgentType::CHICKEN){
                 for (auto& field : surroundings){
-                    if(in_range(field->get_pos(), start_field->get_pos(), 1) && field->empty()){
-                        auto energy = (m_energy + target->agent->get_energy()) / 4;
-                        m_energy *= 0.5;
-                        target->agent->reduce_energy(0.5f);
+                    if(in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()){
+                        auto energy = convert_energy(target->agent);
                         field->agent = std::make_shared<Chicken>(energy);
                         break;
                     }

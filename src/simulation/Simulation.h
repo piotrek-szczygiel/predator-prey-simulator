@@ -25,7 +25,7 @@ class Simulation {
     void draw();
 
    protected:
-    std::shared_ptr<Texture2D> grass_texture;
+    Texture2D grass_texture;
     std::array<std::array<std::shared_ptr<Field>, WIDTH>, HEIGHT> m_grid{};
     double m_last_cabbages_spawn;
 

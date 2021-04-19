@@ -2,7 +2,7 @@
 
 #include "Agent.h"
 
-constexpr int WOLF_SENSOR {3};
+constexpr int WOLF_SENSOR{3};
 
 class Wolf : public Agent {
    public:
@@ -14,4 +14,3 @@ class Wolf : public Agent {
    protected:
     double calculate_metric(std::shared_ptr<Field> field) const override;
 };
-

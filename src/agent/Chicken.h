@@ -2,7 +2,7 @@
 
 #include "Agent.h"
 
-constexpr int CHICKEN_SENSOR {2};
+constexpr int CHICKEN_SENSOR{2};
 
 class Chicken : public Agent {
    public:

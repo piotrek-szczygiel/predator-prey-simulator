@@ -7,13 +7,13 @@ Vector2 convert_to_pos(int x, int y) {
     return {c_x, c_y};
 }
 
-void draw_frame(const std::shared_ptr<Texture2D>& texture, int x, int y, int frame_x, int frame_y) {
-    auto width = static_cast<float>(texture->width) / 4;
-    auto height = static_cast<float>(texture->height) / 4;
+void draw_frame(const Texture2D& texture, int x, int y, int frame_x, int frame_y) {
+    auto width = static_cast<float>(texture.width) / 4;
+    auto height = static_cast<float>(texture.height) / 4;
 
     auto rect = Rectangle{static_cast<float>(frame_x) * width, static_cast<float>(frame_y) * height, width, height};
 
-    DrawTextureRec(*texture, rect, convert_to_pos(x, y), RAYWHITE);
+    DrawTextureRec(texture, rect, convert_to_pos(x, y), RAYWHITE);
 }
 
 bool in_range(const std::pair<int, int>& target, const std::pair<int, int>& start, int range) {

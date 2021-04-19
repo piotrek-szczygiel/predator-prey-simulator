@@ -10,7 +10,7 @@ enum class AgentType { CABBAGE, CHICKEN, WOLF };
 
 constexpr float BASE_ENERGY_VALUE{20.0f};
 constexpr float MAX_ENERGY_VALUE{20.0f};
-constexpr float DYNAMIC_AGENT_UPDATE_TIME {0.1f};
+constexpr float DYNAMIC_AGENT_UPDATE_TIME{0.1f};
 
 class Field;
 
@@ -31,11 +31,11 @@ class Agent {
     void set_energy(float energy) { m_energy = energy; }
     void reduce_energy(float divider) { m_energy *= divider; }
     void set_field(const std::shared_ptr<Field>& field) { m_field = field; }
-    std::shared_ptr<Field> get_field() {return m_field;}
+    std::shared_ptr<Field> get_field() { return m_field; }
     float convert_energy(std::shared_ptr<Agent>& partner);
 
    protected:
-    std::shared_ptr<Texture2D> m_texture;
+    Texture2D m_texture;
     std::shared_ptr<Field> m_field;
     double m_last_update;
     int m_sensor;

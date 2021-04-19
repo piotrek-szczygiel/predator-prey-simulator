@@ -1,12 +1,13 @@
 #include "Wolf.h"
 
-#include <map>
 #include <iostream>
+#include <map>
 
+#include "../ResourceManager.h"
 #include "../Util.h"
 
 Wolf::Wolf(float energy) : Agent(AgentType::WOLF, WOLF_SENSOR, energy) {
-    m_texture = std::make_shared<Texture2D>(LoadTexture("../assets/wolf.png"));
+    m_texture = ResourceManager::the().get_texture(SimulationTexture::Wolf);
 }
 
 Wolf::~Wolf() = default;
@@ -16,7 +17,7 @@ void Wolf::draw(int x, int y) {
 }
 
 double Wolf::calculate_metric(std::shared_ptr<Field> field) const {
-    if(want_to_breed()){
+    if (want_to_breed()) {
         return field->distance + field->ch_dist + field->fo_dist;
     }
     return field->distance + field->ch_dist;
@@ -39,17 +40,13 @@ void Wolf::update(std::vector<std::shared_ptr<Field>> surroundings, std::shared_
         }
         field->reset_metrics();
         field->distance = field->distance_to(start_field);
-        for(auto& compare_field : surroundings){
-            if(!compare_field->is_empty()){
+        for (auto& compare_field : surroundings) {
+            if (!compare_field->is_empty()) {
                 auto compare_agent = compare_field->agent;
                 auto distance = field->distance_to(compare_field);
                 switch (compare_field->agent->get_type()) {
-                    case AgentType::CABBAGE:
-                        field->ca_dist = std::min(field->ca_dist, distance);
-                        break;
-                    case AgentType::CHICKEN:
-                        field->ch_dist = std::min(field->ch_dist, distance);
-                        break;
+                    case AgentType::CABBAGE: field->ca_dist = std::min(field->ca_dist, distance); break;
+                    case AgentType::CHICKEN: field->ch_dist = std::min(field->ch_dist, distance); break;
                     case AgentType::WOLF:
                         if (compare_agent->want_to_breed()) {
                             field->ch_dist = std::min(field->ch_dist, distance);
@@ -60,28 +57,27 @@ void Wolf::update(std::vector<std::shared_ptr<Field>> surroundings, std::shared_
         }
 
         auto metric = calculate_metric(field);
-        if(in_range(field->get_pos(), start_field->get_pos(), 1)){
-
+        if (in_range(field->get_pos(), start_field->get_pos(), 1)) {
             discrete_heat_map[metric].push_back(field);
         }
     }
 
-    if(!discrete_heat_map.empty()){
+    if (!discrete_heat_map.empty()) {
         auto heat_vector = discrete_heat_map.begin()->second;
         auto index = GetRandomValue(0, heat_vector.size() - 1);
         auto target = heat_vector[index];
 
-        if(!target->is_empty()) {
-            if(target->agent->get_type() == AgentType::CABBAGE){
+        if (!target->is_empty()) {
+            if (target->agent->get_type() == AgentType::CABBAGE) {
                 target->agent = std::make_shared<Wolf>(*this);
                 start_field->agent.reset();
-            }else if (target->agent->get_type() == AgentType::CHICKEN) {
+            } else if (target->agent->get_type() == AgentType::CHICKEN) {
                 eat(target->agent);
                 target->agent = std::make_shared<Wolf>(*this);
                 start_field->agent.reset();
-            }else if(target->agent->get_type() == AgentType::WOLF){
-                for (auto& field : surroundings){
-                    if(in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()){
+            } else if (target->agent->get_type() == AgentType::WOLF) {
+                for (auto& field : surroundings) {
+                    if (in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()) {
                         auto energy = convert_energy(target->agent);
                         field->agent = std::make_shared<Wolf>(energy);
                         break;

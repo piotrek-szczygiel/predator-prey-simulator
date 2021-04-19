@@ -13,12 +13,12 @@ class Field {
     Field(int x, int y);
     void draw() const;
     void reset_metrics();
-    std::pair<int ,int> get_pos();
+    std::pair<int, int> get_pos();
     double distance_to(const std::shared_ptr<Field>& field);
     bool is_empty() const;
     bool is_walkable() const;
     bool agent_need_update() const;
-    bool operator==(const Field & rhs) const;
+    bool operator==(const Field& rhs) const;
 
     double distance{BASE_METRIC_VALUE};
     double ca_dist{BASE_METRIC_VALUE};

@@ -1,15 +1,16 @@
 #include "Cabbage.h"
 
+#include "../ResourceManager.h"
 #include "../Util.h"
 
 Cabbage::Cabbage() : Agent(AgentType::CABBAGE, CABBAGE_SENSOR, BASE_ENERGY_VALUE) {
-    m_texture = std::make_shared<Texture2D>(LoadTexture("../assets/cabbage.png"));
+    m_texture = ResourceManager::the().get_texture(SimulationTexture::Cabbage);
 }
 
 Cabbage::~Cabbage() = default;
 
 void Cabbage::draw(int x, int y) {
-    DrawTextureV(*m_texture, convert_to_pos(x, y), RAYWHITE);
+    DrawTextureV(m_texture, convert_to_pos(x, y), RAYWHITE);
 }
 
 double Cabbage::calculate_metric(std::shared_ptr<Field> field) const {

@@ -1,7 +1,6 @@
+.idea/
 .xmake/
 .vscode/
 build/
+cmake-build-*/
 compile_commands.json
-cmake-build-debug-visual-studio
-cmake-build-release-visual-studio
-.idea

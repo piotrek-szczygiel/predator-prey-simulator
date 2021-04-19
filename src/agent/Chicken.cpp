@@ -2,10 +2,11 @@
 
 #include <map>
 
+#include "../ResourceManager.h"
 #include "../Util.h"
 
 Chicken::Chicken(float energy) : Agent(AgentType::CHICKEN, CHICKEN_SENSOR, energy) {
-    m_texture = std::make_shared<Texture2D>(LoadTexture("../assets/chicken.png"));
+    m_texture = ResourceManager::the().get_texture(SimulationTexture::Chicken);
 }
 
 Chicken::~Chicken() = default;
@@ -67,21 +68,21 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         auto index = GetRandomValue(0, heat_vector.size() - 1);
         auto target = heat_vector[index];
 
-        if(!target->is_empty()) {
+        if (!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
                 eat(target->agent);
                 target->agent = std::make_shared<Chicken>(*this);
                 start_field->agent.reset();
-            }else if(target->agent->get_type() == AgentType::CHICKEN){
-                for (auto& field : surroundings){
-                    if(in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()){
+            } else if (target->agent->get_type() == AgentType::CHICKEN) {
+                for (auto& field : surroundings) {
+                    if (in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()) {
                         auto energy = convert_energy(target->agent);
                         field->agent = std::make_shared<Chicken>(energy);
                         break;
                     }
                 }
             }
-        }else {
+        } else {
             target->agent = std::make_shared<Chicken>(*this);
             start_field->agent.reset();
         }

@@ -1,6 +1,6 @@
 #include "Agent.h"
 
-void Agent::eat(std::shared_ptr<Agent> &prey) {
+void Agent::eat(std::shared_ptr<Agent>& prey) {
     m_energy += prey->get_energy();
     if (m_energy > MAX_ENERGY_VALUE) {
         m_energy = MAX_ENERGY_VALUE;

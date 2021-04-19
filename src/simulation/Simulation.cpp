@@ -1,10 +1,11 @@
 #include "Simulation.h"
 #include <utility>
 
+#include "../ResourceManager.h"
 #include "../Util.h"
 
 Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
-    grass_texture = std::make_shared<Texture2D>(LoadTexture("../assets/ground.png"));
+    grass_texture = ResourceManager::the().get_texture(SimulationTexture::Ground);
 
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
@@ -49,7 +50,7 @@ void Simulation::update() {
 void Simulation::draw() {
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
-            DrawTextureV(*grass_texture, convert_to_pos(x, y), RAYWHITE);
+            DrawTextureV(grass_texture, convert_to_pos(x, y), RAYWHITE);
         }
     }
 

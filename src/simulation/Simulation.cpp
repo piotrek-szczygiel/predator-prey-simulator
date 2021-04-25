@@ -41,7 +41,7 @@ void Simulation::update() {
         for (int x = 0; x < WIDTH; ++x) {
             auto& field = m_grid[y][x];
             if (field->agent_need_update()) {
-                update_field(field);
+                update_field(*field);
             }
         }
     }
@@ -62,25 +62,25 @@ void Simulation::draw() {
     }
 }
 
-void Simulation::update_field(std::shared_ptr<Field>& field) {
-    auto x = field->get_pos().first;
-    auto y = field->get_pos().second;
-    auto& agent = field->agent;
+void Simulation::update_field(Field& field) {
+    auto& agent = field.agent;
     if (!agent->is_alive()) {
         agent.reset();
         return;
     }
 
-    auto surr = surroundings(x, y, agent->sensor());
+    auto surr = surroundings(field, agent->sensor());
     agent->update(surr, field);
 }
 
-std::vector<std::shared_ptr<Field>> Simulation::surroundings(int x, int y, int sensor) {
-    std::vector<std::shared_ptr<Field>> tmp;
+std::vector<Field*> Simulation::surroundings(const Field& field, int sensor) {
+    auto x = field.get_pos().first;
+    auto y = field.get_pos().second;
+    std::vector<Field*> tmp;
     for (int f_y = std::max(0, y - sensor); f_y <= std::min(HEIGHT - 1, y + sensor); ++f_y) {
         for (int f_x = std::max(0, x - sensor); f_x <= std::min(WIDTH - 1, x + sensor); ++f_x) {
             if (x != f_x || y != f_y) {
-                tmp.push_back(m_grid[f_y][f_x]);
+                tmp.push_back(m_grid[f_y][f_x].get());
             }
         }
     }

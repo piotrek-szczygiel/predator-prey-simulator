@@ -1,5 +1,6 @@
 #include "Chicken.h"
 
+#include <iostream>
 #include <map>
 
 #include "../ResourceManager.h"
@@ -15,20 +16,20 @@ void Chicken::draw(int x, int y) {
     draw_frame(m_texture, x, y, 1);
 }
 
-double Chicken::calculate_metric(std::shared_ptr<Field> field) const {
+double Chicken::calculate_metric(const Field* field) const {
     if (want_to_breed()) {
         return field->distance + field->ca_dist + field->ch_dist + (BASE_METRIC_VALUE - field->fo_dist * 20);
     }
     return field->distance + field->ca_dist + (BASE_METRIC_VALUE - field->fo_dist * 20);
 }
 
-void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shared_ptr<Field>& start_field) {
+void Chicken::update(std::vector<Field*>& surroundings, Field& start_field) {
     m_last_update = GetTime();
     --m_energy;
 
-    std::map<double, std::vector<std::shared_ptr<Field>>> discrete_heat_map;
+    std::map<double, std::vector<Field*>> discrete_heat_map;
     for (auto& field : surroundings) {
-        if (field == start_field) {
+        if (*field == start_field) {
             continue;
         }
         if (!field->is_empty()) {
@@ -44,7 +45,7 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         for (auto& compare_field : surroundings) {
             if (!compare_field->is_empty()) {
                 auto compare_agent = compare_field->agent;
-                auto distance = field->distance_to(compare_field);
+                auto distance = field->distance_to(*compare_field);
                 switch (compare_agent->get_type()) {
                     case AgentType::CABBAGE: field->ca_dist = std::min(field->ca_dist, distance); break;
                     case AgentType::CHICKEN:
@@ -58,7 +59,7 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
         }
 
         auto metric = calculate_metric(field);
-        if (in_range(field->get_pos(), start_field->get_pos(), 1)) {
+        if (in_range(*field, start_field, 1)) {
             discrete_heat_map[metric].push_back(field);
         }
     }
@@ -70,13 +71,13 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
 
         if (!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
-                eat(target->agent);
+                eat(*target->agent);
                 target->agent = std::make_shared<Chicken>(*this);
-                start_field->agent.reset();
+                start_field.agent.reset();
             } else if (target->agent->get_type() == AgentType::CHICKEN) {
                 for (auto& field : surroundings) {
-                    if (in_range(field->get_pos(), start_field->get_pos(), 1) && field->is_walkable()) {
-                        auto energy = convert_energy(target->agent);
+                    if (in_range(*field, start_field, 1) && field->is_walkable()) {
+                        auto energy = convert_energy(*target->agent);
                         field->agent = std::make_shared<Chicken>(energy);
                         break;
                     }
@@ -84,7 +85,7 @@ void Chicken::update(std::vector<std::shared_ptr<Field>> surroundings, std::shar
             }
         } else {
             target->agent = std::make_shared<Chicken>(*this);
-            start_field->agent.reset();
+            start_field.agent.reset();
         }
     }
 }

@@ -29,7 +29,7 @@ class Simulation {
     std::array<std::array<std::shared_ptr<Field>, WIDTH>, HEIGHT> m_grid{};
     double m_last_cabbages_spawn;
 
-    void update_field(std::shared_ptr<Field>& field);
-    std::vector<std::shared_ptr<Field>> surroundings(int x, int y, int sensor);
+    void update_field(Field& field);
+    std::vector<Field*> surroundings(const Field& field, int sensor);
     void spawn_random_cabbages();
 };

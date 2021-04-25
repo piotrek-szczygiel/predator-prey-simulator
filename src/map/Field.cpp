@@ -15,12 +15,12 @@ void Field::reset_metrics() {
     fo_dist = BASE_METRIC_VALUE;
 }
 
-std::pair<int, int> Field::get_pos() {
+std::pair<int, int> Field::get_pos() const {
     return {m_x, m_y};
 }
 
-double Field::distance_to(const std::shared_ptr<Field>& field) {
-    return sqrt(pow(m_x - field->m_x, 2) + pow(m_y - field->m_y, 2));
+double Field::distance_to(Field& field) const {
+    return sqrt(pow(m_x - field.m_x, 2) + pow(m_y - field.m_y, 2));
     ;
 }
 
@@ -33,11 +33,7 @@ bool Field::agent_need_update() const {
 }
 
 bool Field::is_empty() const {
-    if (agent) {
-        return false;
-    }
-
-    return true;
+    return !agent;
 }
 
 bool Field::is_walkable() const {

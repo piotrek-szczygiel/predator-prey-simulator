@@ -16,8 +16,8 @@ void draw_frame(const Texture2D& texture, int x, int y, int frame_x, int frame_y
     DrawTextureRec(texture, rect, convert_to_pos(x, y), RAYWHITE);
 }
 
-bool in_range(const std::pair<int, int>& target, const std::pair<int, int>& start, int range) {
-    auto left_part = std::abs(target.first - start.first) <= range;
-    auto right_part = std::abs(target.second - start.second) <= range;
+bool in_range(const Field& target, const Field& start, int range) {
+    auto left_part = std::abs(target.get_pos().first - start.get_pos().first) <= range;
+    auto right_part = std::abs(target.get_pos().second - start.get_pos().second) <= range;
     return left_part && right_part;
 }

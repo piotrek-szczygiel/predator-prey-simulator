@@ -22,7 +22,7 @@ class Agent {
     virtual void draw(int x, int y) = 0;
     virtual void eat(Agent& prey);
     virtual bool need_update();
-    virtual void update(std::vector<Field*>& surroundings, Field& start_field) = 0;
+    virtual void update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) = 0;
     AgentType get_type() { return m_type; }
     int sensor() { return m_sensor; }
     bool is_alive() { return m_energy > 0; }
@@ -31,6 +31,8 @@ class Agent {
     void set_energy(float energy) { m_energy = energy; }
     void reduce_energy(float divider) { m_energy *= divider; }
     float convert_energy(Agent& partner);
+
+    Field* m_field;
 
    protected:
     Texture2D m_texture;

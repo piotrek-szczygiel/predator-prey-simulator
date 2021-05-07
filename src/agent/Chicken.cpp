@@ -23,7 +23,7 @@ double Chicken::calculate_metric(const Field* field) const {
     return field->distance + field->ca_dist + (BASE_METRIC_VALUE - field->fo_dist * 20);
 }
 
-void Chicken::update(std::vector<Field*>& surroundings, Field& start_field) {
+void Chicken::update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
     --m_energy;
 
@@ -72,19 +72,23 @@ void Chicken::update(std::vector<Field*>& surroundings, Field& start_field) {
         if (!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
                 eat(*target->agent);
-                target->agent = std::make_shared<Chicken>(*this);
+                target->agent = start_field.agent;
+                m_field = target;
                 start_field.agent.reset();
             } else if (target->agent->get_type() == AgentType::CHICKEN) {
                 for (auto& field : surroundings) {
                     if (in_range(*field, start_field, 1) && field->is_walkable()) {
                         auto energy = convert_energy(*target->agent);
                         field->agent = std::make_shared<Chicken>(energy);
+                        field->agent->m_field = field;
+                        offsprings.push_back(field->agent);
                         break;
                     }
                 }
             }
         } else {
-            target->agent = std::make_shared<Chicken>(*this);
+            target->agent = start_field.agent;
+            m_field = target;
             start_field.agent.reset();
         }
     }

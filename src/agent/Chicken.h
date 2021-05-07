@@ -9,6 +9,6 @@ class Chicken : public Agent {
     explicit Chicken(float energy = BASE_ENERGY_VALUE);
     ~Chicken() override;
     void draw(int x, int y) override;
-    void update(std::vector<Field*>& surroundings, Field& start_field) override;
+    void update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) override;
     double calculate_metric(const Field* field) const override;
 };

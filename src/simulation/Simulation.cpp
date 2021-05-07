@@ -1,5 +1,6 @@
 #include "Simulation.h"
 #include <utility>
+#include <random>
 
 #include "../ResourceManager.h"
 #include "../Util.h"
@@ -20,6 +21,8 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         m_grid[y][x]->agent = std::make_shared<Chicken>();
+        m_grid[y][x]->agent->m_field = m_grid[y][x].get();
+        m_agents.push_back(m_grid[y][x]->agent);
     }
 
     for (int i = 0; i < START_WOLVES; ++i) {
@@ -27,6 +30,8 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         m_grid[y][x]->agent = std::make_shared<Wolf>();
+        m_grid[y][x]->agent->m_field = m_grid[y][x].get();
+        m_agents.push_back(m_grid[y][x]->agent);
     }
 }
 
@@ -37,14 +42,29 @@ void Simulation::update() {
         spawn_random_cabbages();
         m_last_cabbages_spawn = GetTime();
     }
-    for (int y = 0; y < HEIGHT; ++y) {
-        for (int x = 0; x < WIDTH; ++x) {
-            auto& field = m_grid[y][x];
-            if (field->agent_need_update()) {
-                update_field(*field);
-            }
+    //    for (int y = 0; y < HEIGHT; ++y) {
+    //        for (int x = 0; x < WIDTH; ++x) {
+    //            auto& field = m_grid[y][x];
+    //            if (field->agent_need_update()) {
+    //                update_field(*field);
+    //            }
+    //        }
+    //    }
+
+
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(m_agents.begin(), m_agents.end(), g);
+    
+    std::vector<std::shared_ptr<Agent>> offsprings;
+    for (auto& agent : m_agents) {
+        if (agent->need_update()) {
+            update_field(*agent->m_field, offsprings);
         }
     }
+    m_agents.insert(m_agents.end(), offsprings.begin(), offsprings.end());
+
+    m_agents.erase(std::remove_if(m_agents.begin(), m_agents.end(), [](const auto& a) { return a.use_count() <= 1; }), m_agents.end());
 }
 
 void Simulation::draw() {
@@ -62,7 +82,7 @@ void Simulation::draw() {
     }
 }
 
-void Simulation::update_field(Field& field) {
+void Simulation::update_field(Field& field, std::vector<std::shared_ptr<Agent>>& offsprings) {
     auto& agent = field.agent;
     if (!agent->is_alive()) {
         agent.reset();
@@ -70,7 +90,7 @@ void Simulation::update_field(Field& field) {
     }
 
     auto surr = surroundings(field, agent->sensor());
-    agent->update(surr, field);
+    agent->update(surr, field, offsprings);
 }
 
 std::vector<Field*> Simulation::surroundings(const Field& field, int sensor) {
@@ -95,6 +115,8 @@ void Simulation::spawn_random_cabbages() {
         auto& field = m_grid[y][x];
         if (field->is_empty()) {
             field->agent = std::make_shared<Cabbage>();
+            m_grid[y][x]->agent->m_field = m_grid[y][x].get();
+            m_agents.push_back(m_grid[y][x]->agent);
         }
     }
 }

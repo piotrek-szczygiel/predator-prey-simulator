@@ -21,7 +21,7 @@ bool Cabbage::need_update() {
     return GetTime() - m_last_update >= CABBAGE_UPDATE_TIME;
 }
 
-void Cabbage::update(std::vector<Field*>& surroundings, Field& start_field) {
+void Cabbage::update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
     std::vector<Field*> empty_fields;
     for (auto& field : surroundings) {
@@ -34,5 +34,7 @@ void Cabbage::update(std::vector<Field*>& surroundings, Field& start_field) {
         auto index = GetRandomValue(0, empty_fields.size() - 1);
         auto target = empty_fields[index];
         target->agent = std::make_shared<Cabbage>();
+        target->agent->m_field = target;
+        offsprings.push_back(target->agent);
     }
 }

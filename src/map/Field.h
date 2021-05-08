@@ -1,8 +1,7 @@
 #pragma once
 
+#include "../simulation/SimulationSettings.h"
 #include "../agent/Agent.h"
-
-constexpr double BASE_METRIC_VALUE{999};
 
 class Agent;
 

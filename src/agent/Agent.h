@@ -1,16 +1,14 @@
 #pragma once
 
 #include <raylib.h>
+#include <map>
 #include <memory>
 #include <vector>
 
 #include "../map/Field.h"
+#include "../simulation/SimulationSettings.h"
 
 enum class AgentType { CABBAGE, CHICKEN, WOLF };
-
-constexpr float BASE_ENERGY_VALUE{40.0f};
-constexpr float MAX_ENERGY_VALUE{100.0f};
-constexpr float DYNAMIC_AGENT_UPDATE_TIME{0.1f};
 
 class Field;
 
@@ -20,10 +18,9 @@ class Agent {
         : m_type{type}, m_last_update{GetTime()}, m_texture{}, m_sensor{sensor}, m_energy{energy}, eaten{false} {}
     virtual ~Agent() = 0;
     virtual void draw(int x, int y) = 0;
-    virtual void eat(Agent& prey);
     virtual bool need_update();
-    virtual void update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings) = 0;
-    AgentType get_type() { return m_type; }
+    virtual void update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings);
+    AgentType get_type() const { return m_type; }
     int sensor() { return m_sensor; }
     bool is_alive() { return m_energy > 0; }
     float get_energy() { return m_energy; }
@@ -44,7 +41,13 @@ class Agent {
     AgentType m_type;
     Field* m_field;
 
+    bool field_in_range(const Field& target, const Field& start, int range);
+    virtual void apply_field_metrics(Field* field, const Agent& compare_agent, double distance) const = 0;
     virtual double calculate_metric(const Field* field) const = 0;
+    virtual void eat(Agent& prey);
+    virtual void apply_behaviour(const std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings,
+                                 Field& current_field, Field* target) = 0;
+    void move_to_field(Field& current_field, Field* target);
 };
 
 inline Agent::~Agent() = default;

@@ -1,6 +1,5 @@
 #include "Chicken.h"
 
-#include <iostream>
 #include <map>
 
 #include "../ResourceManager.h"
@@ -23,13 +22,22 @@ double Chicken::calculate_metric(const Field* field) const {
     return field->distance + field->ca_dist + (BASE_METRIC_VALUE - field->fo_dist * 20);
 }
 
-void Chicken::update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) {
+void Chicken::update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
     --m_energy;
 
+    auto& current_field = *m_field;
+
+    if (!is_alive()) {
+        if(!eaten){
+            current_field.agent.reset();
+        }
+        return;
+    }
+
     std::map<double, std::vector<Field*>> discrete_heat_map;
     for (auto& field : surroundings) {
-        if (*field == start_field) {
+        if (*field == current_field) {
             continue;
         }
         if (!field->is_empty()) {
@@ -41,7 +49,7 @@ void Chicken::update(std::vector<Field*>& surroundings, Field& start_field, std:
             }
         }
         field->reset_metrics();
-        field->distance = field->distance_to(start_field);
+        field->distance = field->distance_to(current_field);
         for (auto& compare_field : surroundings) {
             if (!compare_field->is_empty()) {
                 auto compare_agent = compare_field->agent;
@@ -59,7 +67,7 @@ void Chicken::update(std::vector<Field*>& surroundings, Field& start_field, std:
         }
 
         auto metric = calculate_metric(field);
-        if (in_range(*field, start_field, 1)) {
+        if (in_range(*field, current_field, 1)) {
             discrete_heat_map[metric].push_back(field);
         }
     }
@@ -72,24 +80,25 @@ void Chicken::update(std::vector<Field*>& surroundings, Field& start_field, std:
         if (!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
                 eat(*target->agent);
-                target->agent = start_field.agent;
-                m_field = target;
-                start_field.agent.reset();
+                target->agent = current_field.agent;
+                set_field(target);
+                current_field.agent.reset();
             } else if (target->agent->get_type() == AgentType::CHICKEN) {
                 for (auto& field : surroundings) {
-                    if (in_range(*field, start_field, 1) && field->is_walkable()) {
+                    if (in_range(*field, current_field, 1) && field->is_walkable()) {
                         auto energy = convert_energy(*target->agent);
-                        field->agent = std::make_shared<Chicken>(energy);
-                        field->agent->m_field = field;
-                        offsprings.push_back(field->agent);
+                        auto offspring = std::make_shared<Chicken>(energy);
+                        field->agent = offspring;
+                        offspring->set_field(field);
+                        offsprings.push_back(offspring);
                         break;
                     }
                 }
             }
         } else {
-            target->agent = start_field.agent;
-            m_field = target;
-            start_field.agent.reset();
+            target->agent = current_field.agent;
+            set_field(target);
+            current_field.agent.reset();
         }
     }
 }

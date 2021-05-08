@@ -1,6 +1,5 @@
 #include "Wolf.h"
 
-#include <iostream>
 #include <map>
 
 #include "../ResourceManager.h"
@@ -23,13 +22,22 @@ double Wolf::calculate_metric(const Field* field) const {
     return field->distance + field->ch_dist;
 }
 
-void Wolf::update(std::vector<Field*>& surroundings, Field& start_field, std::vector<std::shared_ptr<Agent>>& offsprings) {
+void Wolf::update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
     --m_energy;
-    std::cout << m_energy << std::endl;
+
+    auto& current_field = *m_field;
+
+    if (!is_alive()) {
+        if(!eaten){
+            current_field.agent.reset();
+        }
+        return;
+    }
+
     std::map<double, std::vector<Field*>> discrete_heat_map;
     for (auto& field : surroundings) {
-        if (*field == start_field) {
+        if (*field == current_field) {
             continue;
         }
         if (!field->is_empty()) {
@@ -39,7 +47,7 @@ void Wolf::update(std::vector<Field*>& surroundings, Field& start_field, std::ve
             }
         }
         field->reset_metrics();
-        field->distance = field->distance_to(start_field);
+        field->distance = field->distance_to(current_field);
         for (auto& compare_field : surroundings) {
             if (!compare_field->is_empty()) {
                 auto compare_agent = compare_field->agent;
@@ -57,7 +65,7 @@ void Wolf::update(std::vector<Field*>& surroundings, Field& start_field, std::ve
         }
 
         auto metric = calculate_metric(field);
-        if (in_range(*field, start_field, 1)) {
+        if (in_range(*field, current_field, 1)) {
             discrete_heat_map[metric].push_back(field);
         }
     }
@@ -69,29 +77,30 @@ void Wolf::update(std::vector<Field*>& surroundings, Field& start_field, std::ve
 
         if (!target->is_empty()) {
             if (target->agent->get_type() == AgentType::CABBAGE) {
-                target->agent = start_field.agent;
-                m_field = target;
-                start_field.agent.reset();
+                target->agent = current_field.agent;
+                set_field(target);
+                current_field.agent.reset();
             } else if (target->agent->get_type() == AgentType::CHICKEN) {
                 eat(*target->agent);
-                target->agent = start_field.agent;
-                m_field = target;
-                start_field.agent.reset();
+                target->agent = current_field.agent;
+                set_field(target);
+                current_field.agent.reset();
             } else if (target->agent->get_type() == AgentType::WOLF) {
                 for (auto& field : surroundings) {
-                    if (in_range(*field, start_field, 1) && field->is_walkable()) {
+                    if (in_range(*field, current_field, 1) && field->is_walkable()) {
                         auto energy = convert_energy(*target->agent);
-                        field->agent = std::make_shared<Wolf>(energy);
-                        field->agent->m_field = field;
-                        offsprings.push_back(field->agent);
+                        auto offspring = std::make_shared<Wolf>(energy);
+                        field->agent = offspring;
+                        offspring->set_field(field);
+                        offsprings.push_back(offspring);
                         break;
                     }
                 }
             }
         } else {
-            target->agent = start_field.agent;
-            m_field = target;
-            start_field.agent.reset();
+            target->agent = current_field.agent;
+            set_field(target);
+            current_field.agent.reset();
         }
     }
 }

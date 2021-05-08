@@ -21,15 +21,6 @@ std::pair<int, int> Field::get_pos() const {
 
 double Field::distance_to(Field& field) const {
     return sqrt(pow(m_x - field.m_x, 2) + pow(m_y - field.m_y, 2));
-    ;
-}
-
-bool Field::agent_need_update() const {
-    if (is_empty()) {
-        return false;
-    }
-
-    return agent->need_update();
 }
 
 bool Field::is_empty() const {

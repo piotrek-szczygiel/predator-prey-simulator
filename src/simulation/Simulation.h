@@ -10,12 +10,12 @@
 #include "../agent/Wolf.h"
 #include "../map/Field.h"
 
-constexpr int WIDTH{20};
-constexpr int HEIGHT{20};
-constexpr int START_CABBAGES{8};
-constexpr int START_CHICKENS{10};
-constexpr int START_WOLVES{8};
-constexpr float CABBAGE_SPAWN_TIME{1.0f};
+constexpr int WIDTH{40};
+constexpr int HEIGHT{40};
+constexpr int START_CABBAGES{15};
+constexpr int START_CHICKENS{20};
+constexpr int START_WOLVES{6};
+constexpr float CABBAGE_SPAWN_TIME{5.0f};
 
 class Simulation {
    public:
@@ -30,7 +30,6 @@ class Simulation {
     std::vector<std::shared_ptr<Agent>> m_agents;
     double m_last_cabbages_spawn;
 
-    void update_field(Field& field, std::vector<std::shared_ptr<Agent>>& offsprings);
     std::vector<Field*> surroundings(const Field& field, int sensor);
     void spawn_random_cabbages();
 };

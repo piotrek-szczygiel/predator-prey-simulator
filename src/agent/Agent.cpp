@@ -6,6 +6,7 @@ void Agent::eat(Agent& prey) {
         m_energy = MAX_ENERGY_VALUE;
     }
     prey.set_energy(0.0f);
+    prey.eaten = true;
 }
 
 bool Agent::need_update() {

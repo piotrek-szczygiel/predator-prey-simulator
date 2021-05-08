@@ -20,7 +20,7 @@ void Cabbage::update(std::vector<Field*>& surroundings, std::vector<std::shared_
     auto& current_field = *m_field;
 
     if (!is_alive()) {
-        if(!eaten){
+        if (!eaten) {
             current_field.agent.reset();
         }
         return;
@@ -50,9 +50,7 @@ double Cabbage::calculate_metric(const Field* field) const {
 }
 
 void Cabbage::apply_behaviour(const std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings,
-                              Field& current_field, Field* target) {
-}
-
+                              Field& current_field, Field* target) {}
 
 void Cabbage::draw(int x, int y) {
     DrawTextureV(m_texture, convert_to_pos(x, y), RAYWHITE);

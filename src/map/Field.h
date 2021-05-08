@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../simulation/SimulationSettings.h"
 #include "../agent/Agent.h"
+#include "../simulation/SimulationSettings.h"
 
 class Agent;
 

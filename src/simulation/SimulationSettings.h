@@ -1,8 +1,12 @@
 #pragma once
 
+// Window settings
+constexpr int WINDOW_WIDTH{1600};
+constexpr int WINDOW_HEIGHT{900};
+
 // Map settings
-constexpr int WIDTH{40};
-constexpr int HEIGHT{40};
+constexpr int WIDTH{100};
+constexpr int HEIGHT{50};
 constexpr int START_CABBAGES{15};
 constexpr int START_CHICKENS{20};
 constexpr int START_WOLVES{6};

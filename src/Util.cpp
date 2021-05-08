@@ -15,3 +15,30 @@ void draw_frame(const Texture2D& texture, int x, int y, int frame_x, int frame_y
 
     DrawTextureRec(texture, rect, convert_to_pos(x, y), RAYWHITE);
 }
+
+void update_camera(Camera2D& camera) {
+    constexpr float PAN_SPEED{750.0f};
+    constexpr float ZOOM_SPEED{2.0f};
+
+    float dt = GetFrameTime();
+
+    if (IsKeyPressed(KEY_B)) {
+        printf("%f %f\n", camera.target.x, camera.target.y);
+    }
+
+    camera.target.y -= IsKeyDown(KEY_UP) * dt * PAN_SPEED / camera.zoom;
+    camera.target.y += IsKeyDown(KEY_DOWN) * dt * PAN_SPEED / camera.zoom;
+    camera.target.x -= IsKeyDown(KEY_LEFT) * dt * PAN_SPEED / camera.zoom;
+    camera.target.x += IsKeyDown(KEY_RIGHT) * dt * PAN_SPEED / camera.zoom;
+    camera.target.x = std::max(0.0f, std::min(CORNER.x, camera.target.x));
+    camera.target.y = std::max(0.0f, std::min(CORNER.y, camera.target.y));
+
+    camera.zoom *= 1.0f + IsKeyDown(KEY_W) * dt * ZOOM_SPEED;
+    camera.zoom /= 1.0f + IsKeyDown(KEY_S) * dt * ZOOM_SPEED;
+    camera.zoom = std::max(0.1f, std::min(4.0f, camera.zoom));
+
+    if (IsKeyPressed(KEY_R)) {
+        camera.target = MIDDLE;
+        camera.zoom = 1.5f;
+    }
+}

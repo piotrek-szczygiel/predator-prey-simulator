@@ -1,14 +1,13 @@
 #pragma once
 
+#include "../simulation/SimulationSettings.h"
 #include "../agent/Agent.h"
-
-constexpr double BASE_METRIC_VALUE{999};
 
 class Agent;
 
 class Field {
    public:
-    std::shared_ptr<Agent> agent{};
+    std::shared_ptr<Agent> agent;
 
     Field(int x, int y);
     void draw() const;
@@ -17,7 +16,6 @@ class Field {
     double distance_to(Field& field) const;
     bool is_empty() const;
     bool is_walkable() const;
-    bool agent_need_update() const;
     bool operator==(const Field& rhs) const;
 
     double distance{BASE_METRIC_VALUE};

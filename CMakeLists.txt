@@ -43,6 +43,7 @@ add_executable(
         src/agent/Wolf.cpp
         src/agent/Wolf.h
         src/map/Field.cpp
-        src/map/Field.h)
+        src/map/Field.h
+        src/simulation/SimulationSettings.h)
 
 target_link_libraries(${PROJECT_NAME} raylib)

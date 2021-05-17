@@ -51,9 +51,7 @@ void Simulation::update() {
 
     std::vector<std::shared_ptr<Agent>> offsprings;
     for (auto& agent : m_agents) {
-        if (agent->need_update()) {
-            agent->update(m_grid, offsprings);
-        }
+        agent->update(m_grid, offsprings);
     }
     m_agents.insert(m_agents.end(), offsprings.begin(), offsprings.end());
     m_agents.erase(std::remove_if(m_agents.begin(), m_agents.end(), [](const auto& a) { return a.use_count() <= 1; }), m_agents.end());

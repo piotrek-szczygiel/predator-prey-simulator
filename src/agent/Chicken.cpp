@@ -5,13 +5,13 @@
 #include "../ResourceManager.h"
 #include "../Util.h"
 
-Chicken::Chicken(float energy) : Agent(AgentType::CHICKEN, CHICKEN_SENSOR, energy) {
+Chicken::Chicken(int energy) : Agent(AgentType::CHICKEN, CHICKEN_SENSOR, energy) {
     m_texture = ResourceManager::the().get_texture(SimulationTexture::Chicken);
 }
 
 Chicken::~Chicken() = default;
 
-void Chicken::apply_field_metrics(Field* field, const Agent& compare_agent, double distance) const {
+void Chicken::apply_field_metrics(Field* field, const Agent& compare_agent, int distance) const {
     switch (compare_agent.get_type()) {
         case AgentType::CABBAGE: field->ca_dist = std::min(field->ca_dist, distance); break;
         case AgentType::CHICKEN:
@@ -23,7 +23,7 @@ void Chicken::apply_field_metrics(Field* field, const Agent& compare_agent, doub
     }
 }
 
-double Chicken::calculate_metric(const Field* field) const {
+int Chicken::calculate_metric(const Field* field) const {
     if (want_to_breed()) {
         return field->distance + field->ca_dist + field->ch_dist + (BASE_METRIC_VALUE - field->fo_dist * 20);
     }

@@ -24,8 +24,8 @@ std::pair<int, int> Field::get_pos() const {
     return {m_x, m_y};
 }
 
-double Field::distance_to(Field& field) const {
-    return sqrt(pow(m_x - field.m_x, 2) + pow(m_y - field.m_y, 2));
+int Field::distance_to(Field& field) const {
+    return (m_x - field.m_x) * (m_x - field.m_x) + (m_y - field.m_y) * (m_y - field.m_y);
 }
 
 bool Field::is_empty() const {

@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <memory>
 #include "ResourceManager.h"
 #include "Util.h"
 #include "simulation/Simulation.h"
@@ -14,16 +15,20 @@ int main() {
     camera.target = MIDDLE;
 
     ResourceManager::the().load_all_textures();
-    Simulation simulation;
+    auto simulation = std::make_unique<Simulation>();
 
     while (!WindowShouldClose()) {
         update_camera(camera);
-        simulation.update();
+        simulation->update();
+
+        if (IsKeyPressed(KEY_R)) {
+            simulation = std::make_unique<Simulation>();
+        }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
         BeginMode2D(camera);
-        simulation.draw();
+        simulation->draw();
         EndMode2D();
         EndDrawing();
     }

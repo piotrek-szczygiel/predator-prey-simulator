@@ -10,10 +10,6 @@ Cabbage::Cabbage() : Agent(AgentType::CABBAGE, CABBAGE_SENSOR, BASE_ENERGY_VALUE
 
 Cabbage::~Cabbage() = default;
 
-bool Cabbage::need_update() {
-    return GetTime() - m_last_update >= CABBAGE_UPDATE_TIME;
-}
-
 void Cabbage::update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
 
@@ -48,9 +44,9 @@ void Cabbage::update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent
     }
 }
 
-void Cabbage::apply_field_metrics(Field* field, const Agent& compare_agent, double distance) const {}
+void Cabbage::apply_field_metrics(Field* field, const Agent& compare_agent, int distance) const {}
 
-double Cabbage::calculate_metric(const Field* field) const {
+int Cabbage::calculate_metric(const Field* field) const {
     return 0.0f;
 }
 

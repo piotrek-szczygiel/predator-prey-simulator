@@ -37,7 +37,7 @@ void update_camera(Camera2D& camera) {
     camera.zoom /= 1.0f + IsKeyDown(KEY_S) * dt * ZOOM_SPEED;
     camera.zoom = std::max(0.1f, std::min(4.0f, camera.zoom));
 
-    if (IsKeyPressed(KEY_R)) {
+    if (IsKeyPressed(KEY_X)) {
         camera.target = MIDDLE;
         camera.zoom = 1.5f;
     }

@@ -7,13 +7,13 @@
 #include "../ResourceManager.h"
 #include "../Util.h"
 
-Wolf::Wolf(float energy) : Agent(AgentType::WOLF, WOLF_SENSOR, energy) {
+Wolf::Wolf(int energy) : Agent(AgentType::WOLF, WOLF_SENSOR, energy) {
     m_texture = ResourceManager::the().get_texture(SimulationTexture::Wolf);
 }
 
 Wolf::~Wolf() = default;
 
-void Wolf::apply_field_metrics(Field* field, const Agent& compare_agent, double distance) const {
+void Wolf::apply_field_metrics(Field* field, const Agent& compare_agent, int distance) const {
     switch (compare_agent.get_type()) {
         case AgentType::CABBAGE: field->ca_dist = std::min(field->ca_dist, distance); break;
         case AgentType::CHICKEN: field->ch_dist = std::min(field->ch_dist, distance); break;
@@ -25,7 +25,7 @@ void Wolf::apply_field_metrics(Field* field, const Agent& compare_agent, double 
     }
 }
 
-double Wolf::calculate_metric(const Field* field) const {
+int Wolf::calculate_metric(const Field* field) const {
     if (want_to_breed()) {
         return field->distance + field->ch_dist + field->fo_dist;
     }

@@ -26,7 +26,7 @@ void Agent::move_to_field(Field& current_field, Field* target) {
     current_field.agent.reset();
 }
 
-void Agent::update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings) {
+void Agent::update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings) {
     m_last_update = GetTime();
     --m_energy;
 
@@ -39,39 +39,75 @@ void Agent::update(std::vector<Field*>& surroundings, std::vector<std::shared_pt
         return;
     }
 
-    std::map<double, std::vector<Field*>> discrete_heat_map;
-    for (auto& field : surroundings) {
-        if (*field == current_field) {
-            continue;
-        }
-        if (!field->is_empty()) {
-            auto agent = field->agent;
-            if (agent->get_type() == m_type && (!want_to_breed() || !agent->want_to_breed())) {
-                continue;
-            }
-        }
-        field->reset_metrics();
-        field->distance = field->distance_to(current_field);
-        for (auto& compare_field : surroundings) {
-            if (!compare_field->is_empty()) {
-                auto compare_agent = compare_field->agent;
-                auto distance = field->distance_to(*compare_field);
-                apply_field_metrics(field, *compare_agent, distance);
-            }
-        }
+    auto x = m_field->get_pos().first;
+    auto y = m_field->get_pos().second;
 
-        auto metric = calculate_metric(field);
-        if (field_in_range(*field, current_field, 1)) {
-            discrete_heat_map[metric].push_back(field);
+    std::map<double, std::vector<Field*>> discrete_heat_map;
+    for (int f_y = std::max(0, y - m_sensor); f_y <= std::min(HEIGHT - 1, y + m_sensor); ++f_y) {
+        for (int f_x = std::max(0, x - m_sensor); f_x <= std::min(WIDTH - 1, x + m_sensor); ++f_x) {
+            if (x != f_x || y != f_y) {
+                auto& field = map[f_y][f_x];
+                if (field == current_field) {
+                    continue;
+                }
+                if (!field.is_empty()) {
+                    auto agent = field.agent;
+                    if (agent->get_type() == m_type && (!want_to_breed() || !agent->want_to_breed())) {
+                        continue;
+                    }
+                }
+                field.reset_metrics();
+                field.distance = field.distance_to(current_field);
+                for (int s_f_y = std::max(0, y - m_sensor); s_f_y <= std::min(HEIGHT - 1, y + m_sensor); ++s_f_y) {
+                    for (int s_f_x = std::max(0, x - m_sensor); s_f_x <= std::min(WIDTH - 1, x + m_sensor); ++s_f_x) {
+                        auto& compare_field = map[s_f_y][s_f_x];
+                        if (!compare_field.is_empty()) {
+                            auto compare_agent = compare_field.agent;
+                            auto distance = field.distance_to(compare_field);
+                            apply_field_metrics(&field, *compare_agent, distance);
+                        }
+                    }
+                }
+                auto metric = calculate_metric(&field);
+                if (field_in_range(field, current_field, 1)) {
+                    discrete_heat_map[metric].push_back(&field);
+                }
+            }
         }
     }
+
+//    for (auto& field : surroundings) {
+//        if (*field == current_field) {
+//            continue;
+//        }
+//        if (!field->is_empty()) {
+//            auto agent = field->agent;
+//            if (agent->get_type() == m_type && (!want_to_breed() || !agent->want_to_breed())) {
+//                continue;
+//            }
+//        }
+//        field->reset_metrics();
+//        field->distance = field->distance_to(current_field);
+//        for (auto& compare_field : surroundings) {
+//            if (!compare_field->is_empty()) {
+//                auto compare_agent = compare_field->agent;
+//                auto distance = field->distance_to(*compare_field);
+//                apply_field_metrics(field, *compare_agent, distance);
+//            }
+//        }
+//
+//        auto metric = calculate_metric(field);
+//        if (field_in_range(*field, current_field, 1)) {
+//            discrete_heat_map[metric].push_back(field);
+//        }
+//    }
 
     if (!discrete_heat_map.empty()) {
         auto heat_vector = discrete_heat_map.begin()->second;
         auto index = GetRandomValue(0, heat_vector.size() - 1);
         auto target = heat_vector[index];
 
-        apply_behaviour(surroundings, offsprings, current_field, target);
+        apply_behaviour(map, offsprings, current_field, target);
     }
 }
 

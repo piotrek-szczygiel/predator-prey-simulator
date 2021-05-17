@@ -1,6 +1,11 @@
 #include "Field.h"
 
-Field::Field(int x, int y) : m_x{x}, m_y{y}, agent{} {}
+Field::Field() : m_x{}, m_y{}, agent{} {}
+
+void Field::set_pos(int x, int y) {
+    m_x = x;
+    m_y = y;
+}
 
 void Field::draw() const {
     if (!is_empty()) {

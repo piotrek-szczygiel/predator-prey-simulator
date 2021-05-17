@@ -9,7 +9,8 @@ class Field {
    public:
     std::shared_ptr<Agent> agent;
 
-    Field(int x, int y);
+    Field();
+    void set_pos(int x, int y);
     void draw() const;
     void reset_metrics();
     std::pair<int, int> get_pos() const;

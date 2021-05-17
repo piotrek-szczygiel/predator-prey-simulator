@@ -20,10 +20,9 @@ class Simulation {
 
    protected:
     Texture2D grass_texture;
-    std::array<std::array<std::shared_ptr<Field>, WIDTH>, HEIGHT> m_grid{};
+    Field m_grid[HEIGHT][WIDTH] {};
     std::vector<std::shared_ptr<Agent>> m_agents{};
     double m_last_cabbages_spawn;
 
-    std::vector<Field*> surroundings(const Field& field, int sensor);
     void spawn_random_cabbages();
 };

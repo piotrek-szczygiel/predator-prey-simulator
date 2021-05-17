@@ -10,7 +10,7 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
 
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
-            m_grid[y][x] = std::make_shared<Field>(x, y);
+            m_grid[y][x].set_pos(x, y);
         }
     }
 
@@ -21,8 +21,8 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         auto chicken = std::make_shared<Chicken>();
-        chicken->set_field(m_grid[y][x].get());
-        m_grid[y][x]->agent = chicken;
+        chicken->set_field(&m_grid[y][x]);
+        m_grid[y][x].agent = chicken;
         m_agents.push_back(chicken);
     }
 
@@ -31,8 +31,8 @@ Simulation::Simulation() : m_last_cabbages_spawn{GetTime()} {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         auto wolf = std::make_shared<Wolf>();
-        wolf->set_field(m_grid[y][x].get());
-        m_grid[y][x]->agent = wolf;
+        wolf->set_field(&m_grid[y][x]);
+        m_grid[y][x].agent = wolf;
         m_agents.push_back(wolf);
     }
 }
@@ -52,8 +52,7 @@ void Simulation::update() {
     std::vector<std::shared_ptr<Agent>> offsprings;
     for (auto& agent : m_agents) {
         if (agent->need_update()) {
-            auto surr = surroundings(*agent->get_field(), agent->sensor());
-            agent->update(surr, offsprings);
+            agent->update(m_grid, offsprings);
         }
     }
     m_agents.insert(m_agents.end(), offsprings.begin(), offsprings.end());
@@ -70,23 +69,9 @@ void Simulation::draw() {
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
             const auto& field = m_grid[y][x];
-            field->draw();
+            field.draw();
         }
     }
-}
-
-std::vector<Field*> Simulation::surroundings(const Field& field, int sensor) {
-    auto x = field.get_pos().first;
-    auto y = field.get_pos().second;
-    std::vector<Field*> tmp;
-    for (int f_y = std::max(0, y - sensor); f_y <= std::min(HEIGHT - 1, y + sensor); ++f_y) {
-        for (int f_x = std::max(0, x - sensor); f_x <= std::min(WIDTH - 1, x + sensor); ++f_x) {
-            if (x != f_x || y != f_y) {
-                tmp.push_back(m_grid[f_y][f_x].get());
-            }
-        }
-    }
-    return tmp;
 }
 
 void Simulation::spawn_random_cabbages() {
@@ -95,10 +80,10 @@ void Simulation::spawn_random_cabbages() {
         auto y = GetRandomValue(0, HEIGHT - 1);
 
         auto& field = m_grid[y][x];
-        if (field->is_empty()) {
+        if (field.is_empty()) {
             auto cabbage = std::make_shared<Cabbage>();
-            cabbage->set_field(field.get());
-            field->agent = cabbage;
+            cabbage->set_field(&field);
+            field.agent = cabbage;
             m_agents.push_back(cabbage);
         }
     }

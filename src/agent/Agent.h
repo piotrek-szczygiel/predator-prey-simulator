@@ -19,7 +19,7 @@ class Agent {
     virtual ~Agent() = 0;
     virtual void draw(int x, int y) = 0;
     virtual bool need_update();
-    virtual void update(std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings);
+    virtual void update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings);
     AgentType get_type() const { return m_type; }
     int sensor() { return m_sensor; }
     bool is_alive() { return m_energy > 0; }
@@ -45,7 +45,7 @@ class Agent {
     virtual void apply_field_metrics(Field* field, const Agent& compare_agent, double distance) const = 0;
     virtual double calculate_metric(const Field* field) const = 0;
     virtual void eat(Agent& prey);
-    virtual void apply_behaviour(const std::vector<Field*>& surroundings, std::vector<std::shared_ptr<Agent>>& offsprings,
+    virtual void apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings,
                                  Field& current_field, Field* target) = 0;
     void move_to_field(Field& current_field, Field* target);
 };

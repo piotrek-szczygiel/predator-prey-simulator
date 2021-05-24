@@ -9,10 +9,11 @@
 #include "simulation/Simulation.h"
 
 int main(int argc, char **argv) {
-    const bool video = !(argc == 2 && strcmp(argv[1], "--no-video") == 0);
+    bool video = !(argc == 2 && strcmp(argv[1], "--no-video") == 0);
 
     constexpr int max_depth{5};
     bool assets_found = false;
+    auto original_cwd = std::filesystem::current_path();
     for (int i = 0; i < max_depth; ++i) {
         if (std::filesystem::exists("assets")) {
             assets_found = true;
@@ -22,12 +23,14 @@ int main(int argc, char **argv) {
         std::filesystem::current_path("..");
     }
 
-    if (!assets_found) std::cerr << "Unable to find assets directory";
+    if (!assets_found) {
+        std::cerr << "Unable to find assets directory" << std::endl;
+        std::filesystem::current_path(original_cwd);
+        video = false;
+    }
 
     Camera2D camera{};
     if (video) {
-        if (!assets_found) return 1;
-
         SetTraceLogLevel(LOG_WARNING);
         InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "sim");
         SetTargetFPS(60);
@@ -37,6 +40,8 @@ int main(int argc, char **argv) {
         camera.target = MIDDLE;
 
         ResourceManager::the().load_all_textures();
+    } else {
+        std::cerr << "Running in no video mode" << std::endl;
     }
 
     auto simulation = std::make_unique<Simulation>();

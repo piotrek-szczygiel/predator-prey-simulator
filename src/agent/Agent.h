@@ -44,8 +44,8 @@ class Agent {
     virtual void apply_field_metrics(Field* field, const Agent& compare_agent, int distance) const = 0;
     virtual int calculate_metric(const Field* field) const = 0;
     virtual void eat(Agent& prey);
-    virtual void apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings,
-                                 Field& current_field, Field* target) = 0;
+    virtual void apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings, Field& current_field,
+                                 Field* target) = 0;
     void move_to_field(Field& current_field, Field* target);
 };
 

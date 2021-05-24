@@ -1,6 +1,10 @@
 .idea/
 .xmake/
 .vscode/
+.vs/
 build/
 cmake-build-*/
+csv/
+out/
+CMakeSettings.json
 compile_commands.json

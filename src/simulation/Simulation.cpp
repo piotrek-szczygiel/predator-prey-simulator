@@ -72,6 +72,10 @@ void Simulation::draw() {
     }
 }
 
+std::size_t Simulation::get_agent_count(AgentType agent_type) {
+    return std::count_if(m_agents.begin(), m_agents.end(), [=](const auto& a) { return a->get_type() == agent_type; });
+}
+
 void Simulation::spawn_random_cabbages() {
     for (int i = 0; i < START_CABBAGES; ++i) {
         auto x = GetRandomValue(0, WIDTH - 1);

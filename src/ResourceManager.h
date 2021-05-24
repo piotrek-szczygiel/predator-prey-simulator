@@ -17,7 +17,7 @@ class ResourceManager {
     }
 
    private:
-    const std::string m_asset_path = "../assets/";
+    const std::string m_asset_path = "assets/";
     std::map<SimulationTexture, Texture2D> m_textures;
 
     Texture2D load_texture(const std::string& path) { return LoadTexture((m_asset_path + path).c_str()); }

@@ -29,7 +29,7 @@ void Cabbage::update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent
     for (int f_y = std::max(0, y - 1); f_y <= std::min(HEIGHT - 1, y + 1); ++f_y) {
         for (int f_x = std::max(0, x - 1); f_x <= std::min(WIDTH - 1, x + 1); ++f_x) {
             auto field = &map[f_y][f_x];
-            if(field->is_empty()){
+            if (field->is_empty()) {
                 empty_fields.push_back(field);
             }
         }
@@ -50,8 +50,8 @@ int Cabbage::calculate_metric(const Field* field) const {
     return 0.0f;
 }
 
-void Cabbage::apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings,
-                              Field& current_field, Field* target) {}
+void Cabbage::apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>& offsprings, Field& current_field,
+                              Field* target) {}
 
 void Cabbage::draw(int x, int y) {
     DrawTextureV(m_texture, convert_to_pos(x, y), RAYWHITE);

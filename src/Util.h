@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <array>
+#include <fstream>
 #include <memory>
 
 #include "map/Field.h"
@@ -14,3 +15,5 @@ Vector2 convert_to_pos(int x, int y);
 
 void draw_frame(const Texture2D& texture, int x, int y, int frame_x = 0, int frame_y = 0);
 void update_camera(Camera2D& camera);
+
+std::ofstream get_csv_stream();

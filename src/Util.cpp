@@ -1,4 +1,8 @@
 #include "Util.h"
+#include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 Vector2 convert_to_pos(int x, int y) {
     auto c_x = static_cast<float>(x * TILE_SIZE);
@@ -41,4 +45,16 @@ void update_camera(Camera2D& camera) {
         camera.target = MIDDLE;
         camera.zoom = 1.5f;
     }
+}
+
+std::ofstream get_csv_stream() {
+    auto time = std::time(nullptr);
+    std::stringstream ss;
+    ss << "csv/" << std::put_time(std::localtime(&time), "%F_%T") << ".csv";
+    auto s = ss.str();
+    std::replace(s.begin(), s.end(), ':', '-');
+    std::cout << "creating csv file " << s << std::endl;
+    std::ofstream csv(s);
+    csv << "predator;prey\n";
+    return csv;
 }

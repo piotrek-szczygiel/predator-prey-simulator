@@ -17,10 +17,11 @@ class Simulation {
     virtual ~Simulation();
     void update();
     void draw();
+    std::size_t get_agent_count(AgentType agent_type);
 
    protected:
     Texture2D grass_texture;
-    Field m_grid[HEIGHT][WIDTH] {};
+    Field m_grid[HEIGHT][WIDTH]{};
     std::vector<std::shared_ptr<Agent>> m_agents{};
     double m_last_cabbages_spawn;
 

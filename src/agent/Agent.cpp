@@ -71,32 +71,6 @@ void Agent::update(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr<Agent>>
         }
     }
 
-//    for (auto& field : surroundings) {
-//        if (*field == current_field) {
-//            continue;
-//        }
-//        if (!field->is_empty()) {
-//            auto agent = field->agent;
-//            if (agent->get_type() == m_type && (!want_to_breed() || !agent->want_to_breed())) {
-//                continue;
-//            }
-//        }
-//        field->reset_metrics();
-//        field->distance = field->distance_to(current_field);
-//        for (auto& compare_field : surroundings) {
-//            if (!compare_field->is_empty()) {
-//                auto compare_agent = compare_field->agent;
-//                auto distance = field->distance_to(*compare_field);
-//                apply_field_metrics(field, *compare_agent, distance);
-//            }
-//        }
-//
-//        auto metric = calculate_metric(field);
-//        if (field_in_range(*field, current_field, 1)) {
-//            discrete_heat_map[metric].push_back(field);
-//        }
-//    }
-
     if (!discrete_heat_map.empty()) {
         auto heat_vector = discrete_heat_map.begin()->second;
         auto index = GetRandomValue(0, heat_vector.size() - 1);

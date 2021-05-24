@@ -57,16 +57,6 @@ void Wolf::apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_ptr
                     }
                 }
             }
-//            for (auto& field : surroundings) {
-//                if (field_in_range(*field, current_field, 1) && field->is_walkable()) {
-//                    auto energy = this->convert_energy(*target->agent);
-//                    auto offspring = std::make_shared<Wolf>(energy);
-//                    field->agent = offspring;
-//                    offspring->set_field(field);
-//                    offsprings.push_back(offspring);
-//                    break;
-//                }
-//            }
         }
     } else {
         move_to_field(current_field, target);

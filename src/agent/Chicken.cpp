@@ -54,16 +54,6 @@ void Chicken::apply_behaviour(Field map[HEIGHT][WIDTH], std::vector<std::shared_
                     }
                 }
             }
-//            for (auto& field : surroundings) {
-//                if (field_in_range(*field, current_field, 1) && field->is_walkable()) {
-//                    auto energy = convert_energy(*target->agent);
-//                    auto offspring = std::make_shared<Chicken>(energy);
-//                    field->agent = offspring;
-//                    offspring->set_field(field);
-//                    offsprings.push_back(offspring);
-//                    break;
-//                }
-//            }
         }
     } else {
         target->agent = current_field.agent;

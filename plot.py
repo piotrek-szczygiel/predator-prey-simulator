@@ -11,9 +11,6 @@ def collect_files(roots, extensions):
     result = []
     for root in roots:
         for (directory, _, files) in os.walk(root):
-            if ".pio" in directory:
-                continue
-
             for f in files:
                 path = os.path.join(directory, f)
                 if pathlib.Path(path).suffix in extensions:

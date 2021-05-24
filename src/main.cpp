@@ -9,6 +9,9 @@
 #include "simulation/Simulation.h"
 
 int main(int argc, char **argv) {
+    constexpr int max_restarts{20};
+    constexpr std::chrono::duration<double> max_simulation_time{120.0};
+
     bool video = !(argc == 2 && strcmp(argv[1], "--no-video") == 0);
 
     constexpr int max_depth{5};
@@ -51,10 +54,7 @@ int main(int argc, char **argv) {
     auto csv = get_csv_stream();
 
     int restart_count = 0;
-    constexpr int max_restarts{10};
-
     auto simulation_start = std::chrono::system_clock::now();
-    constexpr std::chrono::duration<double> max_simulation_time{120.0};
 
     for (;;) {
         simulation->update();
@@ -65,10 +65,10 @@ int main(int argc, char **argv) {
 
         if ((video && IsKeyPressed(KEY_R)) ||
             (!video && ((std::chrono::system_clock::now() - simulation_start > max_simulation_time) || predator_count < 2))) {
+            if (!video && ++restart_count >= max_restarts - 1) break;
+            simulation_start = std::chrono::system_clock::now();
             simulation = std::make_unique<Simulation>();
             csv = get_csv_stream();
-            simulation_start = std::chrono::system_clock::now();
-            ++restart_count;
         }
 
         if (video) {
@@ -82,8 +82,6 @@ int main(int argc, char **argv) {
             EndMode2D();
             EndDrawing();
         }
-
-        if (!video && restart_count >= max_restarts - 1) break;
     }
 
     if (video) {

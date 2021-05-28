@@ -27,23 +27,14 @@ endif()
 
 add_executable(
     ${PROJECT_NAME}
-    src/main.cpp
-    src/Util.cpp
-    src/Util.h
-    src/ResourceManager.cpp
-    src/ResourceManager.h
-    src/simulation/Simulation.cpp
-    src/simulation/Simulation.h
-    src/agent/Agent.h
-    src/agent/Agent.cpp
-    src/agent/Cabbage.cpp
-    src/agent/Cabbage.h
-    src/agent/Chicken.cpp
-    src/agent/Chicken.h
-    src/agent/Wolf.cpp
-    src/agent/Wolf.h
-    src/map/Field.cpp
-    src/map/Field.h
-    src/simulation/SimulationSettings.h)
+    "src/main.cpp"
+    "src/util.h"
+    "src/util.cpp"
+    "src/simulation.h"
+    "src/agent.h"
+    "src/simulation.cpp"
+    "src/platform.h"
+    "src/platform.cpp"
+    "src/simulation_values.h")
 
 target_link_libraries(${PROJECT_NAME} raylib)

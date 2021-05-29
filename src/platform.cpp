@@ -48,12 +48,13 @@ void Platform::draw(const Simulation& sim) {
 
     for (int y = 0; y < sim.height(); ++y) {
         for (int x = 0; x < sim.width(); ++x) {
-            int wx = x * TILE_SIZE;
-            int wy = y * TILE_SIZE;
-            DrawTexture(m_tex_ground, wx, wy, WHITE);
+            float wx = x * TILE_SIZE;
+            float wy = y * TILE_SIZE;
+            DrawTextureRec(m_tex_ground, {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
 
-            auto type = sim.get_agent_type(x, y);
-            if (type != AgentType::None) DrawTexture(texture_for_type(type), wx, wy, WHITE);
+            auto type = sim.type_at(x, y);
+            if (type != AgentType::None)
+                DrawTextureRec(texture_for_type(type), {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
         }
     }
 

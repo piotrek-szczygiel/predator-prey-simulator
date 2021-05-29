@@ -35,6 +35,7 @@ add_executable(
     "src/simulation.cpp"
     "src/platform.h"
     "src/platform.cpp"
-    "src/simulation_values.h")
+    "src/simulation_values.h"
+    "src/hashgrid.h")
 
 target_link_libraries(${PROJECT_NAME} raylib)

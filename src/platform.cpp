@@ -1,13 +1,13 @@
 #include "platform.h"
 
 void Platform::start(int sim_width, int sim_height) {
-    // SetTraceLogLevel(LOG_WARNING);
+    SetTraceLogLevel(LOG_WARNING);
     InitWindow(m_width, m_height, m_title);
     SetTargetFPS(m_fps);
 
-    m_camera.offset = {m_width / 2.0f, m_height / 2.0f};
+    m_camera.offset = {(float)m_width / 2.0f, (float)m_height / 2.0f};
     m_camera.rotation = 0;
-    m_camera.target = {sim_width * TILE_SIZE / 2.0f, sim_height * TILE_SIZE / 2.0f};
+    m_camera.target = {(float)sim_width * TILE_SIZE / 2.0f, (float)sim_height * TILE_SIZE / 2.0f};
     m_camera.zoom = 1.0;
 
     m_tex_cabbage = LoadTexture("assets/cabbage.png");
@@ -35,10 +35,6 @@ Texture2D Platform::texture_for_type(AgentType type) {
         case AgentType::Wolf: return m_tex_wolf;
         default: return m_tex_ground;
     }
-}
-
-float Platform::time() {
-    return GetTime();
 }
 
 void Platform::draw(const Simulation& sim) {

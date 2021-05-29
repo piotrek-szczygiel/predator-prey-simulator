@@ -10,11 +10,11 @@ struct ChunkUpdate {
     Agent* agent;
 };
 
-class Hashgrid {
+class HashGrid {
    public:
     std::vector<std::list<Agent>> chunks;
 
-    Hashgrid(int map_width, int map_height, int chunk_width, int chunk_height)
+    HashGrid(int map_width, int map_height, int chunk_width, int chunk_height)
         : m_map_width(map_width), m_map_height(map_height), m_chunk_width(chunk_width), m_chunk_height(chunk_height) {
         m_chunk_x_count = map_width / chunk_width;
         m_chunk_y_count = map_height / chunk_height;
@@ -81,7 +81,7 @@ class Hashgrid {
 
     int m_count;
 
-    int get_chunk(int x, int y) {
+    int get_chunk(int x, int y) const {
         x /= m_chunk_width;
         y /= m_chunk_height;
         int chunk = y * m_chunk_x_count + x;

@@ -1,5 +1,4 @@
 #include "simulation.h"
-#include "simulation_values.h"
 #include "util.h"
 
 void Simulation::reset() {

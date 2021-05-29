@@ -19,6 +19,7 @@ class Simulation {
 
     int width() const { return m_width; }
     int height() const { return m_height; }
+    Tick ticks() const { return m_tick; }
 
     AgentType type_at(int x, int y) const;
     int count(AgentType type) const;
@@ -31,7 +32,7 @@ class Simulation {
 
     Tick m_last_cabbages_spawn = 0;
 
-    Hashgrid m_agents;
+    HashGrid m_agents;
     std::vector<Agent*> m_map;
 
     int id(int x, int y) const { return y * m_width + x; }

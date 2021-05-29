@@ -1,7 +1,5 @@
 #pragma once
 
-const float SIMULATION_TICK = 0.5f;
-
 const int FPS = 2;
 
 const int WIDTH = 50;

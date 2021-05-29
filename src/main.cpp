@@ -17,8 +17,7 @@ int main(int argc, char** argv) {
 
     while (p.running()) {
         sim.update();
-        printf("%d\t%d\t%d\n", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken),
-               sim.count(AgentType::Cabbage));
+        printf("count: %d\n", sim.count(AgentType::Chicken));
         p.draw(sim);
     }
 

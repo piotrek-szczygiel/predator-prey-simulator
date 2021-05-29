@@ -37,6 +37,10 @@ void Simulation::update() {
         }
     }
 
+    for (Agent* agent : m_agents.update_chunks()) {
+        at(agent->x, agent->y) = agent;
+    }
+
     ++m_tick;
 }
 
@@ -55,10 +59,11 @@ void Simulation::add_agent(int x, int y, AgentType type) {
 }
 
 void Simulation::move_agent(Agent* agent, int x, int y) {
+    int old_x = agent->x;
+    int old_y = agent->y;
+    m_agents.move(agent, x, y);
     at(x, y) = agent;
-    at(agent->x, agent->y) = nullptr;
-    agent->x = x;
-    agent->y = y;
+    at(old_x, old_y) = nullptr;
 }
 
 void Simulation::spawn_random_agents(AgentType type, int count) {

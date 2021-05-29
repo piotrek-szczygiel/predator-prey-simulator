@@ -15,4 +15,5 @@ class Agent {
     int x;
     int y;
     int energy = BASE_ENERGY;
+    bool chunk_swapped = false;
 };

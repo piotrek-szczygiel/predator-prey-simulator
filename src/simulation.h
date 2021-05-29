@@ -3,14 +3,13 @@
 #include <unordered_map>
 #include <vector>
 #include "agent.h"
-#include "hashgrid.h"
+#include "map.h"
 
 using Tick = uint64_t;
 
 class Simulation {
    public:
-    Simulation(int width, int height)
-        : m_width(width), m_height(height), m_agents(width, height, width / 10, height / 10) {
+    Simulation(int width, int height) : m_width(width), m_height(height), m_map(width, height, width / 5, height / 5) {
         reset();
     };
 
@@ -24,6 +23,10 @@ class Simulation {
     AgentType type_at(int x, int y) const;
     int count(AgentType type) const;
 
+#ifdef _DEBUG
+    void draw_debug();
+#endif
+
    private:
     Tick m_tick = 0;
 
@@ -32,11 +35,11 @@ class Simulation {
 
     Tick m_last_cabbages_spawn = 0;
 
-    HashGrid m_agents;
-    std::vector<Agent*> m_map;
+    Map m_map;
+    std::vector<Agent*> m_ptr_grid;
 
     int id(int x, int y) const { return y * m_width + x; }
-    Agent*& at(int x, int y) { return m_map.at(id(x, y)); }
+    Agent*& at(int x, int y) { return m_ptr_grid.at(id(x, y)); }
     void add_agent(int x, int y, AgentType type);
     void move_agent(Agent* agent, int x, int y);
 

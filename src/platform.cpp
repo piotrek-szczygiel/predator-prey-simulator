@@ -37,15 +37,15 @@ Texture2D Platform::texture_for_type(AgentType type) {
     }
 }
 
-void Platform::draw(const Simulation& sim) {
+void Platform::draw(Simulation& sim) {
     BeginDrawing();
     ClearBackground(RAYWHITE);
     BeginMode2D(m_camera);
 
     for (int y = 0; y < sim.height(); ++y) {
         for (int x = 0; x < sim.width(); ++x) {
-            float wx = x * TILE_SIZE;
-            float wy = y * TILE_SIZE;
+            float wx = (float)x * TILE_SIZE;
+            float wy = (float)y * TILE_SIZE;
             DrawTextureRec(m_tex_ground, {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
 
             auto type = sim.type_at(x, y);
@@ -53,6 +53,10 @@ void Platform::draw(const Simulation& sim) {
                 DrawTextureRec(texture_for_type(type), {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
         }
     }
+
+#ifdef _DEBUG
+    sim.draw_debug();
+#endif
 
     EndMode2D();
     EndDrawing();

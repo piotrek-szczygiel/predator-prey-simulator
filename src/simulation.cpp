@@ -2,12 +2,12 @@
 #include "util.h"
 
 void Simulation::reset() {
-    m_agents.clear();
     m_map.clear();
-    m_map.assign((size_t)m_width * m_height, nullptr);
+    m_ptr_grid.clear();
+    m_ptr_grid.assign((size_t)m_width * m_height, nullptr);
 
-    spawn_random_agents(AgentType::Chicken, CHICKEN_START_COUNT);
-    spawn_random_agents(AgentType::Wolf, WOLF_START_COUNT);
+    spawn_random_agents(AgentType::Chicken, CHICKEN_SPAWN_COUNT);
+    spawn_random_agents(AgentType::Wolf, WOLF_SPAWN_COUNT);
     spawn_random_agents(AgentType::Cabbage, CABBAGE_SPAWN_COUNT);
 }
 
@@ -17,26 +17,26 @@ void Simulation::update() {
         m_last_cabbages_spawn = m_tick;
     }
 
-    for (auto& chunk : m_agents.chunks) {
-        for (auto it = chunk.begin(); it != chunk.end();) {
-            it->energy -= ENERGY_TICK_LOSS;
+    for (auto& chunk : m_map.chunks()) {
+        for (auto agent = chunk.begin(); agent != chunk.end();) {
+            agent->energy -= ENERGY_TICK_LOSS;
 
-            if (it->is_dead()) {
-                at(it->x, it->y) = nullptr;
-                it = chunk.erase(it);
+            if (agent->is_dead()) {
+                at(agent->x, agent->y) = nullptr;
+                agent = chunk.erase(agent);
                 continue;
             }
 
-            switch (it->type) {
-                case AgentType::Chicken: update_chicken(&*it); break;
+            switch (agent->type) {
+                case AgentType::Chicken: update_chicken(&*agent); break;
                 default: break;
             }
 
-            ++it;
+            ++agent;
         }
     }
 
-    for (Agent* agent : m_agents.update_chunks()) {
+    for (Agent* agent : m_map.update_chunks()) {
         at(agent->x, agent->y) = agent;
     }
 
@@ -44,23 +44,23 @@ void Simulation::update() {
 }
 
 AgentType Simulation::type_at(int x, int y) const {
-    Agent* agent = m_map.at(id(x, y));
+    Agent* agent = m_ptr_grid.at(id(x, y));
     return agent ? agent->type : AgentType::None;
 }
 
 int Simulation::count(AgentType type) const {
-    return m_agents.count(type);
+    return m_map.count(type);
 }
 
 void Simulation::add_agent(int x, int y, AgentType type) {
-    Agent* agent = m_agents.add(x, y, type);
+    Agent* agent = m_map.add(x, y, type);
     at(x, y) = agent;
 }
 
 void Simulation::move_agent(Agent* agent, int x, int y) {
     int old_x = agent->x;
     int old_y = agent->y;
-    m_agents.move(agent, x, y);
+    m_map.move(agent, x, y);
     at(x, y) = agent;
     at(old_x, old_y) = nullptr;
 }
@@ -86,3 +86,30 @@ void Simulation::update_chicken(Agent* chicken) {
 
     if (!at(xx, yy)) move_agent(chicken, xx, yy);
 }
+
+#ifdef _DEBUG
+#include <raylib.h>
+
+void draw_line(int x, int y, int xx, int yy, Color color) {
+    color.a = 128;
+    DrawLine(x * 16 + 8, y * 16 + 8, xx * 16 + 8, yy * 16 + 8, color);
+}
+
+void Simulation::draw_debug() {
+    for (int i = 0; i < m_map.chunks().size(); ++i) {
+        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16.0f,
+                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16.0f, m_map.m_chunk_width * 16.0f,
+                           m_map.m_chunk_height * 16.0f, RAYWHITE);
+
+        const auto& chunk = m_map.chunks().at(i);
+        for (const auto& agent : chunk) {
+            if (agent.type == AgentType::Chicken) {
+                for (const auto& target : m_map.get_nearby_to(&agent)) {
+                    Color c = (target->type == AgentType::Chicken ? BLUE : RED);
+                    draw_line(agent.x, agent.y, target->x, target->y, c);
+                }
+            }
+        }
+    }
+}
+#endif

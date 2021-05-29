@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     Simulation sim(WIDTH, HEIGHT);
 
     if (graphics) {
-        Platform p(900, 900, "Predator Prey Simulation", FPS);
+        Platform p(900, 900, "Predator Prey Simulation", 15);
         p.start(WIDTH, HEIGHT);
 
         while (Platform::running()) {

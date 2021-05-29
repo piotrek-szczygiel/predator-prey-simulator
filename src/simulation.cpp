@@ -77,11 +77,11 @@ void Simulation::spawn_random_agents(AgentType type, int count) {
 }
 
 void Simulation::update_chicken(Agent* chicken) {
-    int xx = chicken->x;
-    int yy = chicken->y;
+    int xx;
+    int yy;
     do {
-        xx += random(-1, 1);
-        yy += random(-1, 1);
+        xx = chicken->x + random(-1, 1);
+        yy = chicken->y + random(-1, 1);
     } while (out_of_map(xx, yy));
 
     if (!at(xx, yy)) move_agent(chicken, xx, yy);

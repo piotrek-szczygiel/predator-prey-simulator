@@ -33,9 +33,13 @@ int main(int argc, char** argv) {
 
         p.stop();
     } else {
+        printf("chicken,wolf,cabbage\n");
         while (sim.ticks() < sim_ticks) {
             sim.update();
-            printf("%d\n", sim.count(AgentType::Chicken));
+            int chicken = sim.count(AgentType::Chicken);
+            int wolf = sim.count(AgentType::Wolf);
+            int cabbage = sim.count(AgentType::Cabbage);
+            printf("%d,%d,%d\n", chicken, wolf, cabbage);
         }
     }
 

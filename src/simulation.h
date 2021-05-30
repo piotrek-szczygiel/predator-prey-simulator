@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 #include "agent.h"
@@ -23,7 +24,7 @@ class Simulation {
     AgentType type_at(int x, int y) const;
     int count(AgentType type) const;
 
-#ifdef _DEBUG
+#ifndef NDEBUG
     void draw_debug();
 #endif
 

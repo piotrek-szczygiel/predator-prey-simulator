@@ -120,7 +120,7 @@ void Simulation::update_chicken(Agent* chicken) {
     }
 }
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 #include <raylib.h>
 
 void draw_line(int x, int y, int xx, int yy, Color color) {
@@ -132,7 +132,7 @@ void Simulation::draw_debug() {
     for (int i = 0; i < m_map.chunks().size(); ++i) {
         DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16.0f,
                            (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16.0f, m_map.m_chunk_width * 16.0f,
-                           m_map.m_chunk_height * 16.0f, RAYWHITE);
+                           m_map.m_chunk_height * 16.0f, LIGHTGRAY);
 
         const auto& chunk = m_map.chunks().at(i);
         for (const auto& agent : chunk) {

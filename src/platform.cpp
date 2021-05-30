@@ -54,7 +54,7 @@ void Platform::draw(Simulation& sim) {
         }
     }
 
-#ifdef _DEBUG
+#ifndef NDEBUG
     sim.draw_debug();
 #endif
 

@@ -1,5 +1,5 @@
 #include "pathfinder.h"
-
+#include <cstdio>
 #include "util.h"
 
 Pathfinder::Pathfinder(int sensor, int map_width, int map_height, int start_x, int start_y)

@@ -26,6 +26,6 @@ int random(int min, int max) {
 /*
  * return squared Euclidean distance
  */
-int distance(std::pair<int, int> p, std::pair<int, int> v) {
-    return (p.first - v.first) * (p.first - v.first) + (p.second - v.second) * (p.second - v.second);
+int distance(Vec2 p, Vec2 v) {
+    return (p.x - v.x) * (p.x - v.x) + (p.y - v.y) * (p.y - v.y);
 }

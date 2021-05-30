@@ -1,104 +1,82 @@
 #include "pathfinder.h"
-#include <cstdio>
-#include "util.h"
 
 Pathfinder::Pathfinder(int sensor, int map_width, int map_height, int start_x, int start_y)
-    : start({start_x, start_y}) {
-    x_lower_bound = std::max(0, start_x - sensor);
-    y_lower_bound = std::max(0, start_y - sensor);
+    : m_start({start_x, start_y}) {
+    m_lower_bound = {std::max(0, start_x - sensor), std::max(0, start_y - sensor)};
 
-    int x_upper_bound = std::min(start_x + sensor, map_width);
-    int y_upper_bound = std::min(start_y + sensor, map_height);
+    Vec2 upper_bound = {std::min(start_x + sensor, map_width), std::min(start_y + sensor, map_height)};
 
-    segment_width = x_upper_bound - x_lower_bound + 1;
-    segment_height = y_upper_bound - y_lower_bound + 1;
+    m_segment_size = {upper_bound.x - m_lower_bound.x + 1, upper_bound.y - m_lower_bound.y + 1};
 
-    nodes.resize(segment_height, std::vector<Node>(segment_width));
+    m_nodes.resize(m_segment_size.y, std::vector<Node>(m_segment_size.x));
 }
 
-void Pathfinder::add_blocker(int x, int y) {
-    nodes[y - y_lower_bound][x - x_lower_bound].blocked = true;
+void Pathfinder::add_blocker(Vec2 blocker) {
+    m_nodes[blocker.y - m_lower_bound.y][blocker.x - m_lower_bound.x].blocked = true;
 }
 
-std::pair<int, int> Pathfinder::get_next_step(int target_x, int target_y) {
+Vec2 Pathfinder::get_next_step(Vec2 target) {
     std::vector<std::vector<bool>> closed;
-    closed.resize(segment_height, std::vector<bool>(segment_width, false));
+    closed.resize(m_segment_size.y, std::vector<bool>(m_segment_size.x, false));
 
-    int shifted_tx = target_x - x_lower_bound;
-    int shifted_ty = target_y - y_lower_bound;
-    nodes[shifted_ty][shifted_tx].target = true;
+    Vec2 s_target{target.x - m_lower_bound.x, target.y - m_lower_bound.y};
+    m_nodes[s_target.y][s_target.x].target = true;
 
-    int i = start.first - x_lower_bound;
-    int j = start.second - y_lower_bound;
+    Vec2 s_start{m_start.x - m_lower_bound.x, m_start.y - m_lower_bound.y};
+    m_nodes[s_start.y][s_start.x].f_cost = 0;
+    m_nodes[s_start.y][s_start.x].g_cost = 0;
+    m_nodes[s_start.y][s_start.x].parent = {s_start.x, s_start.y};
 
-    nodes[j][i].f_cost = 0;
-    nodes[j][i].g_cost = 0;
-    nodes[j][i].parent = {i, j};
+    std::priority_queue<AStarNode, std::vector<AStarNode>, AStarNodeComparator> open_queue;
 
-    std::priority_queue<Tuple, std::vector<Tuple>, std::greater<>> open_queue;
-
-    open_queue.emplace(0, i, j);
+    open_queue.push({0, s_start});
     while (!open_queue.empty()) {
-        const Tuple& p = open_queue.top();
-
-        i = std::get<1>(p);
-        j = std::get<2>(p);
-
+        Vec2 p = open_queue.top().position;
         open_queue.pop();
-        closed[j][i] = true;
 
-        Pair available_movements[] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+        closed[p.y][p.x] = true;
+
+        Vec2 available_movements[] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
 
         for (const auto& movement : available_movements) {
-            Pair neighbour(i + movement.first, j + movement.second);
+            Vec2 neighbour{p.x + movement.x, p.y + movement.y};
 
-            if (neighbour.first >= 0 && neighbour.first < segment_width && neighbour.second >= 0 &&
-                neighbour.second < segment_height) {
-                if (nodes[neighbour.second][neighbour.first].target) {
-                    nodes[neighbour.second][neighbour.first].parent = {i, j};
-                    return trace(target_x, target_y);
-                } else if (!closed[neighbour.second][neighbour.first] &&
-                           !nodes[neighbour.second][neighbour.first].blocked) {
-                    int g_new = nodes[i][j].g_cost + 1;
-                    int f_new = g_new + distance({shifted_tx, shifted_ty}, neighbour);
+            if (neighbour.x >= 0 && neighbour.x < m_segment_size.x && neighbour.y >= 0 &&
+                neighbour.y < m_segment_size.y) {
+                if (m_nodes[neighbour.y][neighbour.x].target) {
+                    m_nodes[neighbour.y][neighbour.x].parent = {p.x, p.y};
+                    return trace(target);
+                } else if (!closed[neighbour.y][neighbour.x] && !m_nodes[neighbour.y][neighbour.x].blocked) {
+                    int g_new = m_nodes[p.y][p.x].g_cost + 1;
+                    int f_new = g_new + distance(s_target, neighbour);
 
-                    if (nodes[neighbour.second][neighbour.first].f_cost == -1 ||
-                        nodes[neighbour.second][neighbour.first].f_cost > f_new) {
-                        open_queue.emplace(f_new, neighbour.first, neighbour.second);
+                    if (m_nodes[neighbour.y][neighbour.x].f_cost == -1 ||
+                        m_nodes[neighbour.y][neighbour.x].f_cost > f_new) {
+                        open_queue.push({f_new, neighbour});
 
-                        nodes[neighbour.second][neighbour.first].g_cost = g_new;
-                        nodes[neighbour.second][neighbour.first].f_cost = f_new;
+                        m_nodes[neighbour.y][neighbour.x].g_cost = g_new;
+                        m_nodes[neighbour.y][neighbour.x].f_cost = f_new;
 
-                        nodes[neighbour.second][neighbour.first].parent = {i, j};
+                        m_nodes[neighbour.y][neighbour.x].parent = {p.x, p.y};
                     }
                 }
             }
         }
     }
 
-    return std::pair<int, int>({0, 0});
+    return {0, 0};
 }
 
-std::pair<int, int> Pathfinder::trace(int target_x, int target_y) {
-    Pair current = {target_x - x_lower_bound, target_y - y_lower_bound};
-    Pair parent = nodes[current.second][current.first].parent;
+Vec2 Pathfinder::trace(Vec2 target) {
+    Vec2 current = {target.x - m_lower_bound.x, target.y - m_lower_bound.y};
+    Vec2 parent = m_nodes[current.y][current.x].parent;
 
-    while (!(parent.first == start.first - x_lower_bound && parent.second == start.second - y_lower_bound)) {
+    while (!(parent.x == m_start.x - m_lower_bound.x && parent.y == m_start.y - m_lower_bound.y)) {
         current = parent;
-        parent = nodes[current.second][current.first].parent;
+        parent = m_nodes[current.y][current.x].parent;
     }
 
-    int dx = current.first + x_lower_bound - start.first;
-    int dy = current.second + y_lower_bound - start.second;
-    return std::pair<int, int>({dx, dy});
-}
-
-void Pathfinder::debug_print() {
-    printf("dimensions: %llu\t%llu\n", nodes.size(), nodes[0].size());
-    for (auto y = 0; y < nodes.size(); ++y) {
-        for (auto x = 0; x < nodes[y].size(); ++x) {
-            printf("%d ", nodes[y][x].f_cost);
-        }
-        printf("\n");
-    }
+    int dx = current.x + m_lower_bound.x - m_start.x;
+    int dy = current.y + m_lower_bound.y - m_start.y;
+    return {dx, dy};
 }

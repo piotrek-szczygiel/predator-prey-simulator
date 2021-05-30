@@ -1,11 +1,9 @@
 #include "simulation.h"
 #include "pathfinder.h"
-#include "util.h"
 
 void Simulation::reset() {
     m_map.clear();
-    m_ptr_grid.clear();
-    m_ptr_grid.assign((size_t)m_width * m_height, nullptr);
+    m_grid.fill({});
 
     spawn_random_agents(AgentType::Chicken, CHICKEN_SPAWN_COUNT);
     spawn_random_agents(AgentType::Wolf, WOLF_SPAWN_COUNT);
@@ -19,33 +17,30 @@ void Simulation::update() {
     }
 
     for (auto& chunk : m_map.chunks()) {
-        for (auto agent = chunk.begin(); agent != chunk.end();) {
-            agent->energy -= ENERGY_TICK_LOSS;
-
-            if (agent->is_dead()) {
-                at(agent->x, agent->y) = nullptr;
-                agent = chunk.erase(agent);
+        for (auto& agent : chunk) {
+            agent.energy -= ENERGY_TICK_LOSS;
+            if (agent.is_dead()) {
+                if (&agent == m_grid[agent.y][agent.x]) m_grid[agent.y][agent.x] = nullptr;
                 continue;
             }
 
-            switch (agent->type) {
-                case AgentType::Chicken: update_chicken(&*agent); break;
+            switch (agent.type) {
+                case AgentType::Chicken: update_chicken(&agent); break;
                 default: break;
             }
-
-            ++agent;
         }
     }
 
     for (Agent* agent : m_map.update_chunks()) {
-        at(agent->x, agent->y) = agent;
+        if (!agent->is_dead()) m_grid[agent->y][agent->x] = agent;
     }
 
+    m_map.remove_dead();
     ++m_tick;
 }
 
 AgentType Simulation::type_at(int x, int y) const {
-    Agent* agent = m_ptr_grid.at(id(x, y));
+    Agent* agent = m_grid[y][x];
     return agent ? agent->type : AgentType::None;
 }
 
@@ -55,15 +50,15 @@ int Simulation::count(AgentType type) const {
 
 void Simulation::add_agent(int x, int y, AgentType type) {
     Agent* agent = m_map.add(x, y, type);
-    at(x, y) = agent;
+    m_grid[y][x] = agent;
 }
 
 void Simulation::move_agent(Agent* agent, int x, int y) {
     int old_x = agent->x;
     int old_y = agent->y;
     m_map.move(agent, x, y);
-    at(x, y) = agent;
-    at(old_x, old_y) = nullptr;
+    m_grid[y][x] = agent;
+    m_grid[old_y][old_x] = nullptr;
 }
 
 void Simulation::spawn_random_agents(AgentType type, int count) {
@@ -71,7 +66,7 @@ void Simulation::spawn_random_agents(AgentType type, int count) {
         int x = random(0, m_width - 1);
         int y = random(0, m_height - 1);
 
-        if (!at(x, y)) {
+        if (!m_grid[y][x]) {
             add_agent(x, y, type);
         }
     }
@@ -91,8 +86,8 @@ void Simulation::update_chicken(Agent* chicken) {
 
     for (const auto& other : others) {
         int dist = distance({chicken->x, chicken->y}, {other->x, other->y});
-        if (dist <= sensor && !other->is_dead()) {
-            pathfinder.add_blocker(other->x, other->y);
+        if (dist <= sensor) {
+            pathfinder.add_blocker({other->x, other->y});
             if (other->type == AgentType::Cabbage) {
                 if (min_distance > dist) {
                     min_distance = dist;
@@ -103,9 +98,9 @@ void Simulation::update_chicken(Agent* chicken) {
     }
 
     if (target) {
-        auto next_step = pathfinder.get_next_step(target->x, target->y);
-        xx = chicken->x + next_step.first;
-        yy = chicken->y + next_step.second;
+        auto next_step = pathfinder.get_next_step({target->x, target->y});
+        xx = chicken->x + next_step.x;
+        yy = chicken->y + next_step.y;
     } else {
         do {
             xx = chicken->x + random(-1, 1);
@@ -113,10 +108,13 @@ void Simulation::update_chicken(Agent* chicken) {
         } while (out_of_map(xx, yy));
     }
 
-    if (!at(xx, yy)) {
+    Agent* dest = m_grid[yy][xx];
+    if (!dest) {
         move_agent(chicken, xx, yy);
-    } else if (at(xx, yy) && at(xx, yy)->type == AgentType::Cabbage) {
-        // TODO tu musi zjadac
+    } else if (dest->type == AgentType::Cabbage) {
+        dest->kill();
+        chicken->energy += CABBAGE_NUTRITION_VALUE;
+        move_agent(chicken, xx, yy);
     }
 }
 

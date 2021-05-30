@@ -1,7 +1,10 @@
 #pragma once
 
-#include <utility>
+struct Vec2 {
+    int x;
+    int y;
+};
 
 bool cd_assets();
 int random(int min, int max);
-int distance(std::pair<int, int> p, std::pair<int, int> v);
+int distance(Vec2 p, Vec2 v);

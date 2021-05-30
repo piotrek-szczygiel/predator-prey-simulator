@@ -5,6 +5,7 @@ const int HEIGHT = 50;
 
 const int CABBAGE_SPAWN_TIME = 20;
 const int CABBAGE_SPAWN_COUNT = 5;
+const int CABBAGE_NUTRITION_VALUE = 1000;
 
 const int CHICKEN_SPAWN_COUNT = 5;
 const int WOLF_SPAWN_COUNT = 20;

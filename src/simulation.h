@@ -37,10 +37,8 @@ class Simulation {
     Tick m_last_cabbages_spawn = 0;
 
     Map m_map;
-    std::vector<Agent*> m_ptr_grid;
+    std::array<std::array<Agent*, WIDTH>, HEIGHT> m_grid;
 
-    int id(int x, int y) const { return y * m_width + x; }
-    Agent*& at(int x, int y) { return m_ptr_grid.at(id(x, y)); }
     void add_agent(int x, int y, AgentType type);
     void move_agent(Agent* agent, int x, int y);
 

@@ -1,13 +1,19 @@
 #include <queue>
 #include <tuple>
 #include <vector>
+#include "util.h"
 
-typedef std::pair<int, int> Pair;
+struct AStarNode {
+    int f_cost;
+    Vec2 position;
+};
 
-typedef std::tuple<int, int, int> Tuple;
+struct AStarNodeComparator {
+    bool operator()(const AStarNode& lhs, const AStarNode& rhs) { return lhs.f_cost > rhs.f_cost; }
+};
 
 struct Node {
-    Pair parent;
+    Vec2 parent;
     int g_cost;
     int f_cost;
 
@@ -20,20 +26,15 @@ struct Node {
 class Pathfinder {
    public:
     Pathfinder(int sensor, int map_width, int map_height, int start_x, int start_y);
-    void add_blocker(int x, int y);
-    std::pair<int, int> get_next_step(int target_x, int target_y);
-    void debug_print();
+    void add_blocker(Vec2 blocker);
+    Vec2 get_next_step(Vec2 target);
 
    private:
-    std::vector<std::vector<Node>> nodes;
+    std::vector<std::vector<Node>> m_nodes;
 
-    Pair start;
+    Vec2 m_start;
+    Vec2 m_lower_bound;
+    Vec2 m_segment_size;
 
-    int x_lower_bound;
-    int y_lower_bound;
-
-    int segment_width;
-    int segment_height;
-
-    std::pair<int, int> trace(int target_x, int target_y);
+    Vec2 trace(Vec2 target);
 };

@@ -22,3 +22,10 @@ bool cd_assets() {
 int random(int min, int max) {
     return GetRandomValue(min, max);
 }
+
+/*
+ * return squared Euclidean distance
+ */
+int distance(std::pair<int, int> p, std::pair<int, int> v) {
+    return (p.first - v.first) * (p.first - v.first) + (p.second - v.second) * (p.second - v.second);
+}

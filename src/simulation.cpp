@@ -1,4 +1,5 @@
 #include "simulation.h"
+#include "pathfinder.h"
 #include "util.h"
 
 void Simulation::reset() {
@@ -79,12 +80,44 @@ void Simulation::spawn_random_agents(AgentType type, int count) {
 void Simulation::update_chicken(Agent* chicken) {
     int xx;
     int yy;
-    do {
-        xx = chicken->x + random(-1, 1);
-        yy = chicken->y + random(-1, 1);
-    } while (out_of_map(xx, yy));
 
-    if (!at(xx, yy)) move_agent(chicken, xx, yy);
+    int sensor = 10;
+
+    const auto& others = m_map.get_nearby_to(chicken);
+    Pathfinder pathfinder(sensor, m_width, m_height, chicken->x, chicken->y);
+
+    int min_distance = INT32_MAX;
+    const Agent* target = nullptr;
+
+    for (const auto& other : others) {
+        int dist = distance({chicken->x, chicken->y}, {other->x, other->y});
+        if (dist <= sensor && !other->is_dead()) {
+            pathfinder.add_blocker(other->x, other->y);
+            if (other->type == AgentType::Cabbage) {
+                if (min_distance > dist) {
+                    min_distance = dist;
+                    target = other;
+                }
+            }
+        }
+    }
+
+    if (target) {
+        auto next_step = pathfinder.get_next_step(target->x, target->y);
+        xx = chicken->x + next_step.first;
+        yy = chicken->y + next_step.second;
+    } else {
+        do {
+            xx = chicken->x + random(-1, 1);
+            yy = chicken->y + random(-1, 1);
+        } while (out_of_map(xx, yy));
+    }
+
+    if (!at(xx, yy)) {
+        move_agent(chicken, xx, yy);
+    } else if (at(xx, yy) && at(xx, yy)->type == AgentType::Cabbage) {
+        // TODO tu musi zjadac
+    }
 }
 
 #ifdef _DEBUG

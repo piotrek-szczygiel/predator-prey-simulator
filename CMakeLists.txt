@@ -36,6 +36,8 @@ add_executable(
     "src/platform.h"
     "src/platform.cpp"
     "src/simulation_values.h"
-    "src/map.h")
+    "src/map.h"
+    "src/pathfinder.cpp"
+    "src/pathfinder.h")
 
 target_link_libraries(${PROJECT_NAME} raylib)

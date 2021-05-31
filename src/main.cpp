@@ -30,9 +30,13 @@ int run_graphics() {
             p.interact();
             p.start_drawing(sim);
 
-            if (p.time() - last_update >= (float)config.window_tick_time_ms / 1000.0f) {
+            if (config.window_tick_time_ms != -1) {
+                if (p.time() - last_update >= (float)config.window_tick_time_ms / 1000.0f) {
+                    sim.update();
+                    last_update = p.time();
+                }
+            } else if (p.should_tick()) {
                 sim.update();
-                last_update = p.time();
             }
 
 #ifndef NDEBUG

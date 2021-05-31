@@ -6,5 +6,4 @@ struct Vec2 {
 };
 
 bool cd_assets();
-int random(int min, int max);
 int distance(Vec2 p, Vec2 v);

@@ -5,6 +5,7 @@ void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
+    if (m_config.window_maximized) MaximizeWindow();
     SetTargetFPS(m_config.window_fps);
 
     m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
@@ -27,7 +28,11 @@ void Platform::stop() {
 
 void Platform::reload() {
     if (IsWindowReady()) {
-        SetWindowSize(m_config.window_width, m_config.window_height);
+        if (m_config.window_maximized) {
+            MaximizeWindow();
+        } else {
+            SetWindowSize(m_config.window_width, m_config.window_height);
+        }
         SetTargetFPS(m_config.window_fps);
     }
 }
@@ -38,6 +43,10 @@ bool Platform::should_close() {
 
 bool Platform::should_restart() {
     return IsKeyPressed(KEY_R);
+}
+
+bool Platform::should_tick() {
+    return IsKeyPressed(KEY_SPACE);
 }
 
 void Platform::interact() {

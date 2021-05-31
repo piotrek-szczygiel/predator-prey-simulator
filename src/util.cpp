@@ -1,5 +1,4 @@
 #include "util.h"
-#include <raylib.h>
 #include <filesystem>
 
 bool cd_assets() {
@@ -19,13 +18,6 @@ bool cd_assets() {
     return assets_found;
 }
 
-int random(int min, int max) {
-    return GetRandomValue(min, max);
-}
-
-/*
- * return squared Euclidean distance
- */
 int distance(Vec2 p, Vec2 v) {
     return (p.x - v.x) * (p.x - v.x) + (p.y - v.y) * (p.y - v.y);
 }

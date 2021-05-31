@@ -16,4 +16,5 @@ class Agent {
     int x;
     int y;
     int energy;
+    bool hungry = false;
 };

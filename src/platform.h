@@ -10,6 +10,7 @@ class Platform {
     void reload();
     bool should_close();
     bool should_restart();
+    bool should_tick();
     void interact();
     float time();
     void start_drawing(Simulation& sim);

@@ -33,8 +33,8 @@ class Pathfinder {
     std::vector<std::vector<Node>> m_nodes;
 
     Vec2 m_start;
-    Vec2 m_lower_bound;
-    Vec2 m_segment_size;
+    Vec2 m_lower_bound{};
+    Vec2 m_segment_size{};
 
     Vec2 trace(Vec2 target);
 };

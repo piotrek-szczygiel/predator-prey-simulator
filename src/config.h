@@ -16,6 +16,7 @@ class Config {
 
         window_width = get(ini, "window", "width");
         window_height = get(ini, "window", "height");
+        window_maximized = get(ini, "window", "maximized");
         window_fps = get(ini, "window", "fps");
         window_tick_time_ms = get(ini, "window", "tick_time_ms");
 
@@ -49,6 +50,7 @@ class Config {
 
     int window_width;
     int window_height;
+    bool window_maximized;
     int window_fps;
     int window_tick_time_ms;
 

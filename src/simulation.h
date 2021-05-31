@@ -29,6 +29,8 @@ class Simulation {
     Agent* at(int x, int y) const { return m_grid[y][x]; }
     int count(AgentType type) const;
 
+    std::vector<std::list<Agent>>& chunks() { return m_map.chunks(); }
+
 #ifndef NDEBUG
     void draw_debug();
 #endif

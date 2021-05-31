@@ -14,14 +14,12 @@ void Platform::start() {
 
     m_tex_grass = LoadTexture("assets/grass.png");
     m_tex_chicken = LoadTexture("assets/chicken.png");
-    m_tex_ground = LoadTexture("assets/ground.png");
     m_tex_wolf = LoadTexture("assets/wolf.png");
 }
 
 void Platform::stop() {
     UnloadTexture(m_tex_grass);
     UnloadTexture(m_tex_chicken);
-    UnloadTexture(m_tex_ground);
     UnloadTexture(m_tex_wolf);
     CloseWindow();
 }
@@ -55,8 +53,8 @@ void Platform::interact() {
 
     float mouse_delta = GetMouseWheelMove();
     float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
-    if (new_zoom <= 0.25f) new_zoom = 0.25f;
-    if (new_zoom >= 4.0f) new_zoom = 4.0f;
+    if (new_zoom <= 0.1f) new_zoom = 0.1f;
+    if (new_zoom >= 2.0f) new_zoom = 2.0f;
     m_camera.zoom = new_zoom;
 
     Vector2 current_mouse_pos = GetMousePosition();
@@ -83,7 +81,16 @@ Texture2D Platform::texture_for_type(AgentType type) {
         case AgentType::Grass: return m_tex_grass;
         case AgentType::Chicken: return m_tex_chicken;
         case AgentType::Wolf: return m_tex_wolf;
-        default: return m_tex_ground;
+        default: return {};
+    }
+}
+
+Color Platform::color_for_type(AgentType type) {
+    switch (type) {
+        case AgentType::Grass: return LIME;
+        case AgentType::Chicken: return ORANGE;
+        case AgentType::Wolf: return GRAY;
+        default: return BLACK;
     }
 }
 
@@ -92,18 +99,20 @@ void Platform::start_drawing(Simulation& sim) {
     ClearBackground(RAYWHITE);
     BeginMode2D(m_camera);
 
-    for (int y = 0; y < m_config.sim_height; ++y) {
-        for (int x = 0; x < m_config.sim_width; ++x) {
-            float wx = (float)x * m_config.tile_size;
-            float wy = (float)y * m_config.tile_size;
-            DrawTextureRec(m_tex_ground, {0, 0, m_config.tile_size, m_config.tile_size}, {wx, wy}, WHITE);
+    const Color GRASS_COLOR = {99, 171, 63, 255};
+    const Rectangle GRASS_REC = {0, 0, (float)m_config.sim_width * m_config.tile_size,
+                                 (float)m_config.sim_height * m_config.tile_size};
+    DrawRectangleRec(GRASS_REC, GRASS_COLOR);
 
-            auto agent = sim.at(x, y);
-            if (agent) {
-                auto tint = WHITE;
-                if (agent->energy)
-                    DrawTextureRec(texture_for_type(agent->type), {0, 0, m_config.tile_size, m_config.tile_size},
-                                   {wx, wy}, tint);
+    for (const auto& chunk : sim.chunks()) {
+        for (const auto& agent : chunk) {
+            if (m_camera.zoom >= 0.5f) {
+                DrawTextureRec(texture_for_type(agent.type), {0, 0, m_config.tile_size, m_config.tile_size},
+                               {(float)agent.x * m_config.tile_size, (float)agent.y * m_config.tile_size}, WHITE);
+            } else {
+                DrawRectangleRec({(float)agent.x * m_config.tile_size, (float)agent.y * m_config.tile_size,
+                                  m_config.tile_size, m_config.tile_size},
+                                 color_for_type(agent.type));
             }
         }
     }

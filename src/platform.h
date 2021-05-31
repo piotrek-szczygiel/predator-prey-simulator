@@ -16,6 +16,11 @@ class Platform {
     void start_drawing(Simulation& sim);
     void end_drawing();
 
+    template <typename... Args>
+    void title(const char* fmt, Args... args) {
+        SetWindowTitle(TextFormat(fmt, args...));
+    }
+
    private:
     const Config& m_config;
 
@@ -23,10 +28,10 @@ class Platform {
 
     Texture2D m_tex_grass{};
     Texture2D m_tex_chicken{};
-    Texture2D m_tex_ground{};
     Texture2D m_tex_wolf{};
 
     Vector2 m_prev_mouse_pos{};
 
     Texture2D texture_for_type(AgentType type);
+    Color color_for_type(AgentType type);
 };

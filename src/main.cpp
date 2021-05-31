@@ -32,7 +32,10 @@ int run_graphics() {
 
             if (config.window_tick_time_ms != -1) {
                 if (p.time() - last_update >= (float)config.window_tick_time_ms / 1000.0f) {
+                    float start = p.time();
                     sim.update();
+                    float elapsed_ms = (p.time() - start) * 1000.0f;
+                    p.title("Predator-Prey simulation    update: %0.2fms", elapsed_ms);
                     last_update = p.time();
                 }
             } else if (p.should_tick()) {

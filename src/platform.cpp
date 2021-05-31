@@ -25,8 +25,25 @@ void Platform::stop() {
     CloseWindow();
 }
 
-bool Platform::running() {
-    return !WindowShouldClose();
+void Platform::reload() {
+    if (IsWindowReady()) {
+        SetWindowSize(m_config.window_width, m_config.window_height);
+        SetTargetFPS(m_config.window_fps);
+    }
+}
+
+bool Platform::should_close() {
+    return WindowShouldClose();
+}
+
+bool Platform::should_restart() {
+    return IsKeyPressed(KEY_R);
+}
+
+void Platform::interact() {}
+
+float Platform::time() {
+    return (float)GetTime();
 }
 
 Texture2D Platform::texture_for_type(AgentType type) {

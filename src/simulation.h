@@ -23,6 +23,10 @@ class Simulation {
     Agent* at(int x, int y) const { return m_grid[y][x]; }
     int count(AgentType type) const;
 
+#ifndef NDEBUG
+    void draw_debug();
+#endif
+
    private:
     Tick m_tick = 0;
 
@@ -46,4 +50,12 @@ class Simulation {
     void update_wolf(Agent* wolf);
 
     Vec2 get_step_to(Agent* from, AgentType to, int sensor_range);
+
+#ifndef NDEBUG
+    struct DebugLine {
+        Agent* from;
+        Agent* to;
+    };
+    std::vector<DebugLine> m_debug_lines{};
+#endif
 };

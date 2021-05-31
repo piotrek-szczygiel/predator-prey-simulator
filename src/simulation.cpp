@@ -4,11 +4,30 @@
 #ifndef NDEBUG
 #include <raylib.h>
 
-void draw_line(int x, int y, int xx, int yy, Color color) {
-    color.a = 128;
-    Vector2 from = {(float)x * 16 + 8, (float)y * 16 + 8};
-    Vector2 to = {(float)xx * 16 + 8, (float)yy * 16 + 8};
-    DrawLineEx(from, to, 2.0f, color);
+void Simulation::draw_debug() {
+    for (int i = 0; i < m_map.chunks().size(); ++i) {
+        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16,
+                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16, m_map.m_chunk_width * 16,
+                           m_map.m_chunk_height * 16, LIGHTGRAY);
+    }
+    for (const auto& line : m_debug_lines) {
+        if (line.from->is_dead() || line.to->is_dead()) continue;
+        Color c;
+        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Cabbage)
+            c = ORANGE;
+        else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf)
+            c = BLACK;
+        else if (line.from->type == AgentType::Wolf && line.to->type == AgentType::Chicken)
+            c = RED;
+        else if (line.from->type == line.to->type)
+            c = VIOLET;
+        else
+            c = WHITE;
+        c.a = 128;
+        Vector2 from = {(float)line.from->x * 16 + 8, (float)line.from->y * 16 + 8};
+        Vector2 to = {(float)line.to->x * 16 + 8, (float)line.to->y * 16 + 8};
+        DrawLineEx(from, to, 2.0f, c);
+    }
 }
 #endif
 
@@ -24,11 +43,7 @@ void Simulation::reset() {
 
 void Simulation::update() {
 #ifndef NDEBUG
-    for (int i = 0; i < m_map.chunks().size(); ++i) {
-        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16.0f,
-                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16.0f, m_map.m_chunk_width * 16.0f,
-                           m_map.m_chunk_height * 16.0f, LIGHTGRAY);
-    }
+    m_debug_lines.clear();
 #endif
 
     if (m_tick - m_last_cabbages_spawn > m_config.cabbage_spawn_time) {
@@ -107,14 +122,7 @@ Vec2 Simulation::get_step_to(Agent* from, AgentType to, int sensor_range) {
 
     if (min_agent) {
 #ifndef NDEBUG
-        auto c = WHITE;
-        if (to == AgentType::Cabbage)
-            c = GREEN;
-        else if (to == AgentType::Chicken)
-            c = RED;
-        else
-            c = BLACK;
-        draw_line(from->x, from->y, min_agent->x, min_agent->y, c);
+        m_debug_lines.push_back({from, min_agent});
 #endif
         return pathfinder.get_next_step({min_agent->x, min_agent->y});
     }

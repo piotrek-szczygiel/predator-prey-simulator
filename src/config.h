@@ -4,8 +4,8 @@
 
 class Config {
    public:
-    bool load() {
-        auto ini = INIReader("config.ini");
+    bool load(const char* filename) {
+        auto ini = INIReader(filename);
         if (ini.ParseError() != 0) {
             return false;
         }
@@ -17,6 +17,7 @@ class Config {
         window_width = get(ini, "window", "width");
         window_height = get(ini, "window", "height");
         window_fps = get(ini, "window", "fps");
+        window_tick_time_ms = get(ini, "window", "tick_time_ms");
 
         sim_width = get(ini, "simulation", "width");
         sim_height = get(ini, "simulation", "height");
@@ -49,6 +50,7 @@ class Config {
     int window_width;
     int window_height;
     int window_fps;
+    int window_tick_time_ms;
 
     int sim_width;
     int sim_height;
@@ -82,7 +84,7 @@ class Config {
         char* end;
         long n = strtol(value, &end, 0);
         if (end > value) return n;
-        std::cerr << "invalid value for [" << section << "] " << name << ": '" << str_value << "'\n";
+        fprintf(stderr, "invalid value for [%s] %s: '%s'\n", section.c_str(), name.c_str(), str_value.c_str());
         valid = false;
         return -1;
     }

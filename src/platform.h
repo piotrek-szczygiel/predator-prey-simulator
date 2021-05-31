@@ -4,11 +4,14 @@
 
 class Platform {
    public:
-    Platform(const Config& config) : m_config(config) {}
-
+    explicit Platform(const Config& config) : m_config(config) {}
     void start();
     void stop();
-    static bool running();
+    void reload();
+    bool should_close();
+    bool should_restart();
+    void interact();
+    float time();
     void start_drawing(Simulation& sim);
     void end_drawing();
 

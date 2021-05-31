@@ -1,6 +1,17 @@
 #include "simulation.h"
 #include "pathfinder.h"
 
+#ifndef NDEBUG
+#include <raylib.h>
+
+void draw_line(int x, int y, int xx, int yy, Color color) {
+    color.a = 128;
+    Vector2 from = {(float)x * 16 + 8, (float)y * 16 + 8};
+    Vector2 to = {(float)xx * 16 + 8, (float)yy * 16 + 8};
+    DrawLineEx(from, to, 2.0f, color);
+}
+#endif
+
 void Simulation::reset() {
     m_map.clear();
     m_grid.fill({});
@@ -11,6 +22,14 @@ void Simulation::reset() {
 }
 
 void Simulation::update() {
+#ifndef NDEBUG
+    for (int i = 0; i < m_map.chunks().size(); ++i) {
+        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16.0f,
+                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16.0f, m_map.m_chunk_width * 16.0f,
+                           m_map.m_chunk_height * 16.0f, LIGHTGRAY);
+    }
+#endif
+
     if (m_tick - m_last_cabbages_spawn > CABBAGE_SPAWN_TIME) {
         spawn_random_agents(AgentType::Cabbage, CABBAGE_SPAWN_COUNT);
         m_last_cabbages_spawn = m_tick;
@@ -26,6 +45,7 @@ void Simulation::update() {
 
             switch (agent.type) {
                 case AgentType::Chicken: update_chicken(&agent); break;
+                case AgentType::Wolf: update_wolf(&agent); break;
                 default: break;
             }
         }
@@ -37,11 +57,6 @@ void Simulation::update() {
 
     m_map.remove_dead();
     ++m_tick;
-}
-
-AgentType Simulation::type_at(int x, int y) const {
-    Agent* agent = m_grid[y][x];
-    return agent ? agent->type : AgentType::None;
 }
 
 int Simulation::count(AgentType type) const {
@@ -72,40 +87,62 @@ void Simulation::spawn_random_agents(AgentType type, int count) {
     }
 }
 
-void Simulation::update_chicken(Agent* chicken) {
-    int xx;
-    int yy;
-
-    int sensor = 10;
-
-    const auto& others = m_map.get_nearby_to(chicken);
-    Pathfinder pathfinder(sensor, m_width, m_height, chicken->x, chicken->y);
+Vec2 Simulation::get_step_to(Agent* from, AgentType to, int sensor_range) {
+    Pathfinder pathfinder(sensor_range, m_width, m_height, from->x, from->y);
 
     int min_distance = INT32_MAX;
-    const Agent* target = nullptr;
+    Agent* min_agent = nullptr;
 
-    for (const auto& other : others) {
-        int dist = distance({chicken->x, chicken->y}, {other->x, other->y});
-        if (dist <= sensor) {
+    for (const auto& other : m_map.get_nearby_to(from)) {
+        int dist = distance({from->x, from->y}, {other->x, other->y});
+        if (dist <= sensor_range) {
             pathfinder.add_blocker({other->x, other->y});
-            if (other->type == AgentType::Cabbage) {
-                if (min_distance > dist) {
-                    min_distance = dist;
-                    target = other;
-                }
+            if (other->type == to && dist < min_distance) {
+                min_distance = dist;
+                min_agent = other;
             }
         }
     }
 
-    if (target) {
-        auto next_step = pathfinder.get_next_step({target->x, target->y});
-        xx = chicken->x + next_step.x;
-        yy = chicken->y + next_step.y;
-    } else {
+    if (min_agent) {
+#ifndef NDEBUG
+        auto c = WHITE;
+        if (to == AgentType::Cabbage)
+            c = GREEN;
+        else if (to == AgentType::Chicken)
+            c = RED;
+        else
+            c = BLACK;
+        draw_line(from->x, from->y, min_agent->x, min_agent->y, c);
+#endif
+        return pathfinder.get_next_step({min_agent->x, min_agent->y});
+    }
+
+    return {0, 0};
+}
+
+void Simulation::update_chicken(Agent* chicken) {
+    int xx = chicken->x;
+    int yy = chicken->y;
+
+    Vec2 step = get_step_to(chicken, AgentType::Wolf, CHICKEN_SENSOR_RANGE);
+    if (step.x != 0 && step.y != 0) {
+        step.x *= -1;
+        step.y *= -1;
+    } else if (chicken->energy <= CHICKEN_HUNGRY) {
+        step = get_step_to(chicken, AgentType::Cabbage, CHICKEN_SENSOR_RANGE);
+    } else if (chicken->energy >= BREED_NEEDED_ENERGY) {
+        step = get_step_to(chicken, AgentType::Chicken, CHICKEN_SENSOR_RANGE);
+    }
+
+    if (step.x == 0 && step.y == 0) {
         do {
             xx = chicken->x + random(-1, 1);
             yy = chicken->y + random(-1, 1);
         } while (out_of_map(xx, yy));
+    } else {
+        xx += step.x;
+        yy += step.y;
     }
 
     Agent* dest = m_grid[yy][xx];
@@ -115,32 +152,26 @@ void Simulation::update_chicken(Agent* chicken) {
         dest->kill();
         chicken->energy += CABBAGE_NUTRITION_VALUE;
         move_agent(chicken, xx, yy);
+    } else if (dest->type == AgentType::Chicken && chicken->energy >= BREED_NEEDED_ENERGY) {
+        spawn_random_agents(AgentType::Chicken, 1);
+        chicken->energy -= BREED_LOSS_ENERGY;
+        dest->energy -= BREED_LOSS_ENERGY;
     }
 }
 
-#ifndef NDEBUG
-#include <raylib.h>
+void Simulation::update_wolf(Agent* wolf) {
+    Vec2 step = get_step_to(wolf, AgentType::Chicken, WOLF_SENSOR_RANGE);
+    if (step.x != 0 || step.y != 0) {
+        int xx = wolf->x + step.x;
+        int yy = wolf->y + step.y;
 
-void draw_line(int x, int y, int xx, int yy, Color color) {
-    color.a = 128;
-    DrawLine(x * 16 + 8, y * 16 + 8, xx * 16 + 8, yy * 16 + 8, color);
-}
-
-void Simulation::draw_debug() {
-    for (int i = 0; i < m_map.chunks().size(); ++i) {
-        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16.0f,
-                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16.0f, m_map.m_chunk_width * 16.0f,
-                           m_map.m_chunk_height * 16.0f, LIGHTGRAY);
-
-        const auto& chunk = m_map.chunks().at(i);
-        for (const auto& agent : chunk) {
-            if (agent.type == AgentType::Chicken) {
-                for (const auto& target : m_map.get_nearby_to(&agent)) {
-                    Color c = (target->type == AgentType::Chicken ? BLUE : RED);
-                    draw_line(agent.x, agent.y, target->x, target->y, c);
-                }
-            }
+        Agent* dest = m_grid[yy][xx];
+        if (!dest) {
+            move_agent(wolf, xx, yy);
+        } else if (dest->type == AgentType::Chicken) {
+            dest->kill();
+            wolf->energy += CHICKEN_NUTRITION_VALUE;
+            move_agent(wolf, xx, yy);
         }
     }
 }
-#endif

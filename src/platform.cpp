@@ -37,7 +37,7 @@ Texture2D Platform::texture_for_type(AgentType type) {
     }
 }
 
-void Platform::draw(Simulation& sim) {
+void Platform::start_drawing(Simulation& sim) {
     BeginDrawing();
     ClearBackground(RAYWHITE);
     BeginMode2D(m_camera);
@@ -48,16 +48,16 @@ void Platform::draw(Simulation& sim) {
             float wy = (float)y * TILE_SIZE;
             DrawTextureRec(m_tex_ground, {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
 
-            auto type = sim.type_at(x, y);
-            if (type != AgentType::None)
-                DrawTextureRec(texture_for_type(type), {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
+            auto agent = sim.at(x, y);
+            if (agent) {
+                Color tint = agent->energy >= BREED_NEEDED_ENERGY ? PURPLE : WHITE;
+                DrawTextureRec(texture_for_type(agent->type), {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, tint);
+            }
         }
     }
+}
 
-#ifndef NDEBUG
-    sim.draw_debug();
-#endif
-
+void Platform::end_drawing() {
     EndMode2D();
     EndDrawing();
 }

@@ -12,7 +12,8 @@ class Platform {
     void start(int sim_width, int sim_height);
     void stop();
     static bool running();
-    void draw(Simulation& sim);
+    void start_drawing(Simulation& sim);
+    void end_drawing();
 
    private:
     int m_width;

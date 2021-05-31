@@ -1,6 +1,5 @@
 #include <iostream>
 #include "platform.h"
-#include "util.h"
 
 int main(int argc, char** argv) {
     bool graphics = argc == 1;
@@ -23,12 +22,13 @@ int main(int argc, char** argv) {
     Simulation sim(WIDTH, HEIGHT);
 
     if (graphics) {
-        Platform p(900, 900, "Predator Prey Simulation", 15);
+        Platform p(900, 900, "Predator Prey Simulation", 240);
         p.start(WIDTH, HEIGHT);
 
         while (Platform::running()) {
+            p.start_drawing(sim);
             sim.update();
-            p.draw(sim);
+            p.end_drawing();
         }
 
         p.stop();

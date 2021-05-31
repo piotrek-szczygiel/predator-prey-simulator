@@ -28,11 +28,10 @@ void Platform::stop() {
 
 void Platform::reload() {
     if (IsWindowReady()) {
-        if (m_config.window_maximized) {
-            MaximizeWindow();
-        } else {
+        if (!IsWindowMaximized()) {
             SetWindowSize(m_config.window_width, m_config.window_height);
         }
+
         SetTargetFPS(m_config.window_fps);
     }
 }

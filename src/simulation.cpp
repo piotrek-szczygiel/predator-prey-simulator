@@ -165,14 +165,22 @@ void Simulation::update_chicken(Agent* chicken) {
 void Simulation::update_wolf(Agent* wolf) {
     if (wolf->last_update > 0 && m_tick - wolf->last_update < 2) return;
 
-    auto chicken = get_path_to_nearest(wolf, AgentType::Chicken, m_config.wolf_sensor_range);
-    if (chicken.agent) {
-        if (chicken.dist == 1) {
-            chicken.agent->kill();
-            wolf->energy += m_config.chicken_nutrition_value;
+    if (wolf->energy <= m_config.wolf_hungry_start) {
+        wolf->hungry = true;
+    } else if (wolf->energy >= m_config.wolf_hungry_stop) {
+        wolf->hungry = false;
+    }
+
+    if (wolf->hungry) {
+        auto chicken = get_path_to_nearest(wolf, AgentType::Chicken, m_config.wolf_sensor_range);
+        if (chicken.agent) {
+            if (chicken.dist == 1) {
+                chicken.agent->kill();
+                wolf->energy += m_config.chicken_nutrition_value;
+            }
+            move_agent_around(wolf, wolf->x + chicken.step.x, wolf->y + chicken.step.y);
+            return;
         }
-        move_agent_around(wolf, wolf->x + chicken.step.x, wolf->y + chicken.step.y);
-        return;
     }
 
     if (wolf->energy >= m_config.sim_energy_breed_needed) {

@@ -53,6 +53,8 @@ class Map {
     std::vector<std::list<Agent>> m_chunks{};
     int m_count;
 
+    int m_reserve = m_chunk_width * m_chunk_height;
+
     int get_chunk(int x, int y) const;
     std::vector<ChunkUpdate> m_chunk_updates{};
 };

@@ -39,6 +39,7 @@ std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
     }
 
     std::vector<Agent*> agents;
+    agents.reserve(m_reserve);
     for (auto& chunk : chunks) {
         if (chunk < 0 || chunk >= m_chunks.size()) continue;
         for (auto& a : m_chunks.at(chunk)) {

@@ -42,6 +42,8 @@ class Config {
 
         wolf_spawn_count = get(ini, "wolf", "spawn_count");
         wolf_sensor_range = get(ini, "wolf", "sensor_range");
+        wolf_hungry_start = get(ini, "wolf", "hungry_start");
+        wolf_hungry_stop = get(ini, "wolf", "hungry_stop");
 
         return valid;
     }
@@ -76,6 +78,8 @@ class Config {
 
     int wolf_spawn_count;
     int wolf_sensor_range;
+    int wolf_hungry_start;
+    int wolf_hungry_stop;
 
     bool valid;
 

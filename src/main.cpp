@@ -35,7 +35,9 @@ int run_graphics() {
                 last_update = p.time();
             }
 
+#ifndef NDEBUG
             sim.draw_debug();
+#endif
             p.end_drawing();
         }
     } while (restart);

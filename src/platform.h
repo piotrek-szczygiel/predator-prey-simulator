@@ -25,5 +25,7 @@ class Platform {
     Texture2D m_tex_ground{};
     Texture2D m_tex_wolf{};
 
+    Vector2 m_prev_mouse_pos{};
+
     Texture2D texture_for_type(AgentType type);
 };

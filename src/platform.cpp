@@ -1,12 +1,12 @@
 #include "platform.h"
+#include <raymath.h>
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(m_config.window_fps);
 
-    m_camera.offset = {(float)m_config.window_width / 2.0f, (float)m_config.window_height / 2.0f};
-    m_camera.rotation = 0;
     m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                        (float)m_config.sim_height * m_config.tile_size / 2.0f};
     m_camera.zoom = 1.0;
@@ -40,7 +40,31 @@ bool Platform::should_restart() {
     return IsKeyPressed(KEY_R);
 }
 
-void Platform::interact() {}
+void Platform::interact() {
+    m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+
+    if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
+
+    float mouse_delta = GetMouseWheelMove();
+    float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
+    if (new_zoom <= 0.25f) new_zoom = 0.25f;
+    if (new_zoom >= 4.0f) new_zoom = 4.0f;
+    m_camera.zoom = new_zoom;
+
+    Vector2 current_mouse_pos = GetMousePosition();
+    Vector2 delta = Vector2Subtract(m_prev_mouse_pos, current_mouse_pos);
+    m_prev_mouse_pos = current_mouse_pos;
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
+    }
+
+    if (IsWindowResized() || IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
+                           (float)m_config.sim_height * m_config.tile_size / 2.0f};
+        m_camera.zoom = 1.0f;
+    }
+}
 
 float Platform::time() {
     return (float)GetTime();

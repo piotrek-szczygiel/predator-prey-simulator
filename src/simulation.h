@@ -6,8 +6,6 @@
 #include "config.h"
 #include "map.h"
 
-using Tick = uint64_t;
-
 struct Path {
     Vec2 step;
     Agent* agent;

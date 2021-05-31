@@ -51,7 +51,7 @@ int Simulation::count(AgentType type) const {
 }
 
 void Simulation::add_agent(AgentType type, int x, int y) {
-    Agent* agent = m_map.add(type, x, y, m_config.sim_energy_start);
+    Agent* agent = m_map.add(type, x, y, m_config.sim_energy_start, m_tick - rand_int(0, 2));
     m_grid[y][x] = agent;
 }
 
@@ -59,12 +59,17 @@ void Simulation::move_agent(Agent* agent, int x, int y) {
     int old_x = agent->x;
     int old_y = agent->y;
     m_map.move(agent, x, y);
+    agent->last_update = m_tick;
     m_grid[y][x] = agent;
     m_grid[old_y][old_x] = nullptr;
 }
 
 bool Simulation::move_agent_if_empty(Agent* agent, int x, int y) {
     if (empty(x, y)) {
+        move_agent(agent, x, y);
+        return true;
+    } else if (!out_of_map(x, y) && m_grid[y][x] && m_grid[y][x]->type == AgentType::Cabbage) {
+        m_grid[y][x]->kill();
         move_agent(agent, x, y);
         return true;
     }
@@ -108,10 +113,13 @@ Agent* Simulation::spawn_around(AgentType type, int x, int y) {
 }
 
 void Simulation::update_chicken(Agent* chicken) {
-    if (chicken->energy <= m_config.chicken_hungry_start)
+    if (chicken->last_update > 0 && m_tick - chicken->last_update < 3) return;
+
+    if (chicken->energy <= m_config.chicken_hungry_start) {
         chicken->hungry = true;
-    else if (chicken->energy >= m_config.chicken_hungry_stop)
+    } else if (chicken->energy >= m_config.chicken_hungry_stop) {
         chicken->hungry = false;
+    }
 
     auto wolf = get_path_to_nearest(chicken, AgentType::Wolf, m_config.chicken_sensor_range);
     if (wolf.agent) {
@@ -155,6 +163,8 @@ void Simulation::update_chicken(Agent* chicken) {
 }
 
 void Simulation::update_wolf(Agent* wolf) {
+    if (wolf->last_update > 0 && m_tick - wolf->last_update < 2) return;
+
     auto chicken = get_path_to_nearest(wolf, AgentType::Chicken, m_config.wolf_sensor_range);
     if (chicken.agent) {
         if (chicken.dist == 1) {
@@ -163,6 +173,26 @@ void Simulation::update_wolf(Agent* wolf) {
         }
         move_agent_around(wolf, wolf->x + chicken.step.x, wolf->y + chicken.step.y);
         return;
+    }
+
+    if (wolf->energy >= m_config.sim_energy_breed_needed) {
+        auto partner =
+            get_path_to_nearest(wolf, AgentType::Wolf, m_config.wolf_sensor_range, m_config.sim_energy_breed_needed);
+
+        if (partner.agent) {
+            if (partner.dist == 1) {
+                if (auto kid = spawn_around(AgentType::Wolf, wolf->x, wolf->y)) {
+                    wolf->energy -= m_config.sim_energy_breed_loss;
+                    partner.agent->energy -= m_config.sim_energy_breed_loss;
+#ifndef NDEBUG
+                    m_debug_breeds.push_back({wolf, partner.agent, kid});
+#endif
+                }
+            } else {
+                move_agent_around(wolf, wolf->x + partner.step.x, wolf->y + partner.step.y);
+            }
+            return;
+        }
     }
 
     move_agent_random(wolf);
@@ -177,7 +207,7 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
     for (const auto& other : m_map.get_nearby_to(from)) {
         int dist = distance({from->x, from->y}, {other->x, other->y});
         if (dist <= sensor_range) {
-            pathfinder.add_blocker({other->x, other->y});
+            if (other->type != AgentType::Cabbage) pathfinder.add_blocker({other->x, other->y});
             if (other->type == to && other->energy >= to_min_energy && dist < min_distance) {
                 min_distance = dist;
                 min_agent = other;

@@ -32,8 +32,8 @@ class Map {
         for (auto& chunk : m_chunks) chunk.remove_if([](const auto& agent) { return agent.is_dead(); });
     }
 
-    Agent* add(AgentType type, int x, int y, int energy) {
-        return &m_chunks.at(get_chunk(x, y)).emplace_back(type, x, y, energy);
+    Agent* add(AgentType type, int x, int y, int energy, Tick last_update) {
+        return &m_chunks.at(get_chunk(x, y)).emplace_back(type, x, y, energy, last_update);
     }
 
     std::vector<Agent*> get_nearby_to(const Agent* agent) {

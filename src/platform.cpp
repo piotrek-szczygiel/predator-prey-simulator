@@ -1,13 +1,14 @@
 #include "platform.h"
 
-void Platform::start(int sim_width, int sim_height) {
+void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
-    InitWindow(m_width, m_height, m_title);
-    SetTargetFPS(m_fps);
+    InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
+    SetTargetFPS(m_config.window_fps);
 
-    m_camera.offset = {(float)m_width / 2.0f, (float)m_height / 2.0f};
+    m_camera.offset = {(float)m_config.window_width / 2.0f, (float)m_config.window_height / 2.0f};
     m_camera.rotation = 0;
-    m_camera.target = {(float)sim_width * TILE_SIZE / 2.0f, (float)sim_height * TILE_SIZE / 2.0f};
+    m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
+                       (float)m_config.sim_height * m_config.tile_size / 2.0f};
     m_camera.zoom = 1.0;
 
     m_tex_cabbage = LoadTexture("assets/cabbage.png");
@@ -42,16 +43,18 @@ void Platform::start_drawing(Simulation& sim) {
     ClearBackground(RAYWHITE);
     BeginMode2D(m_camera);
 
-    for (int y = 0; y < sim.height(); ++y) {
-        for (int x = 0; x < sim.width(); ++x) {
-            float wx = (float)x * TILE_SIZE;
-            float wy = (float)y * TILE_SIZE;
-            DrawTextureRec(m_tex_ground, {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, WHITE);
+    for (int y = 0; y < m_config.sim_height; ++y) {
+        for (int x = 0; x < m_config.sim_width; ++x) {
+            float wx = (float)x * m_config.tile_size;
+            float wy = (float)y * m_config.tile_size;
+            DrawTextureRec(m_tex_ground, {0, 0, m_config.tile_size, m_config.tile_size}, {wx, wy}, WHITE);
 
             auto agent = sim.at(x, y);
             if (agent) {
-                Color tint = agent->energy >= BREED_NEEDED_ENERGY ? PURPLE : WHITE;
-                DrawTextureRec(texture_for_type(agent->type), {0, 0, TILE_SIZE, TILE_SIZE}, {wx, wy}, tint);
+                auto tint = WHITE;
+                if (agent->energy)
+                    DrawTextureRec(texture_for_type(agent->type), {0, 0, m_config.tile_size, m_config.tile_size},
+                                   {wx, wy}, tint);
             }
         }
     }

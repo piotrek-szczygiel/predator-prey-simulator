@@ -2,24 +2,18 @@
 #include <raylib.h>
 #include "simulation.h"
 
-const int TILE_SIZE = 16;
-
 class Platform {
    public:
-    Platform(int win_width, int win_height, const char* title, int fps = 60)
-        : m_width(win_width), m_height(win_height), m_title(title), m_fps(fps) {}
+    Platform(const Config& config) : m_config(config) {}
 
-    void start(int sim_width, int sim_height);
+    void start();
     void stop();
     static bool running();
     void start_drawing(Simulation& sim);
     void end_drawing();
 
    private:
-    int m_width;
-    int m_height;
-    int m_fps;
-    const char* m_title;
+    const Config& m_config;
 
     Camera2D m_camera{};
 

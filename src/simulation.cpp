@@ -14,11 +14,12 @@ void draw_line(int x, int y, int xx, int yy, Color color) {
 
 void Simulation::reset() {
     m_map.clear();
-    m_grid.fill({});
+    m_grid.clear();
+    m_grid.resize(m_config.sim_height, std::vector<Agent*>(m_config.sim_width, nullptr));
 
-    spawn_random_agents(AgentType::Chicken, CHICKEN_SPAWN_COUNT);
-    spawn_random_agents(AgentType::Wolf, WOLF_SPAWN_COUNT);
-    spawn_random_agents(AgentType::Cabbage, CABBAGE_SPAWN_COUNT);
+    spawn_random_agents(AgentType::Chicken, m_config.chicken_spawn_count);
+    spawn_random_agents(AgentType::Wolf, m_config.wolf_spawn_count);
+    spawn_random_agents(AgentType::Cabbage, m_config.cabbage_spawn_count);
 }
 
 void Simulation::update() {
@@ -30,14 +31,14 @@ void Simulation::update() {
     }
 #endif
 
-    if (m_tick - m_last_cabbages_spawn > CABBAGE_SPAWN_TIME) {
-        spawn_random_agents(AgentType::Cabbage, CABBAGE_SPAWN_COUNT);
+    if (m_tick - m_last_cabbages_spawn > m_config.cabbage_spawn_time) {
+        spawn_random_agents(AgentType::Cabbage, m_config.cabbage_spawn_count);
         m_last_cabbages_spawn = m_tick;
     }
 
     for (auto& chunk : m_map.chunks()) {
         for (auto& agent : chunk) {
-            agent.energy -= ENERGY_TICK_LOSS;
+            agent.energy -= m_config.sim_energy_tick_loss;
             if (agent.is_dead()) {
                 if (&agent == m_grid[agent.y][agent.x]) m_grid[agent.y][agent.x] = nullptr;
                 continue;
@@ -63,8 +64,8 @@ int Simulation::count(AgentType type) const {
     return m_map.count(type);
 }
 
-void Simulation::add_agent(int x, int y, AgentType type) {
-    Agent* agent = m_map.add(x, y, type);
+void Simulation::add_agent(AgentType type, int x, int y) {
+    Agent* agent = m_map.add(type, x, y, m_config.sim_energy_start);
     m_grid[y][x] = agent;
 }
 
@@ -78,17 +79,17 @@ void Simulation::move_agent(Agent* agent, int x, int y) {
 
 void Simulation::spawn_random_agents(AgentType type, int count) {
     for (int i = 0; i < count; ++i) {
-        int x = random(0, m_width - 1);
-        int y = random(0, m_height - 1);
+        int x = random(0, m_config.sim_width - 1);
+        int y = random(0, m_config.sim_height - 1);
 
         if (!m_grid[y][x]) {
-            add_agent(x, y, type);
+            add_agent(type, x, y);
         }
     }
 }
 
 Vec2 Simulation::get_step_to(Agent* from, AgentType to, int sensor_range) {
-    Pathfinder pathfinder(sensor_range, m_width, m_height, from->x, from->y);
+    Pathfinder pathfinder(sensor_range, m_config.sim_width, m_config.sim_height, from->x, from->y);
 
     int min_distance = INT32_MAX;
     Agent* min_agent = nullptr;
@@ -125,24 +126,24 @@ void Simulation::update_chicken(Agent* chicken) {
     int xx = chicken->x;
     int yy = chicken->y;
 
-    Vec2 step = get_step_to(chicken, AgentType::Wolf, CHICKEN_SENSOR_RANGE);
+    Vec2 step = get_step_to(chicken, AgentType::Wolf, m_config.chicken_sensor_range);
     if (step.x != 0 && step.y != 0) {
         step.x *= -1;
         step.y *= -1;
-    } else if (chicken->energy <= CHICKEN_HUNGRY) {
-        step = get_step_to(chicken, AgentType::Cabbage, CHICKEN_SENSOR_RANGE);
-    } else if (chicken->energy >= BREED_NEEDED_ENERGY) {
-        step = get_step_to(chicken, AgentType::Chicken, CHICKEN_SENSOR_RANGE);
+    } else if (chicken->energy <= m_config.chicken_hungry_start) {
+        step = get_step_to(chicken, AgentType::Cabbage, m_config.chicken_sensor_range);
+    } else if (chicken->energy >= m_config.sim_energy_breed_needed) {
+        step = get_step_to(chicken, AgentType::Chicken, m_config.chicken_sensor_range);
     }
 
-    if (step.x == 0 && step.y == 0) {
+    xx += step.x;
+    yy += step.y;
+
+    if (out_of_map(xx, yy) || (step.x == 0 && step.y == 0)) {
         do {
             xx = chicken->x + random(-1, 1);
             yy = chicken->y + random(-1, 1);
         } while (out_of_map(xx, yy));
-    } else {
-        xx += step.x;
-        yy += step.y;
     }
 
     Agent* dest = m_grid[yy][xx];
@@ -150,17 +151,17 @@ void Simulation::update_chicken(Agent* chicken) {
         move_agent(chicken, xx, yy);
     } else if (dest->type == AgentType::Cabbage) {
         dest->kill();
-        chicken->energy += CABBAGE_NUTRITION_VALUE;
+        chicken->energy += m_config.cabbage_nutrition_value;
         move_agent(chicken, xx, yy);
-    } else if (dest->type == AgentType::Chicken && chicken->energy >= BREED_NEEDED_ENERGY) {
+    } else if (dest->type == AgentType::Chicken && chicken->energy >= m_config.sim_energy_breed_needed) {
         spawn_random_agents(AgentType::Chicken, 1);
-        chicken->energy -= BREED_LOSS_ENERGY;
-        dest->energy -= BREED_LOSS_ENERGY;
+        chicken->energy -= m_config.sim_energy_breed_loss;
+        dest->energy -= m_config.sim_energy_breed_loss;
     }
 }
 
 void Simulation::update_wolf(Agent* wolf) {
-    Vec2 step = get_step_to(wolf, AgentType::Chicken, WOLF_SENSOR_RANGE);
+    Vec2 step = get_step_to(wolf, AgentType::Chicken, m_config.wolf_sensor_range);
     if (step.x != 0 || step.y != 0) {
         int xx = wolf->x + step.x;
         int yy = wolf->y + step.y;
@@ -170,7 +171,7 @@ void Simulation::update_wolf(Agent* wolf) {
             move_agent(wolf, xx, yy);
         } else if (dest->type == AgentType::Chicken) {
             dest->kill();
-            wolf->energy += CHICKEN_NUTRITION_VALUE;
+            wolf->energy += m_config.chicken_nutrition_value;
             move_agent(wolf, xx, yy);
         }
     }

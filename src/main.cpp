@@ -10,20 +10,26 @@ int main(int argc, char** argv) {
         sim_ticks = std::strtoull(argv[1], &p_end, 10);
         if (p_end == argv[1]) {
             std::cerr << "usage: " << argv[0] << " <ticks>\n";
-            return 2;
+            return 1;
         }
     }
 
     if (!cd_assets()) {
         std::cerr << "unable to find assets directory\n";
-        if (graphics) return 1;
+        if (graphics) return 2;
     }
 
-    Simulation sim(WIDTH, HEIGHT);
+    Config config{};
+    if (!config.load()) {
+        std::cerr << "error when parsing config.ini\n";
+        return 3;
+    }
+
+    Simulation sim(config);
 
     if (graphics) {
-        Platform p(900, 900, "Predator Prey Simulation", 240);
-        p.start(WIDTH, HEIGHT);
+        Platform p(config);
+        p.start();
 
         while (Platform::running()) {
             p.start_drawing(sim);

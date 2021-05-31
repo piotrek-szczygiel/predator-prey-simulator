@@ -30,9 +30,9 @@ class Config {
         sim_energy_breed_loss = get(ini, "simulation", "energy_breed_loss");
         sim_energy_tick_loss = get(ini, "simulation", "energy_tick_loss");
 
-        cabbage_spawn_time = get(ini, "cabbage", "spawn_time");
-        cabbage_spawn_count = get(ini, "cabbage", "spawn_count");
-        cabbage_nutrition_value = get(ini, "cabbage", "nutrition_value");
+        grass_spawn_time = get(ini, "grass", "spawn_time");
+        grass_spawn_count = get(ini, "grass", "spawn_count");
+        grass_nutrition_value = get(ini, "grass", "nutrition_value");
 
         chicken_spawn_count = get(ini, "chicken", "spawn_count");
         chicken_sensor_range = get(ini, "chicken", "sensor_range");
@@ -64,9 +64,9 @@ class Config {
     int sim_energy_breed_loss;
     int sim_energy_tick_loss;
 
-    int cabbage_spawn_time;
-    int cabbage_spawn_count;
-    int cabbage_nutrition_value;
+    int grass_spawn_time;
+    int grass_spawn_count;
+    int grass_nutrition_value;
 
     int chicken_spawn_count;
     int chicken_sensor_range;

@@ -12,14 +12,14 @@ void Platform::start() {
                        (float)m_config.sim_height * m_config.tile_size / 2.0f};
     m_camera.zoom = 1.0;
 
-    m_tex_cabbage = LoadTexture("assets/cabbage.png");
+    m_tex_grass = LoadTexture("assets/grass.png");
     m_tex_chicken = LoadTexture("assets/chicken.png");
     m_tex_ground = LoadTexture("assets/ground.png");
     m_tex_wolf = LoadTexture("assets/wolf.png");
 }
 
 void Platform::stop() {
-    UnloadTexture(m_tex_cabbage);
+    UnloadTexture(m_tex_grass);
     UnloadTexture(m_tex_chicken);
     UnloadTexture(m_tex_ground);
     UnloadTexture(m_tex_wolf);
@@ -81,7 +81,7 @@ float Platform::time() {
 
 Texture2D Platform::texture_for_type(AgentType type) {
     switch (type) {
-        case AgentType::Cabbage: return m_tex_cabbage;
+        case AgentType::Grass: return m_tex_grass;
         case AgentType::Chicken: return m_tex_chicken;
         case AgentType::Wolf: return m_tex_wolf;
         default: return m_tex_ground;

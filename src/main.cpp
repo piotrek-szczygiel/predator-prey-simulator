@@ -59,13 +59,13 @@ int run_csv(size_t sim_ticks) {
 
     Simulation sim(config);
 
-    printf("chicken,wolf,cabbage\n");
+    printf("chicken,wolf,grass\n");
     while (sim.ticks() < sim_ticks) {
         sim.update();
         int chicken = sim.count(AgentType::Chicken);
         int wolf = sim.count(AgentType::Wolf);
-        int cabbage = sim.count(AgentType::Cabbage);
-        printf("%d,%d,%d\n", chicken, wolf, cabbage);
+        int grass = sim.count(AgentType::Grass);
+        printf("%d,%d,%d\n", chicken, wolf, grass);
     }
 
     return 0;

@@ -21,7 +21,7 @@ class Platform {
 
     Camera2D m_camera{};
 
-    Texture2D m_tex_cabbage{};
+    Texture2D m_tex_grass{};
     Texture2D m_tex_chicken{};
     Texture2D m_tex_ground{};
     Texture2D m_tex_wolf{};

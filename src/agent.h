@@ -2,7 +2,7 @@
 #include "config.h"
 #include "util.h"
 
-enum class AgentType { None, Wolf, Chicken, Cabbage };
+enum class AgentType { None, Wolf, Chicken, Grass };
 
 class Agent {
    public:

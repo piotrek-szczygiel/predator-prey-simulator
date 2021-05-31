@@ -8,7 +8,7 @@ void Simulation::reset() {
 
     spawn_random_agents(AgentType::Wolf, m_config.wolf_spawn_count);
     spawn_random_agents(AgentType::Chicken, m_config.chicken_spawn_count);
-    spawn_random_agents(AgentType::Cabbage, m_config.cabbage_spawn_count);
+    spawn_random_agents(AgentType::Grass, m_config.grass_spawn_count);
 }
 
 void Simulation::update() {
@@ -17,9 +17,9 @@ void Simulation::update() {
     m_debug_breeds.clear();
 #endif
 
-    if (m_tick - m_last_cabbages_spawn > m_config.cabbage_spawn_time) {
-        spawn_random_agents(AgentType::Cabbage, m_config.cabbage_spawn_count);
-        m_last_cabbages_spawn = m_tick;
+    if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
+        spawn_random_agents(AgentType::Grass, m_config.grass_spawn_count);
+        m_last_grass_spawn = m_tick;
     }
 
     for (auto& chunk : m_map.chunks()) {
@@ -68,7 +68,7 @@ bool Simulation::move_agent_if_empty(Agent* agent, int x, int y) {
     if (empty(x, y)) {
         move_agent(agent, x, y);
         return true;
-    } else if (!out_of_map(x, y) && m_grid[y][x] && m_grid[y][x]->type == AgentType::Cabbage) {
+    } else if (!out_of_map(x, y) && m_grid[y][x] && m_grid[y][x]->type == AgentType::Grass) {
         m_grid[y][x]->kill();
         move_agent(agent, x, y);
         return true;
@@ -128,13 +128,13 @@ void Simulation::update_chicken(Agent* chicken) {
     }
 
     if (chicken->hungry) {
-        auto cabbage = get_path_to_nearest(chicken, AgentType::Cabbage, m_config.chicken_sensor_range);
-        if (cabbage.agent) {
-            if (cabbage.dist == 1) {
-                cabbage.agent->kill();
-                chicken->energy += m_config.cabbage_nutrition_value;
+        auto grass = get_path_to_nearest(chicken, AgentType::Grass, m_config.chicken_sensor_range);
+        if (grass.agent) {
+            if (grass.dist == 1) {
+                grass.agent->kill();
+                chicken->energy += m_config.grass_nutrition_value;
             }
-            move_agent_around(chicken, chicken->x + cabbage.step.x, chicken->y + cabbage.step.y);
+            move_agent_around(chicken, chicken->x + grass.step.x, chicken->y + grass.step.y);
             return;
         }
     }
@@ -207,7 +207,7 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
     for (const auto& other : m_map.get_nearby_to(from)) {
         int dist = distance({from->x, from->y}, {other->x, other->y});
         if (dist <= sensor_range) {
-            if (other->type != AgentType::Cabbage) pathfinder.add_blocker({other->x, other->y});
+            if (other->type != AgentType::Grass) pathfinder.add_blocker({other->x, other->y});
             if (other->type == to && other->energy >= to_min_energy && dist < min_distance) {
                 min_distance = dist;
                 min_agent = other;
@@ -243,7 +243,7 @@ void Simulation::draw_debug() {
     for (const auto& line : m_debug_lines) {
         if (line.from->is_dead() || line.to->is_dead()) continue;
         Color c;
-        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Cabbage)
+        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Grass)
             c = ORANGE;
         else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf)
             c = BLACK;

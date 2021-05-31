@@ -38,7 +38,7 @@ class Simulation {
 
     const Config& m_config;
 
-    Tick m_last_cabbages_spawn = 0;
+    Tick m_last_grass_spawn = 0;
 
     Map m_map;
     std::vector<std::vector<Agent*>> m_grid{};

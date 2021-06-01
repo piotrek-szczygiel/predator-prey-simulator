@@ -20,6 +20,7 @@ class Config {
     int window_maximized{};
     int window_fps{};
     int window_tick_time_ms{};
+    int window_manual_stepping{};
 
     int sim_width{};
     int sim_height{};

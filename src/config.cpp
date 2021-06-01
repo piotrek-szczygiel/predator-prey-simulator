@@ -35,6 +35,7 @@ bool Config::load() {
     set(window_maximized, "window", "maximized");
     set(window_fps, "window", "fps");
     set(window_tick_time_ms, "window", "tick_time_ms");
+    set(window_manual_stepping, "window", "manual_stepping");
 
     set(sim_width, "simulation", "width");
     set(sim_height, "simulation", "height");

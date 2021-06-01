@@ -14,12 +14,7 @@ class Platform {
     void interact();
     float time();
     void start_drawing(Simulation& sim);
-    void update_gui_end_drawing();
-
-    template <typename... Args>
-    void title(const char* fmt, Args... args) {
-        SetWindowTitle(TextFormat(fmt, args...));
-    }
+    void update_gui_end_drawing(const Simulation& sim);
 
    private:
     Config& m_config;
@@ -36,9 +31,8 @@ class Platform {
     Color color_for_type(AgentType type);
 
     int m_gui_width{};
-    bool m_gui_closed = true;
+    bool m_gui_closed = false;
     bool m_gui_restart = false;
-    std::string m_status{};
 
-    void update_gui();
+    void update_gui(const Simulation& sim);
 };

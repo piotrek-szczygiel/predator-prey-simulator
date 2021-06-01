@@ -55,8 +55,16 @@ bool Platform::should_tick() {
 }
 
 void Platform::interact() {
-    m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+    if (m_gui_closed) {
+        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+    } else {
+        m_camera.offset = {(float)(GetScreenWidth() - m_gui_width) / 2.0f, (float)(GetScreenHeight() - 20) / 2.0f};
+    }
     m_gui_width = GetScreenWidth() / 3;
+
+    m_config.window_width = GetScreenWidth();
+    m_config.window_height = GetScreenHeight();
+    m_config.window_maximized = IsWindowMaximized() ? 1 : 0;
 
     if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) m_gui_closed = !m_gui_closed;
@@ -76,7 +84,7 @@ void Platform::interact() {
         m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
     }
 
-    if (IsWindowResized() || IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
         m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                            (float)m_config.sim_height * m_config.tile_size / 2.0f};
         m_camera.zoom = 1.0f;
@@ -111,8 +119,8 @@ void Platform::start_drawing(Simulation& sim) {
     BeginMode2D(m_camera);
 
     const Color GRASS_COLOR = {99, 171, 63, 255};
-    const Rectangle GRASS_REC = {0, 0, (float)m_config.sim_width * m_config.tile_size,
-                                 (float)m_config.sim_height * m_config.tile_size};
+    const Rectangle GRASS_REC = {0, 0, (float)sim.width() * m_config.tile_size,
+                                 (float)sim.height() * m_config.tile_size};
     DrawRectangleRec(GRASS_REC, GRASS_COLOR);
 
     for (const auto& chunk : sim.chunks()) {
@@ -129,55 +137,110 @@ void Platform::start_drawing(Simulation& sim) {
     }
 }
 
-void Platform::update_gui_end_drawing() {
+void Platform::update_gui_end_drawing(const Simulation& sim) {
     EndMode2D();
-    if (!m_gui_closed) update_gui();
+    if (!m_gui_closed) update_gui(sim);
     EndDrawing();
 }
 
-void Platform::update_gui() {
+void Platform::update_gui(const Simulation& sim) {
     auto width = (float)m_gui_width;
     float margin = 5.0f;
     float padding = 10.0f;
+
+    float status_bar_height = 20.0f;
+    float button_height = 30.0f;
+    float entry_height = 25.0f;
+    float checkbox_size = 15.0f;
+
     float x = (float)GetScreenWidth() - width;
     float y = margin;
-    GuiStatusBar({0, (float)GetScreenHeight() - 20, (float)GetScreenWidth(), 20}, m_status.c_str());
-    m_gui_closed = GuiWindowBox({x, y, width - margin, (float)GetScreenHeight() - 20 - margin * 2.0f}, "Settings");
+    static std::string s_status{};
+    GuiStatusBar({0, (float)GetScreenHeight() - status_bar_height, (float)GetScreenWidth(), status_bar_height},
+                 s_status.c_str());
+
+    m_gui_closed =
+        GuiWindowBox({x, y, width - margin, (float)GetScreenHeight() - status_bar_height - margin * 2.0f}, "Settings");
 
     x += padding;
     y += 30;
     width -= padding * 2.0f;
 
-    if (GuiButton({x, y, width / 2.0f - padding / 2.0f, 30}, GuiIconText(RICON_FILE_SAVE, "Save config"))) {
+    if (GuiButton({x, y, width / 2.0f - padding / 2.0f, button_height}, GuiIconText(RICON_FILE_SAVE, "Save config"))) {
         if (m_config.write()) {
-            m_status = "Configuration saved successfully!";
+            s_status = "Configuration saved successfully!";
         } else {
-            m_status = "Error while saving configuration!";
+            s_status = "Error while saving configuration!";
         }
     }
-    if (GuiButton({x + width / 2.0f + padding / 2.0f, y, width / 2.0f - padding, 30},
+    if (GuiButton({x + width / 2.0f + padding / 2.0f, y, width / 2.0f - padding, button_height},
                   GuiIconText(RICON_FILE_OPEN, "Load config"))) {
         if (m_config.load()) {
-            m_status = "Configuration loaded successfully!";
+            s_status = "Configuration loaded successfully!";
         } else {
-            m_status = "Error while loading configuration!";
+            s_status = "Error while loading configuration!";
         }
     }
-    y += 30 + padding * 4.0f;
+    y += button_height + padding * 4.0f;
 
     GuiGroupBox({x, y, width, (float)GetScreenHeight() - y - 20 - margin * 2.0f - padding}, "Simulation");
     x += padding;
     width -= padding * 2.0f;
     y += padding * 2.0f;
 
-    m_gui_restart = GuiButton({x + width / 4.0f, y, width / 2.0f, 30}, GuiIconText(RICON_REDO, "Restart"));
-    y += 30 + padding;
+    m_gui_restart = GuiButton({x, y, width / 4.0f, entry_height * 2.0f}, GuiIconText(RICON_REDO, "Restart"));
+
+    m_config.window_manual_stepping = GuiCheckBox({x + width / 4.0f + padding, y, checkbox_size, checkbox_size},
+                                                  "Manual stepping [SPACE]", m_config.window_manual_stepping);
+    y += entry_height;
+
+    static bool s_tick_edit = false;
+    if (!m_config.window_manual_stepping) {
+        if (GuiSpinner({x + width / 2.0f, y, width / 2.0f, entry_height}, "Tick (ms)", &m_config.window_tick_time_ms, 0,
+                       1000, s_tick_edit))
+            s_tick_edit = !s_tick_edit;
+    }
+
+    y += button_height + padding;
 
     GuiLine({x, y, width, 1}, nullptr);
     y += padding;
 
-    float x_slider = x + 50;
-    m_config.window_tick_time_ms =
-        (int)GuiSlider({x_slider, y, width / 2.0f, 20.0f}, "Tick", TextFormat("%dms", m_config.window_tick_time_ms),
-                       (float)m_config.window_tick_time_ms, 0, 1000);
+    GuiLabel({x, y, width / 2.0f, entry_height}, TextFormat("Update time: %.3fms", sim.update_time()));
+    GuiLabel({x + width / 2.0f, y, width / 2.0f, entry_height}, TextFormat("Average: %.3fms", sim.avg_update_time()));
+    y += entry_height;
+
+    GuiLabel({x, y, width, entry_height}, TextFormat("Wolves: %d", sim.count(AgentType::Wolf)));
+    y += entry_height;
+
+    GuiLabel({x, y, width, entry_height}, TextFormat("Chickens: %d", sim.count(AgentType::Chicken)));
+    y += entry_height;
+
+    GuiLabel({x, y, width, entry_height}, TextFormat("Grasses: %d", sim.count(AgentType::Grass)));
+    y += entry_height + padding;
+
+    GuiLine({x, y, width, 1}, nullptr);
+    y += padding;
+
+    static bool s_grid_width_edit = false;
+    if (GuiSpinner({x + width / 4.0f - padding / 2.0f, y, width / 4.0f, entry_height}, "Grid width",
+                   &m_config.sim_width, 10, 500, s_grid_width_edit))
+        s_grid_width_edit = !s_grid_width_edit;
+
+    static bool s_grid_height_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - padding / 2.0f, y, width / 4.0f, entry_height}, "Grid height",
+                   &m_config.sim_height, 10, 500, s_grid_height_edit))
+        s_grid_height_edit = !s_grid_height_edit;
+    y += entry_height;
+
+    static bool s_chunk_width_edit = false;
+    if (GuiSpinner({x + width / 4.0f - padding / 2.0f, y, width / 4.0f, entry_height}, "Chunk width",
+                   &m_config.sim_chunk_width, 4, 100, s_chunk_width_edit))
+        s_chunk_width_edit = !s_chunk_width_edit;
+
+    static bool s_chunk_height_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - padding / 2.0f, y, width / 4.0f, entry_height}, "Chunk height",
+                   &m_config.sim_chunk_height, 4, 100, s_chunk_height_edit))
+        s_chunk_height_edit = !s_chunk_height_edit;
+    y += entry_height;
 }

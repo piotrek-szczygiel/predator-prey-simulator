@@ -16,8 +16,8 @@ class Map {
    public:
     Map(int map_width, int map_height, int chunk_width, int chunk_height)
         : m_chunk_width(chunk_width), m_chunk_height(chunk_height) {
-        m_chunk_x_count = map_width / chunk_width;
-        m_chunk_y_count = map_height / chunk_height;
+        m_chunk_x_count = std::ceil((double)map_width / chunk_width);
+        m_chunk_y_count = std::ceil((double)map_height / chunk_height);
         m_count = m_chunk_x_count * m_chunk_y_count;
         clear();
     }

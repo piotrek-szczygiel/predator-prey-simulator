@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -16,6 +17,8 @@ class Simulation {
    public:
     explicit Simulation(const Config& config)
         : m_config(config),
+          m_width(config.sim_width),
+          m_height(config.sim_height),
           m_map(config.sim_width, config.sim_height, config.sim_chunk_width, config.sim_chunk_height),
           m_mt19937(m_random_device()) {
         reset();
@@ -24,7 +27,12 @@ class Simulation {
     void reset();
     void update();
 
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+
     Tick ticks() const { return m_tick; }
+    double update_time() const { return m_update_times.back(); }
+    double avg_update_time() const { return m_avg_update_time; }
 
     Agent* at(int x, int y) const { return m_grid[y][x]; }
     int count(AgentType type) const;
@@ -36,7 +44,12 @@ class Simulation {
 #endif
 
    private:
+    int m_width;
+    int m_height;
+
     Tick m_tick = 0;
+    std::vector<double> m_update_times{};
+    double m_avg_update_time = 0.0;
 
     const Config& m_config;
 
@@ -63,9 +76,7 @@ class Simulation {
     void move_agent_random(Agent* agent);
     void move_agent_around(Agent* agent, int x, int y);
 
-    bool out_of_map(int x, int y) const {
-        return x < 0 || y < 0 || x >= m_config.sim_width || y >= m_config.sim_height;
-    }
+    bool out_of_map(int x, int y) const { return x < 0 || y < 0 || x >= m_width || y >= m_height; }
     bool empty(int x, int y) const { return !out_of_map(x, y) && (m_grid[y][x] == nullptr || m_grid[y][x]->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);

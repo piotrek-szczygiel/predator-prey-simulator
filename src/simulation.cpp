@@ -1,10 +1,11 @@
 #include "simulation.h"
+#include <numeric>
 #include "pathfinder.h"
 
 void Simulation::reset() {
     m_map.clear();
     m_grid.clear();
-    m_grid.resize(m_config.sim_height, std::vector<Agent*>(m_config.sim_width, nullptr));
+    m_grid.resize(m_height, std::vector<Agent*>(m_width, nullptr));
 
     spawn_random_agents(AgentType::Wolf, m_config.wolf_spawn_count);
     spawn_random_agents(AgentType::Chicken, m_config.chicken_spawn_count);
@@ -17,6 +18,7 @@ void Simulation::update() {
     m_debug_breeds.clear();
 #endif
 
+    auto start = std::chrono::high_resolution_clock::now();
     if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
         spawn_random_agents(AgentType::Grass, m_config.grass_spawn_count);
         m_last_grass_spawn = m_tick;
@@ -44,6 +46,13 @@ void Simulation::update() {
 
     m_map.remove_dead();
     ++m_tick;
+    std::chrono::duration<double, std::milli> elapsed = std::chrono::high_resolution_clock::now() - start;
+
+    if (m_update_times.size() == 10) {
+        m_avg_update_time = std::accumulate(m_update_times.begin(), m_update_times.end(), 0.0) / 10.0;
+        m_update_times.clear();
+    }
+    m_update_times.push_back(elapsed.count());
 }
 
 int Simulation::count(AgentType type) const {
@@ -94,7 +103,7 @@ void Simulation::move_agent_around(Agent* agent, int x, int y) {
 
 void Simulation::spawn_random_agents(AgentType type, int count) {
     for (int i = 0; i < count; ++i) {
-        while (!spawn_around(type, rand_int(0, m_config.sim_width - 1), rand_int(0, m_config.sim_height - 1)))
+        while (!spawn_around(type, rand_int(0, m_width - 1), rand_int(0, m_height - 1)))
             ;
     }
 }
@@ -207,7 +216,7 @@ void Simulation::update_wolf(Agent* wolf) {
 }
 
 Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range, int to_min_energy) {
-    Pathfinder pathfinder(sensor_range, m_config.sim_width, m_config.sim_height, from->x, from->y);
+    Pathfinder pathfinder(sensor_range, m_width, m_height, from->x, from->y);
 
     int min_distance = INT32_MAX;
     Agent* min_agent = nullptr;
@@ -244,7 +253,7 @@ void Simulation::draw_debug() {
     for (int i = 0; i < m_map.chunks().size(); ++i) {
         DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16,
                            (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16, m_map.m_chunk_width * 16,
-                           m_map.m_chunk_height * 16, LIGHTGRAY);
+                           m_map.m_chunk_height * 16, Fade(LIGHTGRAY, 0.5f));
     }
 
     for (const auto& line : m_debug_lines) {

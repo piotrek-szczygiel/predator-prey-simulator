@@ -14,11 +14,6 @@ int run_graphics() {
     do {
         if (restart) {
             restart = false;
-            if (!config.load()) {
-                fprintf(stderr, "error while reloading config.ini\n");
-                return 4;
-            }
-
             p.reload();
         }
 
@@ -30,12 +25,9 @@ int run_graphics() {
             p.interact();
             p.start_drawing(sim);
 
-            if (config.window_tick_time_ms != -1) {
+            if (!config.window_manual_stepping) {
                 if (p.time() - last_update >= (float)config.window_tick_time_ms / 1000.0f) {
-                    float start = p.time();
                     sim.update();
-                    float elapsed_ms = (p.time() - start) * 1000.0f;
-                    p.title("Predator-Prey simulation    update: %0.2fms", elapsed_ms);
                     last_update = p.time();
                 }
             } else if (p.should_tick()) {
@@ -45,7 +37,7 @@ int run_graphics() {
 #ifndef NDEBUG
             sim.draw_debug();
 #endif
-            p.update_gui_end_drawing();
+            p.update_gui_end_drawing(sim);
         }
     } while (restart);
 

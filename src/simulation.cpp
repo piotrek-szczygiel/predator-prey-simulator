@@ -13,10 +13,10 @@ void Simulation::reset() {
 }
 
 void Simulation::update() {
-#ifndef NDEBUG
-    m_debug_lines.clear();
-    m_debug_breeds.clear();
-#endif
+    if (m_config.runtime_debug_draw) {
+        m_debug_lines.clear();
+        m_debug_breeds.clear();
+    }
 
     auto start = std::chrono::high_resolution_clock::now();
     if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
@@ -124,9 +124,9 @@ Agent* Simulation::spawn_around(AgentType type, int x, int y) {
 void Simulation::update_chicken(Agent* chicken) {
     if (chicken->last_update > 0 && m_tick - chicken->last_update < 3) return;
 
-    if (chicken->energy <= m_config.chicken_hungry_start) {
+    if (chicken->energy <= m_config.chicken_hunger_start) {
         chicken->hungry = true;
-    } else if (chicken->energy >= m_config.chicken_hungry_stop) {
+    } else if (chicken->energy >= m_config.chicken_hunger_stop) {
         chicken->hungry = false;
     }
 
@@ -157,9 +157,7 @@ void Simulation::update_chicken(Agent* chicken) {
                 if (auto kid = spawn_around(AgentType::Chicken, chicken->x, chicken->y)) {
                     chicken->energy -= m_config.sim_energy_breed_loss;
                     partner.agent->energy -= m_config.sim_energy_breed_loss;
-#ifndef NDEBUG
-                    m_debug_breeds.push_back({chicken, partner.agent, kid});
-#endif
+                    if (m_config.runtime_debug_draw) m_debug_breeds.push_back({chicken, partner.agent, kid});
                 }
             } else {
                 move_agent_around(chicken, chicken->x + partner.step.x, chicken->y + partner.step.y);
@@ -174,9 +172,9 @@ void Simulation::update_chicken(Agent* chicken) {
 void Simulation::update_wolf(Agent* wolf) {
     if (wolf->last_update > 0 && m_tick - wolf->last_update < 2) return;
 
-    if (wolf->energy <= m_config.wolf_hungry_start) {
+    if (wolf->energy <= m_config.wolf_hunger_start) {
         wolf->hungry = true;
-    } else if (wolf->energy >= m_config.wolf_hungry_stop) {
+    } else if (wolf->energy >= m_config.wolf_hunger_stop) {
         wolf->hungry = false;
     }
 
@@ -201,9 +199,7 @@ void Simulation::update_wolf(Agent* wolf) {
                 if (auto kid = spawn_around(AgentType::Wolf, wolf->x, wolf->y)) {
                     wolf->energy -= m_config.sim_energy_breed_loss;
                     partner.agent->energy -= m_config.sim_energy_breed_loss;
-#ifndef NDEBUG
-                    m_debug_breeds.push_back({wolf, partner.agent, kid});
-#endif
+                    if (m_config.runtime_debug_draw) m_debug_breeds.push_back({wolf, partner.agent, kid});
                 }
             } else {
                 move_agent_around(wolf, wolf->x + partner.step.x, wolf->y + partner.step.y);
@@ -223,7 +219,7 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
 
     for (const auto& other : m_map.get_nearby_to(from)) {
         int dist = distance({from->x, from->y}, {other->x, other->y});
-        if (dist <= sensor_range) {
+        if (dist <= sensor_range * sensor_range) {
             if (other->type != AgentType::Grass) pathfinder.add_blocker({other->x, other->y});
             if (other->type == to && other->energy >= to_min_energy && dist < min_distance) {
                 min_distance = dist;
@@ -233,51 +229,9 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
     }
 
     if (min_agent) {
-#ifndef NDEBUG
-        m_debug_lines.push_back({from, min_agent});
-#endif
+        if (m_config.runtime_debug_draw) m_debug_lines.push_back({from, min_agent});
         return {pathfinder.get_next_step({min_agent->x, min_agent->y}), min_agent, min_distance};
     }
 
     return {{0, 0}, nullptr};
 }
-
-#ifndef NDEBUG
-#include <raylib.h>
-
-void draw_rect(Agent* a, Color color) {
-    if (a && !a->is_dead()) DrawRectangleV({(float)a->x * 16.0f, (float)a->y * 16.0f}, {16, 16}, Fade(color, 0.3f));
-}
-
-void Simulation::draw_debug() {
-    for (int i = 0; i < m_map.chunks().size(); ++i) {
-        DrawRectangleLines((i % m_map.m_chunk_x_count) * m_map.m_chunk_width * 16,
-                           (i / m_map.m_chunk_y_count) * m_map.m_chunk_height * 16, m_map.m_chunk_width * 16,
-                           m_map.m_chunk_height * 16, Fade(LIGHTGRAY, 0.5f));
-    }
-
-    for (const auto& line : m_debug_lines) {
-        if (line.from->is_dead() || line.to->is_dead()) continue;
-        Color color;
-        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Grass)
-            color = ORANGE;
-        else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf)
-            color = BLACK;
-        else if (line.from->type == AgentType::Wolf && line.to->type == AgentType::Chicken)
-            color = RED;
-        else if (line.from->type == line.to->type)
-            color = VIOLET;
-        else
-            color = WHITE;
-        Vector2 from = {(float)line.from->x * 16 + 8, (float)line.from->y * 16 + 8};
-        Vector2 to = {(float)line.to->x * 16 + 8, (float)line.to->y * 16 + 8};
-        DrawLineEx(from, to, 2.0f, Fade(color, 0.5f));
-    }
-
-    for (const auto& breed : m_debug_breeds) {
-        draw_rect(breed.mom, VIOLET);
-        draw_rect(breed.dad, MAGENTA);
-        draw_rect(breed.kid, YELLOW);
-    }
-}
-#endif

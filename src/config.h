@@ -19,8 +19,9 @@ class Config {
     int window_height{};
     int window_maximized{};
     int window_fps{};
-    int window_tick_time_ms{};
-    int window_manual_stepping{};
+    int runtime_tick_time_ms{};
+    int runtime_manual_stepping{};
+    int runtime_debug_draw{};
 
     int sim_width{};
     int sim_height{};
@@ -28,9 +29,9 @@ class Config {
     int sim_chunk_height{};
 
     int sim_energy_start{};
+    int sim_energy_tick_loss{};
     int sim_energy_breed_needed{};
     int sim_energy_breed_loss{};
-    int sim_energy_tick_loss{};
 
     int grass_spawn_time{};
     int grass_spawn_count{};
@@ -39,13 +40,13 @@ class Config {
     int chicken_spawn_count{};
     int chicken_sensor_range{};
     int chicken_nutrition_value{};
-    int chicken_hungry_start{};
-    int chicken_hungry_stop{};
+    int chicken_hunger_start{};
+    int chicken_hunger_stop{};
 
     int wolf_spawn_count{};
     int wolf_sensor_range{};
-    int wolf_hungry_start{};
-    int wolf_hungry_stop{};
+    int wolf_hunger_start{};
+    int wolf_hunger_stop{};
 
     bool valid = false;
 

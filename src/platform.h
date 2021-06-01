@@ -1,6 +1,9 @@
 #pragma once
 #include <raylib.h>
+#include <chrono>
 #include "simulation.h"
+
+using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::duration<double>>;
 
 class Platform {
    public:
@@ -12,8 +15,10 @@ class Platform {
     bool should_restart();
     bool should_tick();
     void interact();
-    float time();
+    TimePoint time_now();
+    double time_diff_ms(TimePoint t1, TimePoint t2);
     void start_drawing(Simulation& sim);
+    void draw_debug(Simulation& sim);
     void update_gui_end_drawing(const Simulation& sim);
 
    private:

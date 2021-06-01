@@ -18,25 +18,24 @@ int run_graphics() {
         }
 
         Simulation sim(config);
+        sim.update();
+        auto last_update = p.time_now();
 
-        float last_update = p.time();
         while (!p.should_close() && !restart) {
             restart = p.should_restart();
             p.interact();
             p.start_drawing(sim);
 
-            if (!config.window_manual_stepping) {
-                if (p.time() - last_update >= (float)config.window_tick_time_ms / 1000.0f) {
+            if (!config.runtime_manual_stepping) {
+                if (p.time_diff_ms(p.time_now(), last_update) >= (double)config.runtime_tick_time_ms) {
                     sim.update();
-                    last_update = p.time();
+                    last_update = p.time_now();
                 }
             } else if (p.should_tick()) {
                 sim.update();
             }
 
-#ifndef NDEBUG
-            sim.draw_debug();
-#endif
+            if (config.runtime_debug_draw) p.draw_debug(sim);
             p.update_gui_end_drawing(sim);
         }
     } while (restart);

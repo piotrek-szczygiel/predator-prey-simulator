@@ -13,6 +13,17 @@ struct Path {
     int dist;
 };
 
+struct DebugLine {
+    Agent* from;
+    Agent* to;
+};
+
+struct DebugBreed {
+    Agent* mom;
+    Agent* dad;
+    Agent* kid;
+};
+
 class Simulation {
    public:
     explicit Simulation(const Config& config)
@@ -38,10 +49,13 @@ class Simulation {
     int count(AgentType type) const;
 
     std::vector<std::list<Agent>>& chunks() { return m_map.chunks(); }
+    int chunk_x_count() const { return m_map.m_chunk_x_count; }
+    int chunk_y_count() const { return m_map.m_chunk_y_count; }
+    int chunk_width() const { return m_map.m_chunk_width; }
+    int chunk_height() const { return m_map.m_chunk_height; }
 
-#ifndef NDEBUG
-    void draw_debug();
-#endif
+    const std::vector<DebugLine>& debug_lines() const { return m_debug_lines; }
+    const std::vector<DebugBreed>& debug_breeds() const { return m_debug_breeds; }
 
    private:
     int m_width;
@@ -87,18 +101,6 @@ class Simulation {
 
     Path get_path_to_nearest(Agent* from, AgentType to, int sensor_range, int to_min_energy = 0);
 
-#ifndef NDEBUG
-    struct DebugLine {
-        Agent* from;
-        Agent* to;
-    };
     std::vector<DebugLine> m_debug_lines{};
-
-    struct DebugBreed {
-        Agent* mom;
-        Agent* dad;
-        Agent* kid;
-    };
     std::vector<DebugBreed> m_debug_breeds{};
-#endif
 };

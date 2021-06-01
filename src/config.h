@@ -17,8 +17,10 @@ class Config {
 
     int window_width{};
     int window_height{};
+    int window_style{};
     int window_maximized{};
     int window_fps{};
+
     int runtime_tick_time_ms{};
     int runtime_manual_stepping{};
     int runtime_debug_draw{};

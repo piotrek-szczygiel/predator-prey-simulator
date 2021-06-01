@@ -12,7 +12,6 @@ void Platform::start() {
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetWindowMinSize(510, 930);
     if (m_config.window_maximized) MaximizeWindow();
-    SetTargetFPS(m_config.window_fps);
 
     m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                        (float)m_config.sim_height * m_config.tile_size / 2.0f};
@@ -22,8 +21,7 @@ void Platform::start() {
     m_tex_chicken = LoadTexture("assets/chicken.png");
     m_tex_wolf = LoadTexture("assets/wolf.png");
 
-    GuiLoadStyle("assets/candy.rgs");
-    GuiFade(0.8f);
+    reload();
 }
 
 void Platform::stop() {
@@ -40,6 +38,12 @@ void Platform::reload() {
         }
 
         SetTargetFPS(m_config.window_fps);
+        if (m_config.window_style == 0) {
+            GuiLoadStyleDefault();
+        } else {
+            GuiLoadStyle(m_styles[m_config.window_style]);
+        }
+        GuiFade(0.9f);
     }
 }
 
@@ -191,6 +195,9 @@ void Platform::draw_debug(Simulation& sim) {
 }
 
 void Platform::update_gui(const Simulation& sim) {
+    static bool s_style_edit = false;
+    if (s_style_edit) GuiLock();
+
     auto width = (float)m_gui_width;
     float margin = 5.0f;
     float padding = 10.0f;
@@ -246,14 +253,6 @@ void Platform::update_gui(const Simulation& sim) {
                                                    "Manual stepping", m_config.runtime_manual_stepping);
     y += entry_height;
 
-    GuiLabel({x + padding, y + 1.0f, width / 2.0f, entry_height}, TextFormat("FPS: %d", GetFPS()));
-    static bool s_fps_edit = false;
-    if (GuiSpinner({x + width / 3.0f - 2.0f * padding, y, width / 6.0f, entry_height}, "Max", &m_config.window_fps, 0,
-                   999, s_fps_edit)) {
-        s_fps_edit = !s_fps_edit;
-        SetTargetFPS(m_config.window_fps);
-    }
-
     static bool s_tick_edit = false;
     if (!m_config.runtime_manual_stepping) {
         if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Tick (ms)",
@@ -263,12 +262,24 @@ void Platform::update_gui(const Simulation& sim) {
 
     y += button_height + padding;
 
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Statistics");
-    y += padding;
+    GuiLine({x - padding, y, (width + padding * 2.0f - margin) / 2.0f, 1}, "Statistics");
+    GuiLine({x - padding + (width + padding * 2.0f - margin) / 2.0f, y, (width + padding * 2.0f - margin) / 2.0f, 1},
+            "Graphics");
+    y += padding * 2.0f;
 
-    GuiLabel({x + padding, y, width / 2.0f, entry_height}, TextFormat("Update time: %.3fms", sim.update_time()));
-    GuiLabel({x + padding + width / 2.0f, y, width / 2.0f, entry_height},
-             TextFormat("Average: %.3fms", sim.avg_update_time()));
+    GuiLabel({x + width / 2.0f + padding, y + 1.0f, width / 2.0f, entry_height}, TextFormat("FPS: %d", GetFPS()));
+    static bool s_fps_edit = false;
+    if (GuiSpinner({x + 5.0f * width / 6.0f - 2.0f * padding, y, width / 6.0f, entry_height}, "Max",
+                   &m_config.window_fps, 0, 999, s_fps_edit)) {
+        s_fps_edit = !s_fps_edit;
+        reload();
+    }
+
+    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f,
+                                 entry_height};
+    GuiLabel({x + width / 2.0f + padding, y + entry_height + padding, width / 2.0f, entry_height}, "GUI Style");
+
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;
 
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolves: %d", sim.count(AgentType::Wolf)));
@@ -401,4 +412,10 @@ void Platform::update_gui(const Simulation& sim) {
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
                    &m_config.wolf_hunger_stop, 1, 1000, s_wolf_hunger_stop_edit))
         s_wolf_hunger_stop_edit = !s_wolf_hunger_stop_edit;
+
+    GuiUnlock();
+    if (GuiDropdownBox(styles_position, m_style_names, &m_config.window_style, s_style_edit)) {
+        s_style_edit = !s_style_edit;
+        reload();
+    }
 }

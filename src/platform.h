@@ -40,4 +40,18 @@ class Platform {
     bool m_gui_restart = false;
 
     void update_gui(const Simulation& sim);
+
+    const char* m_styles[9] = {
+        "",
+        "assets/styles/ashes.rgs",
+        "assets/styles/bluish.rgs",
+        "assets/styles/candy.rgs",
+        "assets/styles/cherry.rgs",
+        "assets/styles/cyber.rgs",
+        "assets/styles/jungle.rgs",
+        "assets/styles/lavanda.rgs",
+        "assets/styles/terminal.rgs",
+    };
+
+    const char* m_style_names = "Default;Ashes;Bluish;Candy;Cherry;Cyber;Jungle;Lavanda;Terminal";
 };

@@ -31,7 +31,8 @@ class Simulation {
           m_width(config.sim_width),
           m_height(config.sim_height),
           m_map(config.sim_width, config.sim_height, config.sim_chunk_width, config.sim_chunk_height),
-          m_mt19937(m_random_device()) {
+          m_seed(m_random_device()),
+          m_mt19937(m_seed) {
         reset();
     };
 
@@ -44,6 +45,8 @@ class Simulation {
     Tick ticks() const { return m_tick; }
     double update_time() const { return m_update_times.back(); }
     double avg_update_time() const { return m_avg_update_time; }
+
+    unsigned int seed() const { return m_seed; }
 
     Agent* at(int x, int y) const { return m_grid[y][x]; }
     int count(AgentType type) const;
@@ -73,6 +76,7 @@ class Simulation {
     std::vector<std::vector<Agent*>> m_grid{};
 
     std::random_device m_random_device{};
+    unsigned int m_seed;
     std::mt19937 m_mt19937;
 
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }

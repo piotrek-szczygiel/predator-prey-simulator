@@ -101,8 +101,7 @@ void Simulation::move_agent_around(Agent* agent, int x, int y) {
 
 void Simulation::spawn_random_agents(AgentType type, int count) {
     for (int i = 0; i < count; ++i) {
-        while (!spawn_around(type, random_position()))
-            ;
+        spawn_around(type, random_position());
     }
 }
 

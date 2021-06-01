@@ -254,6 +254,8 @@ void Platform::update_gui(const Simulation& sim) {
                                                    "Manual stepping", m_config.runtime_manual_stepping);
     y += entry_height;
 
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Seed: %u", sim.seed()));
+
     static bool s_tick_edit = false;
     if (!m_config.runtime_manual_stepping) {
         if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Tick (ms)",

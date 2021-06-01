@@ -6,19 +6,20 @@ import subprocess
 import sys
 
 
-def collect_files(roots, extensions):
+def collect_files(roots, ext, ignored):
     result = []
     for root in roots:
         for (directory, _, files) in os.walk(root):
-            for f in files:
-                path = os.path.join(directory, f)
-                if pathlib.Path(path).suffix in extensions:
-                    result.append(path)
+            if pathlib.Path(directory).name not in ignored:
+                for file in files:
+                    path = pathlib.Path(os.path.join(directory, file))
+                    if path.suffix in ext:
+                        result.append(path)
 
     return result
 
 
-def format(file):
+def clang_format(file):
     format_base = ["clang-format", "-i"]
     command = format_base + [f]
     print("Formatting", f)
@@ -31,10 +32,10 @@ if __name__ == "__main__":
     try:
         if len(sys.argv) > 1:
             for f in sys.argv[1:]:
-                format(f)
+                clang_format(f)
         else:
-            for f in collect_files(["src"], extensions):
-                format(f)
+            for f in collect_files(["src"], extensions, ["external"]):
+                clang_format(f)
     except OSError as e:
         if e.errno == errno.ENOENT:
             print("Error: clang-format is not installed!")

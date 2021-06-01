@@ -27,9 +27,11 @@ endif()
 
 add_executable(
     ${PROJECT_NAME}
+    "src/external/ini.h"
+    "src/external/raygui.h"
     "src/agent.h"
     "src/config.h"
-    "src/ini.h"
+    "src/config.cpp"
     "src/main.cpp"
     "src/map.h"
     "src/map.cpp"

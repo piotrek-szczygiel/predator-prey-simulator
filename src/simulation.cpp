@@ -236,9 +236,8 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
 #ifndef NDEBUG
 #include <raylib.h>
 
-void draw_rect(Agent* a, Color c) {
-    c.a = 64;
-    if (a && !a->is_dead()) DrawRectangleV({(float)a->x * 16.0f, (float)a->y * 16.0f}, {16, 16}, c);
+void draw_rect(Agent* a, Color color) {
+    if (a && !a->is_dead()) DrawRectangleV({(float)a->x * 16.0f, (float)a->y * 16.0f}, {16, 16}, Fade(color, 0.3f));
 }
 
 void Simulation::draw_debug() {
@@ -250,21 +249,20 @@ void Simulation::draw_debug() {
 
     for (const auto& line : m_debug_lines) {
         if (line.from->is_dead() || line.to->is_dead()) continue;
-        Color c;
+        Color color;
         if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Grass)
-            c = ORANGE;
+            color = ORANGE;
         else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf)
-            c = BLACK;
+            color = BLACK;
         else if (line.from->type == AgentType::Wolf && line.to->type == AgentType::Chicken)
-            c = RED;
+            color = RED;
         else if (line.from->type == line.to->type)
-            c = VIOLET;
+            color = VIOLET;
         else
-            c = WHITE;
-        c.a = 128;
+            color = WHITE;
         Vector2 from = {(float)line.from->x * 16 + 8, (float)line.from->y * 16 + 8};
         Vector2 to = {(float)line.to->x * 16 + 8, (float)line.to->y * 16 + 8};
-        DrawLineEx(from, to, 2.0f, c);
+        DrawLineEx(from, to, 2.0f, Fade(color, 0.5f));
     }
 
     for (const auto& breed : m_debug_breeds) {

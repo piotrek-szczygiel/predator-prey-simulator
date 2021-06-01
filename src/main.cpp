@@ -1,8 +1,8 @@
 #include "platform.h"
 
 int run_graphics() {
-    Config config{};
-    if (!config.load("config.ini")) {
+    Config config("config.ini");
+    if (!config.load()) {
         fprintf(stderr, "error while reading config.ini\n");
         return 3;
     }
@@ -14,7 +14,7 @@ int run_graphics() {
     do {
         if (restart) {
             restart = false;
-            if (!config.load("config.ini")) {
+            if (!config.load()) {
                 fprintf(stderr, "error while reloading config.ini\n");
                 return 4;
             }
@@ -45,7 +45,7 @@ int run_graphics() {
 #ifndef NDEBUG
             sim.draw_debug();
 #endif
-            p.end_drawing();
+            p.update_gui_end_drawing();
         }
     } while (restart);
 
@@ -54,8 +54,8 @@ int run_graphics() {
 }
 
 int run_csv(size_t sim_ticks) {
-    Config config{};
-    if (!config.load("config.ini")) {
+    Config config("config.ini");
+    if (!config.load()) {
         fprintf(stderr, "error while reading config.ini\n");
         return 3;
     }

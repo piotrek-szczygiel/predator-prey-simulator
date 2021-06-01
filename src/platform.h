@@ -12,13 +12,13 @@ class Platform {
     void stop();
     void reload();
     bool should_close();
-    bool should_restart();
+    bool should_restart() const;
     bool should_tick();
     void interact();
     TimePoint time_now();
     double time_diff_ms(TimePoint t1, TimePoint t2);
     void start_drawing(Simulation& sim);
-    void draw_debug(Simulation& sim);
+    void draw_debug(Simulation& sim) const;
     void update_gui_end_drawing(const Simulation& sim);
 
    private:

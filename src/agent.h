@@ -19,4 +19,5 @@ class Agent {
     int energy;
     bool hungry = false;
     Tick last_update;
+    Vec2 random_direction{};
 };

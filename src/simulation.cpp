@@ -13,10 +13,8 @@ void Simulation::reset() {
 }
 
 void Simulation::update() {
-    if (m_config.runtime_debug_draw) {
-        m_debug_lines.clear();
-        m_debug_breeds.clear();
-    }
+    m_debug_lines.clear();
+    m_debug_breeds.clear();
 
     auto start = std::chrono::high_resolution_clock::now();
     if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
@@ -60,7 +58,7 @@ int Simulation::count(AgentType type) const {
 }
 
 void Simulation::add_agent(AgentType type, int x, int y) {
-    Agent* agent = m_map.add(type, x, y, m_config.sim_energy_start, m_tick - rand_int(0, 2));
+    Agent* agent = m_map.add(type, x, y, m_config.sim_energy_start, m_tick - random(0, 2));
     m_grid[y][x] = agent;
 }
 
@@ -103,14 +101,15 @@ void Simulation::move_agent_around(Agent* agent, int x, int y) {
 
 void Simulation::spawn_random_agents(AgentType type, int count) {
     for (int i = 0; i < count; ++i) {
-        while (!spawn_around(type, rand_int(0, m_width - 1), rand_int(0, m_height - 1)))
+        while (!spawn_around(type, random_position()))
             ;
     }
 }
 
-Agent* Simulation::spawn_around(AgentType type, int x, int y) {
-    std::vector<Vec2> possible{{x - 1, y - 1}, {x - 1, y},     {x - 1, y + 1}, {x, y - 1},    {x, y},
-                               {x, y + 1},     {x + 1, y - 1}, {x + 1, y},     {x + 1, y + 1}};
+Agent* Simulation::spawn_around(AgentType type, Vec2 p) {
+    std::vector<Vec2> possible{{p.x - 1, p.y - 1}, {p.x - 1, p.y}, {p.x - 1, p.y + 1},
+                               {p.x, p.y - 1},     {p.x, p.y},     {p.x, p.y + 1},
+                               {p.x + 1, p.y - 1}, {p.x + 1, p.y}, {p.x + 1, p.y + 1}};
     std::shuffle(possible.begin(), possible.end(), m_mt19937);
     for (const auto& pos : possible) {
         if (empty(pos.x, pos.y)) {
@@ -154,7 +153,7 @@ void Simulation::update_chicken(Agent* chicken) {
 
         if (partner.agent) {
             if (partner.dist == 1) {
-                if (auto kid = spawn_around(AgentType::Chicken, chicken->x, chicken->y)) {
+                if (auto kid = spawn_around(AgentType::Chicken, {chicken->x, chicken->y})) {
                     chicken->energy -= m_config.sim_energy_breed_loss;
                     partner.agent->energy -= m_config.sim_energy_breed_loss;
                     if (m_config.runtime_debug_draw) m_debug_breeds.push_back({chicken, partner.agent, kid});
@@ -181,6 +180,7 @@ void Simulation::update_wolf(Agent* wolf) {
     if (wolf->hungry) {
         auto chicken = get_path_to_nearest(wolf, AgentType::Chicken, m_config.wolf_sensor_range);
         if (chicken.agent) {
+            wolf->random_direction = {};
             if (chicken.dist == 1) {
                 chicken.agent->kill();
                 wolf->energy += m_config.chicken_nutrition_value;
@@ -195,8 +195,9 @@ void Simulation::update_wolf(Agent* wolf) {
             get_path_to_nearest(wolf, AgentType::Wolf, m_config.wolf_sensor_range, m_config.sim_energy_breed_needed);
 
         if (partner.agent) {
+            wolf->random_direction = {};
             if (partner.dist == 1) {
-                if (auto kid = spawn_around(AgentType::Wolf, wolf->x, wolf->y)) {
+                if (auto kid = spawn_around(AgentType::Wolf, {wolf->x, wolf->y})) {
                     wolf->energy -= m_config.sim_energy_breed_loss;
                     partner.agent->energy -= m_config.sim_energy_breed_loss;
                     if (m_config.runtime_debug_draw) m_debug_breeds.push_back({wolf, partner.agent, kid});
@@ -208,7 +209,14 @@ void Simulation::update_wolf(Agent* wolf) {
         }
     }
 
-    move_agent_random(wolf);
+    if (wolf->random_direction.x == 0 && wolf->random_direction.y == 0) {
+        wolf->random_direction = random_position();
+    }
+
+    Pathfinder pathfinder(100, m_width, m_height, wolf->x, wolf->y);
+    auto path = pathfinder.get_next_step({wolf->random_direction.x, wolf->random_direction.y});
+    if (distance({wolf->x, wolf->y}, wolf->random_direction) == 1) wolf->random_direction = {};
+    move_agent_around(wolf, wolf->x + path.x, wolf->y + path.y);
 }
 
 Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range, int to_min_energy) {

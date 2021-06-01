@@ -75,14 +75,8 @@ class Simulation {
     std::random_device m_random_device{};
     std::mt19937 m_mt19937;
 
-    int rand_int(int min, int max) {
-        if (min > max) {
-            int tmp = max;
-            max = min;
-            min = tmp;
-        }
-        return ((int)m_mt19937() % (abs(max - min) + 1) + min);
-    }
+    int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
+    Vec2 random_position() { return {random(0, m_width - 1), random(0, m_height - 1)}; }
 
     void add_agent(AgentType type, int x, int y);
     void move_agent(Agent* agent, int x, int y);
@@ -94,7 +88,7 @@ class Simulation {
     bool empty(int x, int y) const { return !out_of_map(x, y) && (m_grid[y][x] == nullptr || m_grid[y][x]->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);
-    Agent* spawn_around(AgentType type, int x, int y);
+    Agent* spawn_around(AgentType type, Vec2 p);
 
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);

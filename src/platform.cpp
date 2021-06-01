@@ -43,7 +43,7 @@ void Platform::reload() {
         } else {
             GuiLoadStyle(m_styles[m_config.window_style]);
         }
-        GuiFade(0.9f);
+        GuiFade(0.95f);
     }
 }
 
@@ -51,7 +51,7 @@ bool Platform::should_close() {
     return WindowShouldClose();
 }
 
-bool Platform::should_restart() {
+bool Platform::should_restart() const {
     return m_gui_restart || IsKeyPressed(KEY_R);
 }
 
@@ -78,7 +78,7 @@ void Platform::interact() {
     float mouse_delta = GetMouseWheelMove();
     float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
     if (new_zoom <= 0.1f) new_zoom = 0.1f;
-    if (new_zoom >= 2.0f) new_zoom = 2.0f;
+    if (new_zoom >= 4.0f) new_zoom = 4.0f;
     m_camera.zoom = new_zoom;
 
     Vector2 current_mouse_pos = GetMousePosition();
@@ -86,7 +86,7 @@ void Platform::interact() {
     m_prev_mouse_pos = current_mouse_pos;
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        (m_gui_closed || current_mouse_pos.x < (int)GetScreenWidth() - m_gui_width)) {
+        (m_gui_closed || (int)current_mouse_pos.x < GetScreenWidth() - m_gui_width)) {
         m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
     }
 
@@ -126,17 +126,20 @@ Color Platform::color_for_type(AgentType type) {
 
 void Platform::start_drawing(Simulation& sim) {
     BeginDrawing();
-    ClearBackground(LIGHTGRAY);
+    ClearBackground({230, 230, 230, 255});
     BeginMode2D(m_camera);
 
     const Color GRASS_COLOR = {99, 171, 63, 255};
     const Rectangle GRASS_REC = {0, 0, (float)sim.width() * m_config.tile_size,
                                  (float)sim.height() * m_config.tile_size};
     DrawRectangleRec(GRASS_REC, GRASS_COLOR);
+    DrawRectangleLinesEx(
+        {-4.0f, -4.0f, (float)sim.width() * m_config.tile_size + 8.0f, (float)sim.height() * m_config.tile_size + 8.0f},
+        4.0f, BEIGE);
 
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
-            if (m_camera.zoom >= 0.5f) {
+            if (m_camera.zoom >= 0.75f) {
                 DrawTextureRec(texture_for_type(agent.type), {0, 0, m_config.tile_size, m_config.tile_size},
                                {(float)agent.x * m_config.tile_size, (float)agent.y * m_config.tile_size}, WHITE);
             } else {
@@ -158,16 +161,14 @@ void draw_rect(Agent* a, Color color) {
     if (a && !a->is_dead()) DrawRectangleV({(float)a->x * 16.0f, (float)a->y * 16.0f}, {16, 16}, Fade(color, 0.3f));
 }
 
-void Platform::draw_debug(Simulation& sim) {
+void Platform::draw_debug(Simulation& sim) const {
+    const int w = sim.chunk_width() * (int)m_config.tile_size;
+    const int h = sim.chunk_height() * (int)m_config.tile_size;
     for (int y = 0; y < sim.chunk_y_count(); ++y) {
         for (int x = 0; x < sim.chunk_x_count(); ++x) {
-            DrawRectangleLines(x * sim.chunk_width() * m_config.tile_size, y * sim.chunk_height() * m_config.tile_size,
-                               sim.chunk_width() * m_config.tile_size, sim.chunk_height() * m_config.tile_size,
-                               Fade(LIGHTGRAY, 0.75f));
+            DrawRectangleLines(x * w, y * h, w, h, Fade(WHITE, 0.25f));
         }
     }
-    DrawRectangleLinesEx({0, 0, (float)sim.width() * m_config.tile_size, (float)sim.height() * m_config.tile_size},
-                         2.0f, DARKGREEN);
 
     for (const auto& line : sim.debug_lines()) {
         if (line.from->is_dead() || line.to->is_dead()) continue;

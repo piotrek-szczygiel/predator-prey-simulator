@@ -10,7 +10,7 @@ class Agent {
         : type(type), x(x), y(y), energy(energy), last_update(last_update) {}
 
     bool is_none() const { return type == AgentType::None; }
-    bool is_dead() const { return energy <= 0; }
+    inline bool is_dead() const { return energy <= 0; }
     void kill() { energy = 0; }
 
     AgentType type;

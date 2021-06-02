@@ -6,6 +6,7 @@
 #include "agent.h"
 #include "config.h"
 #include "map.h"
+#include "pathfinder.h"
 
 struct Path {
     Vec2 step;
@@ -32,7 +33,8 @@ class Simulation {
           m_height(config.sim_height),
           m_map(config.sim_width, config.sim_height, config.sim_chunk_width, config.sim_chunk_height),
           m_seed(m_random_device()),
-          m_mt19937(m_seed) {
+          m_mt19937(m_seed),
+          m_pathfinder(new Pathfinder(m_width, m_height)) {
         reset();
     };
 
@@ -74,6 +76,7 @@ class Simulation {
 
     Map m_map;
     std::vector<std::vector<Agent*>> m_grid{};
+    Pathfinder* m_pathfinder;
 
     std::random_device m_random_device{};
     unsigned int m_seed;

@@ -1,6 +1,5 @@
 #include "simulation.h"
 #include <numeric>
-#include "pathfinder.h"
 
 void Simulation::reset() {
     m_map.clear();
@@ -25,7 +24,7 @@ void Simulation::update() {
     for (auto& chunk : m_map.chunks()) {
         for (auto& agent : chunk) {
             agent.energy -= m_config.sim_energy_tick_loss;
-            if (agent.is_dead()) {
+            if (agent.energy <= 0) {
                 if (&agent == m_grid[agent.y][agent.x]) m_grid[agent.y][agent.x] = nullptr;
                 continue;
             }
@@ -212,22 +211,19 @@ void Simulation::update_wolf(Agent* wolf) {
         wolf->random_direction = random_position();
     }
 
-    Pathfinder pathfinder(100, m_width, m_height, wolf->x, wolf->y);
-    auto path = pathfinder.get_next_step({wolf->random_direction.x, wolf->random_direction.y});
+    auto path =
+        m_pathfinder->get_next_step({wolf->x, wolf->y}, {wolf->random_direction.x, wolf->random_direction.y}, m_grid);
     if (distance({wolf->x, wolf->y}, wolf->random_direction) == 1) wolf->random_direction = {};
     move_agent_around(wolf, wolf->x + path.x, wolf->y + path.y);
 }
 
 Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range, int to_min_energy) {
-    Pathfinder pathfinder(sensor_range, m_width, m_height, from->x, from->y);
-
     int min_distance = INT32_MAX;
     Agent* min_agent = nullptr;
 
     for (const auto& other : m_map.get_nearby_to(from)) {
         int dist = distance({from->x, from->y}, {other->x, other->y});
         if (dist <= sensor_range * sensor_range) {
-            if (other->type != AgentType::Grass) pathfinder.add_blocker({other->x, other->y});
             if (other->type == to && other->energy >= to_min_energy && dist < min_distance) {
                 min_distance = dist;
                 min_agent = other;
@@ -237,7 +233,8 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int sensor_range
 
     if (min_agent) {
         if (m_config.runtime_debug_draw) m_debug_lines.push_back({from, min_agent});
-        return {pathfinder.get_next_step({min_agent->x, min_agent->y}), min_agent, min_distance};
+        return {m_pathfinder->get_next_step({from->x, from->y}, {min_agent->x, min_agent->y}, m_grid), min_agent,
+                min_distance};
     }
 
     return {{0, 0}, nullptr};

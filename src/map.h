@@ -1,7 +1,7 @@
 #pragma once
 #include <raylib.h>
 #include <array>
-#include <cassert>
+#include <cmath>
 #include <list>
 #include <vector>
 #include "agent.h"

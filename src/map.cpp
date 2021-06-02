@@ -89,6 +89,5 @@ int Map::get_chunk(int x, int y) const {
     x /= m_chunk_width;
     y /= m_chunk_height;
     int chunk = y * m_chunk_x_count + x;
-    assert(chunk < m_chunks.size());
     return chunk;
 }

@@ -1,5 +1,8 @@
 # sim
 
+![cmake](https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg)
+
+
 Predator-Prey simulation
 
 ## Requirements

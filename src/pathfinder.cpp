@@ -8,11 +8,12 @@ bool Pathfinder::is_valid(Vec2 pos) const {
     return pos.x >= 0 && pos.x < m_map_size.x && pos.y >= 0 && pos.y < m_map_size.y;
 }
 
-bool Pathfinder::is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid) {
-    return grid[pos.y][pos.x] && grid[pos.y][pos.x]->type != AgentType::Grass;
+bool Pathfinder::is_blocked(Vec2 pos, const Grid& grid) {
+    auto agent = grid.at(pos);
+    return agent && agent->type != AgentType::Grass;
 }
 
-Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const std::vector<std::vector<Agent*>>& grid) {
+Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const Grid& grid) {
     m_nodes.assign(m_nodes.size(), Node{});
 
     int start_id = node_id(start);

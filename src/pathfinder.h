@@ -2,6 +2,7 @@
 #include <tuple>
 #include <vector>
 #include "agent.h"
+#include "grid.h"
 #include "util.h"
 
 struct AStarNode {
@@ -27,7 +28,7 @@ class Pathfinder {
    public:
     explicit Pathfinder(Vec2 map_size) : m_map_size(map_size) { m_nodes.resize(map_size.x * map_size.y); }
 
-    Vec2 get_next_step(Vec2 start, Vec2 target, const std::vector<std::vector<Agent*>>& grid);
+    Vec2 get_next_step(Vec2 start, Vec2 target, const Grid& grid);
 
    private:
     std::vector<Node> m_nodes;
@@ -35,6 +36,6 @@ class Pathfinder {
 
     int node_id(Vec2 pos) const;
     bool is_valid(Vec2 pos) const;
-    static bool is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid);
+    static bool is_blocked(Vec2 pos, const Grid& grid);
     Vec2 trace(Vec2 start, Vec2 target);
 };

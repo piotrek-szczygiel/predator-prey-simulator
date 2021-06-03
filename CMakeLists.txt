@@ -30,6 +30,7 @@ add_executable(
     "src/agent.h"
     "src/config.h"
     "src/config.cpp"
+    "src/grid.h"
     "src/main.cpp"
     "src/map.h"
     "src/map.cpp"

@@ -14,6 +14,8 @@ struct Vec2 {
 
     inline Vec2 operator+(Vec2 other) const { return {other.x + x, other.y + y}; }
     inline Vec2 operator-(Vec2 other) const { return {other.x - x, other.y - y}; }
+    inline bool operator==(Vec2 other) const { return other.x == x && other.y == y; }
+    inline bool operator!=(Vec2 other) const { return other.x != x || other.y != y; }
 };
 
 bool cd_assets();

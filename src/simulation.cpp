@@ -4,7 +4,6 @@
 void Simulation::reset() {
     m_map.clear();
     m_grid.clear();
-    m_grid.resize(m_size.y, std::vector<Agent*>(m_size.x, nullptr));
 
     spawn_random_agents(AgentType::Wolf, m_config.wolf_spawn_count);
     spawn_random_agents(AgentType::Chicken, m_config.chicken_spawn_count);
@@ -18,7 +17,7 @@ void Simulation::update() {
     auto start = std::chrono::high_resolution_clock::now();
 
     for (Agent* agent : m_map.update_chunks()) {
-        if (!agent->is_dead()) at_mut(agent->pos) = agent;
+        if (!agent->is_dead()) m_grid.at_mut(agent->pos) = agent;
     }
 
     m_map.remove_dead();
@@ -32,7 +31,7 @@ void Simulation::update() {
         for (auto& agent : chunk) {
             agent.energy -= m_config.sim_energy_tick_loss;
             if (agent.energy <= 0) {
-                if (&agent == at(agent.pos)) at_mut(agent.pos) = nullptr;
+                if (&agent == m_grid.at(agent.pos)) m_grid.at_mut(agent.pos) = nullptr;
                 continue;
             }
 
@@ -61,23 +60,23 @@ int Simulation::count(AgentType type) const {
 
 void Simulation::add_agent(AgentType type, Vec2 pos) {
     Agent* agent = m_map.add(type, pos, m_config.sim_energy_start, m_tick - random(0, 2));
-    at_mut(pos) = agent;
+    m_grid.at_mut(pos) = agent;
 }
 
 void Simulation::move_agent(Agent* agent, Vec2 pos) {
     Vec2 old = agent->pos;
     m_map.move(agent, pos);
     agent->last_update = m_tick;
-    at_mut(pos) = agent;
-    at_mut(old) = nullptr;
+    m_grid.at_mut(pos) = agent;
+    m_grid.at_mut(old) = nullptr;
 }
 
 bool Simulation::move_agent_if_empty(Agent* agent, Vec2 pos) {
     if (empty(pos)) {
         move_agent(agent, pos);
         return true;
-    } else if (!out_of_map(pos) && at(pos) && at(pos)->type == AgentType::Grass) {
-        at(pos)->kill();
+    } else if (!out_of_map(pos) && m_grid.at(pos) && m_grid.at(pos)->type == AgentType::Grass) {
+        m_grid.at(pos)->kill();
         move_agent(agent, pos);
         return true;
     }
@@ -109,7 +108,7 @@ Agent* Simulation::spawn_around(AgentType type, Vec2 pos) {
         Vec2 new_pos = pos + offset;
         if (empty(new_pos)) {
             add_agent(type, new_pos);
-            return at(new_pos);
+            return m_grid.at(new_pos);
         }
     }
     return nullptr;

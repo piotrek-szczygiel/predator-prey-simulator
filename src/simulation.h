@@ -5,6 +5,7 @@
 #include <vector>
 #include "agent.h"
 #include "config.h"
+#include "grid.h"
 #include "map.h"
 #include "pathfinder.h"
 
@@ -31,6 +32,7 @@ class Simulation {
         : m_config(config),
           m_size({config.sim_width, config.sim_height}),
           m_map(m_size, {config.sim_chunk_width, config.sim_chunk_height}),
+          m_grid(m_size),
           m_seed(2137),
           m_mt19937(m_seed),
           m_pathfinder(Pathfinder(m_size)) {
@@ -47,7 +49,6 @@ class Simulation {
 
     unsigned int seed() const { return m_seed; }
 
-    Agent* at(Vec2 pos) const { return m_grid[pos.y][pos.x]; }
     int count(AgentType type) const;
 
     std::vector<std::deque<Agent>>& chunks() { return m_map.chunks(); }
@@ -69,7 +70,7 @@ class Simulation {
     Tick m_last_grass_spawn = 0;
 
     Map m_map;
-    std::vector<std::vector<Agent*>> m_grid{};
+    Grid m_grid;
     Pathfinder m_pathfinder;
 
     std::random_device m_random_device{};
@@ -79,8 +80,6 @@ class Simulation {
     std::vector<Vec2> m_possible_random_moves{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     std::vector<Vec2> m_possible_spawn_offsets{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
                                                {0, 1},   {1, -1}, {1, 0},  {1, 1}};
-
-    Agent*& at_mut(Vec2 pos) { return m_grid[pos.y][pos.x]; }
 
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
     Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
@@ -92,7 +91,7 @@ class Simulation {
     void move_agent_random(Agent* agent);
 
     bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
-    bool empty(Vec2 pos) const { return !out_of_map(pos) && (!at(pos) || at(pos)->is_dead()); }
+    bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);
     Agent* spawn_around(AgentType type, Vec2 p);

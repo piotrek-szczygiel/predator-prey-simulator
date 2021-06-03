@@ -26,7 +26,7 @@ struct Node {
 
 class Pathfinder {
    public:
-    explicit Pathfinder(Vec2 map_size) : m_map_size(map_size) { m_nodes.resize(map_size.x * map_size.y); }
+    explicit Pathfinder(Vec2 map_size) : m_map_size(map_size) { m_nodes.resize((size_t)map_size.x * map_size.y); }
 
     Vec2 get_next_step(Vec2 start, Vec2 target, const Grid& grid);
 
@@ -34,7 +34,7 @@ class Pathfinder {
     std::vector<Node> m_nodes;
     Vec2 m_map_size;
 
-    int node_id(Vec2 pos) const;
+    Node& at(Vec2 pos) { return m_nodes[(size_t)m_map_size.x * pos.y + pos.x]; }
     bool is_valid(Vec2 pos) const;
     static bool is_blocked(Vec2 pos, const Grid& grid);
     Vec2 trace(Vec2 start, Vec2 target);

@@ -12,8 +12,8 @@ struct Vec2 {
     int x;
     int y;
 
-    inline Vec2 operator+(Vec2 other) const { return {other.x + x, other.y + y}; }
-    inline Vec2 operator-(Vec2 other) const { return {other.x - x, other.y - y}; }
+    inline Vec2 operator+(Vec2 other) const { return {x + other.x, y + other.y}; }
+    inline Vec2 operator-(Vec2 other) const { return {x - other.x, y - other.y}; }
     inline bool operator==(Vec2 other) const { return other.x == x && other.y == y; }
     inline bool operator!=(Vec2 other) const { return other.x != x || other.y != y; }
 };

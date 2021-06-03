@@ -33,7 +33,7 @@ class Simulation {
           m_size({config.sim_width, config.sim_height}),
           m_map(m_size, {config.sim_chunk_width, config.sim_chunk_height}),
           m_grid(m_size),
-          m_seed(2137),
+          m_seed(m_random_device()),
           m_mt19937(m_seed),
           m_pathfinder(Pathfinder(m_size)) {
         reset();
@@ -90,8 +90,8 @@ class Simulation {
     void move_agent_around(Agent* agent, Vec2 pos);
     void move_agent_random(Agent* agent);
 
-    bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
-    bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
+    inline bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
+    inline bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);
     Agent* spawn_around(AgentType type, Vec2 p);

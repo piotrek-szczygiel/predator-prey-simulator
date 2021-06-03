@@ -1,13 +1,5 @@
 #include "pathfinder.h"
 
-bool Pathfinder::is_valid(Vec2 pos) const {
-    return pos.x >= 0 && pos.x < m_map_size.x && pos.y >= 0 && pos.y < m_map_size.y;
-}
-
-bool Pathfinder::is_blocked(Vec2 pos, const Grid& grid) {
-    return grid.at(pos) && grid.at(pos)->type != AgentType::Grass;
-}
-
 Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const Grid& grid) {
     m_nodes.assign(m_nodes.size(), Node{});
 

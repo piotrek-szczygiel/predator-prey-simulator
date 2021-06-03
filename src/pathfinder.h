@@ -15,13 +15,10 @@ struct AStarNodeComparator {
 };
 
 struct Node {
-    Vec2 parent;
-    int g_cost;
-    int f_cost;
-
-    bool closed;
-
-    Node() : parent({-1, -1}), g_cost(-1), f_cost(-1), closed(false) {}
+    Vec2 parent = {-1, -1};
+    int g_cost = -1;
+    int f_cost = -1;
+    bool closed = false;
 };
 
 class Pathfinder {
@@ -34,8 +31,15 @@ class Pathfinder {
     std::vector<Node> m_nodes;
     Vec2 m_map_size;
 
-    Node& at(Vec2 pos) { return m_nodes[(size_t)m_map_size.x * pos.y + pos.x]; }
-    bool is_valid(Vec2 pos) const;
-    static bool is_blocked(Vec2 pos, const Grid& grid);
+    inline Node& at(Vec2 pos) { return m_nodes[(size_t)m_map_size.x * pos.y + pos.x]; }
+
+    inline bool is_valid(Vec2 pos) const {
+        return pos.x >= 0 && pos.x < m_map_size.x && pos.y >= 0 && pos.y < m_map_size.y;
+    }
+
+    static inline bool is_blocked(Vec2 pos, const Grid& grid) {
+        return grid.at(pos) && grid.at(pos)->type != AgentType::Grass;
+    }
+
     Vec2 trace(Vec2 start, Vec2 target);
 };

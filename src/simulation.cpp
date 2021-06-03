@@ -16,6 +16,13 @@ void Simulation::update() {
     m_debug_breeds.clear();
 
     auto start = std::chrono::high_resolution_clock::now();
+
+    for (Agent* agent : m_map.update_chunks()) {
+        if (!agent->is_dead()) at_mut(agent->pos) = agent;
+    }
+
+    m_map.remove_dead();
+
     if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
         spawn_random_agents(AgentType::Grass, m_config.grass_spawn_count);
         m_last_grass_spawn = m_tick;
@@ -37,12 +44,8 @@ void Simulation::update() {
         }
     }
 
-    for (Agent* agent : m_map.update_chunks()) {
-        if (!agent->is_dead()) at_mut(agent->pos) = agent;
-    }
-
-    m_map.remove_dead();
     ++m_tick;
+
     std::chrono::duration<double, std::milli> elapsed = std::chrono::high_resolution_clock::now() - start;
 
     if (m_update_times.size() == 10) {
@@ -82,14 +85,9 @@ bool Simulation::move_agent_if_empty(Agent* agent, Vec2 pos) {
 }
 
 void Simulation::move_agent_random(Agent* agent) {
-    std::vector<Vec2> possible{{agent->pos.x - 1, agent->pos.y},
-                               {agent->pos.x + 1, agent->pos.y},
-                               {agent->pos.x, agent->pos.y - 1},
-                               {agent->pos.x, agent->pos.y + 1}};
-
-    std::shuffle(possible.begin(), possible.end(), m_mt19937);
-    for (const auto& pos : possible) {
-        if (move_agent_if_empty(agent, pos)) break;
+    std::shuffle(m_possible_random_moves.begin(), m_possible_random_moves.end(), m_mt19937);
+    for (const auto& pos : m_possible_random_moves) {
+        if (move_agent_if_empty(agent, agent->pos + pos)) break;
     }
 }
 
@@ -105,15 +103,13 @@ void Simulation::spawn_random_agents(AgentType type, int count) {
     }
 }
 
-Agent* Simulation::spawn_around(AgentType type, Vec2 p) {
-    std::vector<Vec2> possible{{p.x - 1, p.y - 1}, {p.x - 1, p.y}, {p.x - 1, p.y + 1},
-                               {p.x, p.y - 1},     {p.x, p.y},     {p.x, p.y + 1},
-                               {p.x + 1, p.y - 1}, {p.x + 1, p.y}, {p.x + 1, p.y + 1}};
-    std::shuffle(possible.begin(), possible.end(), m_mt19937);
-    for (const auto& pos : possible) {
-        if (empty(pos)) {
-            add_agent(type, pos);
-            return at(pos);
+Agent* Simulation::spawn_around(AgentType type, Vec2 pos) {
+    std::shuffle(m_possible_spawn_offsets.begin(), m_possible_spawn_offsets.end(), m_mt19937);
+    for (const auto& offset : m_possible_spawn_offsets) {
+        Vec2 new_pos = pos + offset;
+        if (empty(new_pos)) {
+            add_agent(type, new_pos);
+            return at(new_pos);
         }
     }
     return nullptr;

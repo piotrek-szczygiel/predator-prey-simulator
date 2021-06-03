@@ -31,7 +31,7 @@ class Simulation {
         : m_config(config),
           m_size({config.sim_width, config.sim_height}),
           m_map(m_size, {config.sim_chunk_width, config.sim_chunk_height}),
-          m_seed(m_random_device()),
+          m_seed(2137),
           m_mt19937(m_seed),
           m_pathfinder(Pathfinder(m_size)) {
         reset();
@@ -50,7 +50,7 @@ class Simulation {
     Agent* at(Vec2 pos) const { return m_grid[pos.y][pos.x]; }
     int count(AgentType type) const;
 
-    std::vector<std::list<Agent>>& chunks() { return m_map.chunks(); }
+    std::vector<std::deque<Agent>>& chunks() { return m_map.chunks(); }
     Vec2 chunk_count() const { return m_map.chunk_count(); }
     Vec2 chunk_size() const { return m_map.chunk_size(); }
 
@@ -75,6 +75,10 @@ class Simulation {
     std::random_device m_random_device{};
     unsigned int m_seed;
     std::mt19937 m_mt19937;
+
+    std::vector<Vec2> m_possible_random_moves{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    std::vector<Vec2> m_possible_spawn_offsets{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
+                                               {0, 1},   {1, -1}, {1, 0},  {1, 1}};
 
     Agent*& at_mut(Vec2 pos) { return m_grid[pos.y][pos.x]; }
 

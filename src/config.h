@@ -1,5 +1,5 @@
 #pragma once
-#include <mINI/ini.h>
+#include <ini.h>
 #include <iostream>
 
 class Config {

@@ -3,7 +3,7 @@
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
-#include <raygui/raygui.h>
+#include <raygui.h>
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);

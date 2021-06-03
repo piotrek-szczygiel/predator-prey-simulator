@@ -1,8 +1,30 @@
 #include "map.h"
 
-std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
+void Map::move(Agent* agent, Vec2 pos) {
+    int old_chunk = get_chunk(agent->pos);
+    int new_chunk = get_chunk(pos);
+
+    if (old_chunk != new_chunk) {
+        m_chunk_updates.push_back({old_chunk, new_chunk, agent});
+    }
+
+    agent->pos = pos;
+}
+
+int Map::count(AgentType type) const {
+    int count = 0;
+    for (const auto& chunk : m_chunks) {
+        for (const auto& agent : chunk) {
+            if (agent.type == type) ++count;
+        }
+    }
+    return count;
+}
+
+SmallVector<Agent*> Map::get_nearby_to(const Agent* agent) {
     int c = get_chunk(agent->pos);
-    std::vector<int> chunks{c};
+    SmallVector<int> chunks;
+    chunks.push_back(c);
 
     int x = agent->pos.x % m_chunk_size.x;
     int y = agent->pos.y % m_chunk_size.y;
@@ -39,8 +61,7 @@ std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
         }
     }
 
-    std::vector<Agent*> agents;
-    agents.reserve(m_reserve);
+    SmallVector<Agent*> agents;
     for (auto& chunk : chunks) {
         if (chunk < 0 || chunk >= m_chunks.size()) continue;
         for (auto& a : m_chunks.at(chunk)) {
@@ -50,35 +71,15 @@ std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
     return agents;
 }
 
-void Map::move(Agent* agent, Vec2 pos) {
-    int old_chunk = get_chunk(agent->pos);
-    int new_chunk = get_chunk(pos);
-
-    if (old_chunk != new_chunk) {
-        m_chunk_updates.push_back({old_chunk, new_chunk, agent});
-    }
-
-    agent->pos = pos;
-}
-
-int Map::count(AgentType type) const {
-    int count = 0;
-    for (const auto& chunk : m_chunks) {
-        for (const auto& agent : chunk) {
-            if (agent.type == type) ++count;
-        }
-    }
-    return count;
-}
-
-std::vector<Agent*> Map::update_chunks() {
-    std::vector<Agent*> updates;
+SmallVector<Agent*> Map::update_chunks() {
+    SmallVector<Agent*> updates;
     for (const auto& update : m_chunk_updates) {
         auto& old_chunk = m_chunks.at(update.old_chunk);
         auto& new_chunk = m_chunks.at(update.new_chunk);
         for (auto it = old_chunk.begin(); it != old_chunk.end(); ++it) {
             if (&*it == update.agent) {
-                new_chunk.splice(new_chunk.end(), old_chunk, it);
+                new_chunk.push_back(*it);
+                old_chunk.erase(it);
                 updates.push_back(&new_chunk.back());
                 break;
             }
@@ -97,11 +98,19 @@ int Map::get_chunk(Vec2 pos) const {
 
 void Map::clear() {
     m_chunks.clear();
-    m_chunks.assign(m_chunk_count.x * m_chunk_count.y, {});
+    m_chunks.assign((size_t)m_chunk_count.x * m_chunk_count.y, {});
 }
 
 void Map::remove_dead() {
-    for (auto& chunk : m_chunks) chunk.remove_if([](const auto& agent) { return agent.is_dead(); });
+    for (auto& chunk : m_chunks) {
+        for (auto it = chunk.begin(); it != chunk.end();) {
+            if (it->is_dead()) {
+                it = chunk.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
 }
 
 Agent* Map::add(AgentType type, Vec2 pos, int energy, Tick last_update) {

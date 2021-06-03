@@ -1,9 +1,7 @@
 #pragma once
 #include <raylib.h>
-#include <array>
 #include <cmath>
-#include <list>
-#include <vector>
+#include <deque>
 #include "agent.h"
 
 struct ChunkUpdate {
@@ -21,7 +19,7 @@ class Map {
         clear();
     }
 
-    std::vector<std::list<Agent>>& chunks() { return m_chunks; }
+    std::vector<std::deque<Agent>>& chunks() { return m_chunks; }
     Vec2 chunk_count() const { return m_chunk_count; }
     Vec2 chunk_size() const { return m_chunk_size; }
 
@@ -30,18 +28,17 @@ class Map {
     void move(Agent* agent, Vec2 pos);
 
     Agent* add(AgentType type, Vec2 pos, int energy, Tick last_update);
-    std::vector<Agent*> get_nearby_to(const Agent* agent);
     int count(AgentType type) const;
-    std::vector<Agent*> update_chunks();
+
+    SmallVector<Agent*> get_nearby_to(const Agent* agent);
+    SmallVector<Agent*> update_chunks();
 
    private:
-    std::vector<std::list<Agent>> m_chunks{};
+    std::vector<std::deque<Agent>> m_chunks{};
     std::vector<ChunkUpdate> m_chunk_updates{};
 
     Vec2 m_chunk_count;
     Vec2 m_chunk_size;
-
-    int m_reserve = m_chunk_size.x * m_chunk_size.y;
 
     int get_chunk(Vec2 pos) const;
 };

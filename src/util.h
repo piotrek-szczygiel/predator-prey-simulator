@@ -1,7 +1,12 @@
 #pragma once
 #include <cstdint>
+#include <small_vector.hpp>
+#include <vector>
 
 using Tick = int64_t;
+
+template <typename T>
+using SmallVector = itlib::small_vector<T, 1024>;
 
 struct Vec2 {
     int x;

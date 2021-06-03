@@ -1,9 +1,5 @@
 #include "pathfinder.h"
 
-Pathfinder::Pathfinder(int map_width, int map_height) : m_map_size({map_width, map_height}) {
-    m_nodes.resize(map_height * map_width);
-}
-
 int Pathfinder::node_id(Vec2 pos) const {
     return m_map_size.x * pos.y + pos.x;
 }
@@ -12,7 +8,7 @@ bool Pathfinder::is_valid(Vec2 pos) const {
     return pos.x >= 0 && pos.x < m_map_size.x && pos.y >= 0 && pos.y < m_map_size.y;
 }
 
-bool Pathfinder::is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid) const {
+bool Pathfinder::is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid) {
     return grid[pos.y][pos.x] && grid[pos.y][pos.x]->type != AgentType::Grass;
 }
 
@@ -28,7 +24,7 @@ Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const std::vector<std::v
 
     open_queue.push({0, start});
     while (!open_queue.empty()) {
-        Vec2 p = open_queue.top().position;
+        Vec2 p = open_queue.top().pos;
         open_queue.pop();
 
         m_nodes[node_id(p)].closed = true;

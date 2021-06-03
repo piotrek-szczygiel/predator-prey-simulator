@@ -6,7 +6,7 @@
 
 struct AStarNode {
     int f_cost;
-    Vec2 position;
+    Vec2 pos;
 };
 
 struct AStarNodeComparator {
@@ -25,16 +25,16 @@ struct Node {
 
 class Pathfinder {
    public:
-    Pathfinder(int map_width, int map_height);
+    explicit Pathfinder(Vec2 map_size) : m_map_size(map_size) { m_nodes.resize(map_size.x * map_size.y); }
+
     Vec2 get_next_step(Vec2 start, Vec2 target, const std::vector<std::vector<Agent*>>& grid);
 
    private:
     std::vector<Node> m_nodes;
-
     Vec2 m_map_size;
 
     int node_id(Vec2 pos) const;
     bool is_valid(Vec2 pos) const;
-    bool is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid) const;
+    static bool is_blocked(Vec2 pos, const std::vector<std::vector<Agent*>>& grid);
     Vec2 trace(Vec2 start, Vec2 target);
 };

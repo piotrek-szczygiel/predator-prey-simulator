@@ -1,40 +1,41 @@
 #include "map.h"
 
 std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
-    int c = get_chunk(agent->x, agent->y);
-    std::vector<int> chunks;
-    chunks.push_back(c);
+    int c = get_chunk(agent->pos);
+    std::vector<int> chunks{c};
 
-    int x = agent->x % m_chunk_width;
-    int y = agent->y % m_chunk_height;
+    int x = agent->pos.x % m_chunk_size.x;
+    int y = agent->pos.y % m_chunk_size.y;
 
-    if (x < m_chunk_width / 2) {
-        if (y < m_chunk_height / 2) {  // left-top
-            if (c % m_chunk_x_count != 0) {
+    int c_x = m_chunk_count.x;
+
+    if (x < m_chunk_size.x / 2) {
+        if (y < m_chunk_size.y / 2) {  // left-top
+            if (c % c_x != 0) {
                 chunks.push_back(c - 1);
-                chunks.push_back(c - m_chunk_x_count - 1);
+                chunks.push_back(c - c_x - 1);
             }
-            chunks.push_back(c - m_chunk_x_count);
+            chunks.push_back(c - c_x);
         } else {  // left-bottom
-            if (c % m_chunk_x_count != 0) {
+            if (c % c_x != 0) {
                 chunks.push_back(c - 1);
-                chunks.push_back(c + m_chunk_x_count - 1);
+                chunks.push_back(c + c_x - 1);
             }
-            chunks.push_back(c + m_chunk_x_count);
+            chunks.push_back(c + c_x);
         }
     } else {
-        if (y < m_chunk_height / 2) {  // right-top
-            if ((c + 1) % m_chunk_x_count != 0) {
+        if (y < m_chunk_size.y / 2) {  // right-top
+            if ((c + 1) % c_x != 0) {
                 chunks.push_back(c + 1);
-                chunks.push_back(c - m_chunk_x_count + 1);
+                chunks.push_back(c - c_x + 1);
             }
-            chunks.push_back(c - m_chunk_x_count);
+            chunks.push_back(c - c_x);
         } else {  // right-bottom
-            if ((c + 1) % m_chunk_x_count != 0) {
+            if ((c + 1) % c_x != 0) {
                 chunks.push_back(c + 1);
-                chunks.push_back(c + m_chunk_x_count + 1);
+                chunks.push_back(c + c_x + 1);
             }
-            chunks.push_back(c + m_chunk_x_count);
+            chunks.push_back(c + c_x);
         }
     }
 
@@ -48,17 +49,18 @@ std::vector<Agent*> Map::get_nearby_to(const Agent* agent) {
     }
     return agents;
 }
-void Map::move(Agent* agent, int x, int y) {
-    int old_chunk = get_chunk(agent->x, agent->y);
-    int new_chunk = get_chunk(x, y);
+
+void Map::move(Agent* agent, Vec2 pos) {
+    int old_chunk = get_chunk(agent->pos);
+    int new_chunk = get_chunk(pos);
 
     if (old_chunk != new_chunk) {
         m_chunk_updates.push_back({old_chunk, new_chunk, agent});
     }
 
-    agent->x = x;
-    agent->y = y;
+    agent->pos = pos;
 }
+
 int Map::count(AgentType type) const {
     int count = 0;
     for (const auto& chunk : m_chunks) {
@@ -68,6 +70,7 @@ int Map::count(AgentType type) const {
     }
     return count;
 }
+
 std::vector<Agent*> Map::update_chunks() {
     std::vector<Agent*> updates;
     for (const auto& update : m_chunk_updates) {
@@ -85,9 +88,22 @@ std::vector<Agent*> Map::update_chunks() {
     m_chunk_updates.clear();
     return updates;
 }
-int Map::get_chunk(int x, int y) const {
-    x /= m_chunk_width;
-    y /= m_chunk_height;
-    int chunk = y * m_chunk_x_count + x;
-    return chunk;
+
+int Map::get_chunk(Vec2 pos) const {
+    pos.x /= m_chunk_size.x;
+    pos.y /= m_chunk_size.y;
+    return pos.y * m_chunk_count.x + pos.x;
+}
+
+void Map::clear() {
+    m_chunks.clear();
+    m_chunks.assign(m_chunk_count.x * m_chunk_count.y, {});
+}
+
+void Map::remove_dead() {
+    for (auto& chunk : m_chunks) chunk.remove_if([](const auto& agent) { return agent.is_dead(); });
+}
+
+Agent* Map::add(AgentType type, Vec2 pos, int energy, Tick last_update) {
+    return &m_chunks.at(get_chunk(pos)).emplace_back(type, pos, energy, last_update);
 }

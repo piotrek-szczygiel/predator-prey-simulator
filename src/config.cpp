@@ -1,5 +1,10 @@
 #include "config.h"
 
+bool Config::write() {
+    for (const auto& link : m_links) m_ini[link.section][link.name] = std::to_string(link.output);
+    return m_file.write(m_ini, true);
+}
+
 void Config::set(int& output, const char* section, const char* name) {
     std::string str_value = m_ini.get(section).get(name);
     if (str_value.empty()) {

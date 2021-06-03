@@ -1,17 +1,13 @@
 #pragma once
+#include <mINI/ini.h>
 #include <iostream>
-#include "external/ini.h"
 
 class Config {
    public:
     explicit Config(const char* filename) : m_filename(filename), m_file(filename) {}
 
+    bool write();
     bool load();
-
-    bool write() {
-        for (const auto& link : m_links) m_ini[link.section][link.name] = std::to_string(link.output);
-        return m_file.write(m_ini, true);
-    }
 
     float tile_size{};
 

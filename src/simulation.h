@@ -29,42 +29,36 @@ class Simulation {
    public:
     explicit Simulation(const Config& config)
         : m_config(config),
-          m_width(config.sim_width),
-          m_height(config.sim_height),
-          m_map(config.sim_width, config.sim_height, config.sim_chunk_width, config.sim_chunk_height),
+          m_size({config.sim_width, config.sim_height}),
+          m_map(m_size, {config.sim_chunk_width, config.sim_chunk_height}),
           m_seed(m_random_device()),
           m_mt19937(m_seed),
-          m_pathfinder(new Pathfinder(m_width, m_height)) {
+          m_pathfinder(Pathfinder(m_size)) {
         reset();
     };
 
     void reset();
     void update();
 
-    int width() const { return m_width; }
-    int height() const { return m_height; }
-
+    Vec2 size() { return m_size; }
     Tick ticks() const { return m_tick; }
     double update_time() const { return m_update_times.back(); }
     double avg_update_time() const { return m_avg_update_time; }
 
     unsigned int seed() const { return m_seed; }
 
-    Agent* at(int x, int y) const { return m_grid[y][x]; }
+    Agent* at(Vec2 pos) const { return m_grid[pos.y][pos.x]; }
     int count(AgentType type) const;
 
     std::vector<std::list<Agent>>& chunks() { return m_map.chunks(); }
-    int chunk_x_count() const { return m_map.m_chunk_x_count; }
-    int chunk_y_count() const { return m_map.m_chunk_y_count; }
-    int chunk_width() const { return m_map.m_chunk_width; }
-    int chunk_height() const { return m_map.m_chunk_height; }
+    Vec2 chunk_count() const { return m_map.chunk_count(); }
+    Vec2 chunk_size() const { return m_map.chunk_size(); }
 
     const std::vector<DebugLine>& debug_lines() const { return m_debug_lines; }
     const std::vector<DebugBreed>& debug_breeds() const { return m_debug_breeds; }
 
    private:
-    int m_width;
-    int m_height;
+    Vec2 m_size;
 
     Tick m_tick = 0;
     std::vector<double> m_update_times{};
@@ -76,23 +70,25 @@ class Simulation {
 
     Map m_map;
     std::vector<std::vector<Agent*>> m_grid{};
-    Pathfinder* m_pathfinder;
+    Pathfinder m_pathfinder;
 
     std::random_device m_random_device{};
     unsigned int m_seed;
     std::mt19937 m_mt19937;
 
+    Agent*& at_mut(Vec2 pos) { return m_grid[pos.y][pos.x]; }
+
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
-    Vec2 random_position() { return {random(0, m_width - 1), random(0, m_height - 1)}; }
+    Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
 
-    void add_agent(AgentType type, int x, int y);
-    void move_agent(Agent* agent, int x, int y);
-    bool move_agent_if_empty(Agent* agent, int x, int y);
+    void add_agent(AgentType type, Vec2 pos);
+    void move_agent(Agent* agent, Vec2 pos);
+    bool move_agent_if_empty(Agent* agent, Vec2 pos);
+    void move_agent_around(Agent* agent, Vec2 pos);
     void move_agent_random(Agent* agent);
-    void move_agent_around(Agent* agent, int x, int y);
 
-    bool out_of_map(int x, int y) const { return x < 0 || y < 0 || x >= m_width || y >= m_height; }
-    bool empty(int x, int y) const { return !out_of_map(x, y) && (m_grid[y][x] == nullptr || m_grid[y][x]->is_dead()); }
+    bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
+    bool empty(Vec2 pos) const { return !out_of_map(pos) && (!at(pos) || at(pos)->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);
     Agent* spawn_around(AgentType type, Vec2 p);

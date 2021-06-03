@@ -27,8 +27,6 @@ endif()
 
 add_executable(
     ${PROJECT_NAME}
-    "src/external/ini.h"
-    "src/external/raygui.h"
     "src/agent.h"
     "src/config.h"
     "src/config.cpp"
@@ -44,4 +42,5 @@ add_executable(
     "src/util.h"
     "src/util.cpp")
 
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "third_party")
 target_link_libraries(${PROJECT_NAME} raylib)

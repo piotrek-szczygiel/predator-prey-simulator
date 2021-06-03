@@ -44,7 +44,7 @@ int run_graphics() {
     return 0;
 }
 
-int run_csv(size_t sim_ticks) {
+int run_csv(Tick sim_ticks) {
     Config config("config.ini");
     if (!config.load()) {
         fprintf(stderr, "error while reading config.ini\n");
@@ -67,11 +67,11 @@ int run_csv(size_t sim_ticks) {
 
 int main(int argc, char** argv) {
     bool graphics = argc == 1;
-    size_t sim_ticks = 0;
+    Tick sim_ticks = 0;
 
     if (argc == 2) {
         char* p_end;
-        sim_ticks = std::strtoull(argv[1], &p_end, 10);
+        sim_ticks = std::strtoll(argv[1], &p_end, 10);
         if (p_end == argv[1]) {
             fprintf(stderr, "usage: %s simulation_ticks\n", argv[0]);
             return 1;

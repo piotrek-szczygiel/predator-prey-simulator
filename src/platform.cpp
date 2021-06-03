@@ -1,10 +1,9 @@
 #include "platform.h"
-#include <raylib.h>
 #include <raymath.h>
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
-#include "external/raygui.h"
+#include <raygui/raygui.h>
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
@@ -130,20 +129,21 @@ void Platform::start_drawing(Simulation& sim) {
     BeginMode2D(m_camera);
 
     const Color GRASS_COLOR = {99, 171, 63, 255};
-    const Rectangle GRASS_REC = {0, 0, (float)sim.width() * m_config.tile_size,
-                                 (float)sim.height() * m_config.tile_size};
+    const Rectangle GRASS_REC = {0, 0, (float)sim.size().x * m_config.tile_size,
+                                 (float)sim.size().y * m_config.tile_size};
     DrawRectangleRec(GRASS_REC, GRASS_COLOR);
-    DrawRectangleLinesEx(
-        {-4.0f, -4.0f, (float)sim.width() * m_config.tile_size + 8.0f, (float)sim.height() * m_config.tile_size + 8.0f},
-        4.0f, BEIGE);
+    DrawRectangleLinesEx({-4.0f, -4.0f, (float)sim.size().x * m_config.tile_size + 8.0f,
+                          (float)sim.size().y * m_config.tile_size + 8.0f},
+                         4.0f, BEIGE);
 
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
             if (m_camera.zoom >= 0.75f) {
                 DrawTextureRec(texture_for_type(agent.type), {0, 0, m_config.tile_size, m_config.tile_size},
-                               {(float)agent.x * m_config.tile_size, (float)agent.y * m_config.tile_size}, WHITE);
+                               {(float)agent.pos.x * m_config.tile_size, (float)agent.pos.y * m_config.tile_size},
+                               WHITE);
             } else {
-                DrawRectangleRec({(float)agent.x * m_config.tile_size, (float)agent.y * m_config.tile_size,
+                DrawRectangleRec({(float)agent.pos.x * m_config.tile_size, (float)agent.pos.y * m_config.tile_size,
                                   m_config.tile_size, m_config.tile_size},
                                  color_for_type(agent.type));
             }
@@ -158,14 +158,15 @@ void Platform::update_gui_end_drawing(const Simulation& sim) {
 }
 
 void draw_rect(Agent* a, Color color) {
-    if (a && !a->is_dead()) DrawRectangleV({(float)a->x * 16.0f, (float)a->y * 16.0f}, {16, 16}, Fade(color, 0.3f));
+    if (a && !a->is_dead())
+        DrawRectangleV({(float)a->pos.x * 16.0f, (float)a->pos.y * 16.0f}, {16, 16}, Fade(color, 0.3f));
 }
 
 void Platform::draw_debug(Simulation& sim) const {
-    const int w = sim.chunk_width() * (int)m_config.tile_size;
-    const int h = sim.chunk_height() * (int)m_config.tile_size;
-    for (int y = 0; y < sim.chunk_y_count(); ++y) {
-        for (int x = 0; x < sim.chunk_x_count(); ++x) {
+    const int w = sim.chunk_size().x * (int)m_config.tile_size;
+    const int h = sim.chunk_size().y * (int)m_config.tile_size;
+    for (int y = 0; y < sim.chunk_count().y; ++y) {
+        for (int x = 0; x < sim.chunk_count().x; ++x) {
             DrawRectangleLines(x * w, y * h, w, h, Fade(WHITE, 0.25f));
         }
     }
@@ -183,8 +184,8 @@ void Platform::draw_debug(Simulation& sim) const {
             color = VIOLET;
         else
             color = WHITE;
-        Vector2 from = {(float)line.from->x * 16 + 8, (float)line.from->y * 16 + 8};
-        Vector2 to = {(float)line.to->x * 16 + 8, (float)line.to->y * 16 + 8};
+        Vector2 from = {(float)line.from->pos.x * 16 + 8, (float)line.from->pos.y * 16 + 8};
+        Vector2 to = {(float)line.to->pos.x * 16 + 8, (float)line.to->pos.y * 16 + 8};
         DrawLineEx(from, to, 2.0f, Fade(color, 0.5f));
     }
 

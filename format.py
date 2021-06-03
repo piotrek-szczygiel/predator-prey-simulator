@@ -6,15 +6,14 @@ import subprocess
 import sys
 
 
-def collect_files(roots, ext, ignored):
+def collect_files(roots, ext):
     result = []
     for root in roots:
         for (directory, _, files) in os.walk(root):
-            if pathlib.Path(directory).name not in ignored:
-                for file in files:
-                    path = pathlib.Path(os.path.join(directory, file))
-                    if path.suffix in ext:
-                        result.append(path)
+            for file in files:
+                path = pathlib.Path(os.path.join(directory, file))
+                if path.suffix in ext:
+                    result.append(path)
 
     return result
 
@@ -34,7 +33,7 @@ if __name__ == "__main__":
             for f in sys.argv[1:]:
                 clang_format(f)
         else:
-            for f in collect_files(["src"], extensions, ["external"]):
+            for f in collect_files(["src"], extensions):
                 clang_format(f)
     except OSError as e:
         if e.errno == errno.ENOENT:

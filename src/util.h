@@ -20,3 +20,4 @@ struct Vec2 {
 
 bool cd_assets();
 int distance(Vec2 p, Vec2 v);
+uint32_t seed_from_str(const std::string& str);

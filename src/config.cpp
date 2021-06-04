@@ -1,7 +1,10 @@
 #include "config.h"
 
 bool Config::write() {
-    for (const auto& link : m_links) m_ini[link.section][link.name] = std::to_string(link.output);
+    for (const auto& link : m_links) {
+        m_ini[link.section][link.name] = std::to_string(link.output);
+    }
+    m_ini["seed"]["seed"] = seed;
     return m_file.write(m_ini, true);
 }
 
@@ -44,6 +47,9 @@ bool Config::load() {
     set(runtime_tick_time_ms, "runtime", "tick_time_ms");
     set(runtime_manual_stepping, "runtime", "manual_stepping");
     set(runtime_debug_draw, "runtime", "debug_draw");
+
+    set(seed_manual, "seed", "manual");
+    std::snprintf(seed, SEED_SIZE, "%s", m_ini.get("seed").get("seed").c_str());
 
     set(sim_width, "simulation", "width");
     set(sim_height, "simulation", "height");

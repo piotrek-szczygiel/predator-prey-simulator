@@ -9,6 +9,8 @@ class Config {
     bool write();
     bool load();
 
+    static const int SEED_SIZE = 16;
+
     float tile_size{};
 
     int window_width{};
@@ -20,6 +22,9 @@ class Config {
     int runtime_tick_time_ms{};
     int runtime_manual_stepping{};
     int runtime_debug_draw{};
+
+    int seed_manual{};
+    char seed[SEED_SIZE]{};
 
     int sim_width{};
     int sim_height{};

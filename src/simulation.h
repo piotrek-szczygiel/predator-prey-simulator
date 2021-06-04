@@ -33,7 +33,8 @@ class Simulation {
           m_size({config.sim_width, config.sim_height}),
           m_map(m_size, {config.sim_chunk_width, config.sim_chunk_height}),
           m_grid(m_size),
-          m_seed(m_random_device()),
+          m_random_device(),
+          m_seed(config.seed_manual ? seed_from_str(config.seed) : m_random_device()),
           m_mt19937(m_seed),
           m_pathfinder(Pathfinder(m_size)) {
         reset();
@@ -76,8 +77,8 @@ class Simulation {
     Grid m_grid;
     Pathfinder m_pathfinder;
 
-    std::random_device m_random_device{};
-    unsigned int m_seed;
+    std::random_device m_random_device;
+    uint32_t m_seed;
     std::mt19937 m_mt19937;
 
     std::vector<Vec2> m_possible_random_moves{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};

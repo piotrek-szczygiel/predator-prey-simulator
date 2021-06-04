@@ -1,4 +1,5 @@
 #include "util.h"
+#include <CRC.h>
 #include <filesystem>
 
 bool cd_assets() {
@@ -20,4 +21,16 @@ bool cd_assets() {
 
 int distance(Vec2 p, Vec2 v) {
     return (p.x - v.x) * (p.x - v.x) + (p.y - v.y) * (p.y - v.y);
+}
+
+uint32_t seed_from_str(const std::string& str) {
+    if (str.empty()) {
+        return 0;
+    }
+
+    if (std::find_if(str.begin(), str.end(), [](unsigned char c) { return !std::isdigit(c); }) == str.end()) {
+        return std::stoul(str);
+    }
+
+    return CRC::Calculate(str.c_str(), str.size(), CRC::CRC_32());
 }

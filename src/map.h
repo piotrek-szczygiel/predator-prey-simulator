@@ -32,7 +32,7 @@ class Map {
     int count(AgentType type) const;
 
     SmallVector<Agent*> get_nearby_to(const Agent* agent);
-    SmallVector<Agent*> update_chunks();
+    void update_chunks();
 
    private:
     std::vector<std::list<Agent>> m_chunks{};

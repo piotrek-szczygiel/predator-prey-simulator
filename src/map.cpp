@@ -71,22 +71,19 @@ SmallVector<Agent*> Map::get_nearby_to(const Agent* agent) {
     return agents;
 }
 
-SmallVector<Agent*> Map::update_chunks() {
-    SmallVector<Agent*> updates;
+void Map::update_chunks() {
     for (const auto& update : m_chunk_updates) {
         auto& old_chunk = m_chunks.at(update.old_chunk);
         auto& new_chunk = m_chunks.at(update.new_chunk);
         for (auto it = old_chunk.begin(); it != old_chunk.end(); ++it) {
             if (&*it == update.agent) {
                 new_chunk.splice(new_chunk.end(), old_chunk, it);
-                updates.push_back(&new_chunk.back());
                 break;
             }
         }
     }
 
     m_chunk_updates.clear();
-    return updates;
 }
 
 int Map::get_chunk(Vec2 pos) const {

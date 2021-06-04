@@ -16,10 +16,7 @@ void Simulation::update() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (Agent* agent : m_map.update_chunks()) {
-        if (!agent->is_dead()) m_grid.at_mut(agent->pos) = agent;
-    }
-
+    m_map.update_chunks();
     m_map.remove_dead();
 
     if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
@@ -45,13 +42,18 @@ void Simulation::update() {
 
     ++m_tick;
 
-    std::chrono::duration<double, std::milli> elapsed = std::chrono::high_resolution_clock::now() - start;
+    auto end = std::chrono::high_resolution_clock::now();
 
-    if (m_update_times.size() == 10) {
-        m_avg_update_time = std::accumulate(m_update_times.begin(), m_update_times.end(), 0.0) / 10.0;
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    m_update_times.push_back(elapsed.count());
+
+    std::chrono::duration<double, std::milli> average_elapsed = end - m_last_average;
+    if (average_elapsed.count() >= 500.0f) {
+        m_last_average = end;
+        m_avg_update_time =
+            std::accumulate(m_update_times.begin(), m_update_times.end(), 0.0) / (double)m_update_times.size();
         m_update_times.clear();
     }
-    m_update_times.push_back(elapsed.count());
 }
 
 int Simulation::count(AgentType type) const {

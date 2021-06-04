@@ -8,8 +8,7 @@
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
-    SetWindowState(FLAG_WINDOW_RESIZABLE);
-    SetWindowMinSize(510, 930);
+    SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(KEY_Q);
     if (m_config.window_maximized) MaximizeWindow();
 
@@ -81,7 +80,7 @@ Color Platform::color_for_type(AgentType type) {
     switch (type) {
         case AgentType::Grass: return LIME;
         case AgentType::Chicken: return ORANGE;
-        case AgentType::Wolf: return GRAY;
+        case AgentType::Wolf: return DARKGRAY;
         default: return BLACK;
     }
 }
@@ -356,6 +355,9 @@ void Platform::update_gui(const Simulation& sim) {
     Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f,
                                  entry_height};
     GuiLabel({x + width / 2.0f + padding, y + entry_height + padding, width / 2.0f, entry_height}, "GUI Style");
+
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Current tick: %u", sim.ticks()));
+    y += entry_height;
 
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;

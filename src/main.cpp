@@ -53,11 +53,16 @@ int run_csv(Tick sim_ticks) {
     Simulation sim(config);
 
     printf("%u\n", sim.seed());
-    printf("chicken,wolf,grass\n");
+    printf("chicken,wolf\n");
 
     while (sim.ticks() < sim_ticks) {
         sim.update();
-        printf("%d,%d,%d\n", sim.count(AgentType::Chicken), sim.count(AgentType::Wolf), sim.count(AgentType::Grass));
+
+        int chicken = sim.count(AgentType::Chicken);
+        int wolf = sim.count(AgentType::Wolf);
+        printf("%d,%d\n", chicken, wolf);
+
+        if (wolf < 2) break;
     }
 
     return 0;

@@ -14,9 +14,8 @@ void Map::move(Agent* agent, Vec2 pos) {
 int Map::count(AgentType type) const {
     size_t count = 0;
     for (const auto& chunk : m_chunks) {
-        for (const auto& agent : chunk) {
-            count += std::count_if(chunk.begin(), chunk.end(), [type](const auto& a) { return a.type == type; });
-        }
+        count +=
+            std::count_if(chunk.begin(), chunk.end(), [type](const auto& a) { return a.type == type && !a.is_dead(); });
     }
     return (int)count;
 }

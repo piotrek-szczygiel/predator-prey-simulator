@@ -88,8 +88,9 @@ class Simulation {
 
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
     Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
+    AgentGenes mutate_genes(AgentGenes mom, AgentGenes dad);
 
-    void add_agent(AgentType type, Vec2 pos);
+    void add_agent(AgentType type, AgentGenes genes, Vec2 pos);
     void move_agent(Agent* agent, Vec2 pos);
     bool move_agent_if_empty(Agent* agent, Vec2 pos);
     void move_agent_around(Agent* agent, Vec2 pos);
@@ -97,13 +98,14 @@ class Simulation {
 
     inline bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
 
-    void spawn_random_agents(AgentType type, int count);
-    Agent* spawn_around(AgentType type, Vec2 p);
+    void spawn_random_agents(AgentType type, AgentGenes genes, int count);
+    Agent* spawn_around(AgentType type, AgentGenes genes, Vec2 p);
+    void breed(Agent *mom, Agent *dad);
 
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);
 
-    Path get_path_to_nearest(Agent* from, AgentType to, int sensor_range, int to_min_energy = 0);
+    Path get_path_to_nearest(Agent* from, AgentType to, int to_min_energy = 0);
 
     std::vector<DebugLine> m_debug_lines{};
     std::vector<DebugBreed> m_debug_breeds{};

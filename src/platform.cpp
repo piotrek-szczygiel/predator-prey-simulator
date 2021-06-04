@@ -231,7 +231,7 @@ void Platform::update_gui(const Simulation& sim) {
     if (m_hl_agent && m_hl_agent->is_dead()) m_hl_agent = nullptr;
     if (m_hl_agent) {
         float i_width = 150.0f;
-        float i_height = 150.0f;
+        float i_height = 180.0f;
 
         if (GuiWindowBox({margin, margin, i_width, i_height}, GuiIconText(RICON_INFO, "Agent info"))) {
             m_hl_agent = nullptr;
@@ -252,10 +252,11 @@ void Platform::update_gui(const Simulation& sim) {
             GuiLabel({x, y, i_width, entry_height}, TextFormat("Hungry: %s", m_hl_agent->hungry ? "yes" : "no"));
             y += entry_height;
 
-            if (m_hl_agent->type == AgentType::Wolf && m_hl_agent->random_direction != Vec2{}) {
-                GuiLabel({x, y, i_width, entry_height}, TextFormat("Random dir: %d, %d", m_hl_agent->random_direction.x,
-                                                                   m_hl_agent->random_direction.y));
-            }
+            GuiLabel({x, y, i_width, entry_height}, TextFormat("Offsprings: %d", m_hl_agent->genes.offsprings));
+            y += entry_height;
+
+            GuiLabel({x, y, i_width, entry_height}, TextFormat("Sensor range: %d", m_hl_agent->genes.sensor_range));
+            y += entry_height;
         }
     }
 
@@ -337,7 +338,7 @@ void Platform::update_gui(const Simulation& sim) {
         }
     }
 
-    y += button_height + padding;
+    y += button_height + padding * 2.0f;
 
     GuiLine({x - padding, y, (width + padding * 2.0f - margin) / 2.0f, 1}, "Statistics");
     GuiLine({x - padding + (width + padding * 2.0f - margin) / 2.0f, y, (width + padding * 2.0f - margin) / 2.0f, 1},
@@ -352,8 +353,7 @@ void Platform::update_gui(const Simulation& sim) {
         reload();
     }
 
-    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f,
-                                 entry_height};
+    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f, entry_height};
     GuiLabel({x + width / 2.0f + padding, y + entry_height + padding, width / 2.0f, entry_height}, "GUI Style");
 
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Current tick: %u", sim.ticks()));
@@ -362,14 +362,24 @@ void Platform::update_gui(const Simulation& sim) {
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolf count: %d", sim.count(AgentType::Wolf)));
-    y += entry_height;
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolves: %d  Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
+    y += entry_height + padding * 2.0f;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Chicken count: %d", sim.count(AgentType::Chicken)));
-    y += entry_height;
+    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Genes");
+    y += padding * 2.0f;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Grass count: %d", sim.count(AgentType::Grass)));
-    y += entry_height + padding * 4.0f;
+    static bool s_genes_max_offsprings = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Max offsprings",
+                   &m_config.genes_max_offsprings, 1, 8, s_genes_max_offsprings)) {
+        s_genes_max_offsprings = !s_genes_max_offsprings;
+    }
+
+    static bool s_genes_max_sensor_range = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Max sensor",
+                   &m_config.genes_max_sensor_range, 1, 100, s_genes_max_sensor_range)) {
+        s_genes_max_sensor_range = !s_genes_max_sensor_range;
+    }
+    y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Simulation");
     y += padding * 2.0f;
@@ -402,29 +412,29 @@ void Platform::update_gui(const Simulation& sim) {
 
     static bool s_energy_start_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
-                   &m_config.sim_energy_start, 1, 1000, s_energy_start_edit)) {
+                   &m_config.sim_energy_start, 1, 10000, s_energy_start_edit)) {
         s_energy_start_edit = !s_energy_start_edit;
     }
 
     static bool s_energy_loss_edit = false;
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
-                   &m_config.sim_energy_tick_loss, 1, 1000, s_energy_loss_edit)) {
+                   &m_config.sim_energy_tick_loss, 1, 10000, s_energy_loss_edit)) {
         s_energy_loss_edit = !s_energy_loss_edit;
     }
     y += entry_height + padding;
 
     static bool s_energy_breed_needed_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed energy",
-                   &m_config.sim_energy_breed_needed, 1, 1000, s_energy_breed_needed_edit)) {
+                   &m_config.sim_energy_breed_needed, 1, 10000, s_energy_breed_needed_edit)) {
         s_energy_breed_needed_edit = !s_energy_breed_needed_edit;
     }
 
     static bool s_energy_breed_loss_edit = false;
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed loss",
-                   &m_config.sim_energy_breed_loss, 1, 1000, s_energy_breed_loss_edit)) {
+                   &m_config.sim_energy_breed_loss, 1, 10000, s_energy_breed_loss_edit)) {
         s_energy_breed_loss_edit = !s_energy_breed_loss_edit;
     }
-    y += entry_height + padding * 3.0f;
+    y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Grass");
     y += padding * 2.0f;
@@ -444,10 +454,10 @@ void Platform::update_gui(const Simulation& sim) {
 
     static bool s_grass_nutrition_value_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
-                   &m_config.grass_nutrition_value, 1, 1000, s_grass_nutrition_value_edit)) {
+                   &m_config.grass_nutrition_value, 1, 10000, s_grass_nutrition_value_edit)) {
         s_grass_nutrition_value_edit = !s_grass_nutrition_value_edit;
     }
-    y += entry_height + padding * 3.0f;
+    y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Chicken");
     y += padding * 2.0f;
@@ -467,23 +477,23 @@ void Platform::update_gui(const Simulation& sim) {
 
     static bool s_chicken_hunger_start_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
-                   &m_config.chicken_hunger_start, 1, 1000, s_chicken_hunger_start_edit)) {
+                   &m_config.chicken_hunger_start, 1, 10000, s_chicken_hunger_start_edit)) {
         s_chicken_hunger_start_edit = !s_chicken_hunger_start_edit;
     }
 
     static bool s_chicken_hunger_stop_edit = false;
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
-                   &m_config.chicken_hunger_stop, 1, 1000, s_chicken_hunger_stop_edit)) {
+                   &m_config.chicken_hunger_stop, 1, 10000, s_chicken_hunger_stop_edit)) {
         s_chicken_hunger_stop_edit = !s_chicken_hunger_stop_edit;
     }
     y += entry_height + padding;
 
     static bool s_chicken_nutrition_value_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
-                   &m_config.chicken_nutrition_value, 1, 1000, s_chicken_nutrition_value_edit)) {
+                   &m_config.chicken_nutrition_value, 1, 10000, s_chicken_nutrition_value_edit)) {
         s_chicken_nutrition_value_edit = !s_chicken_nutrition_value_edit;
     }
-    y += entry_height + padding * 3.0f;
+    y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Wolf");
     y += padding * 2.0f;
@@ -503,13 +513,13 @@ void Platform::update_gui(const Simulation& sim) {
 
     static bool s_wolf_hunger_start_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
-                   &m_config.wolf_hunger_start, 1, 1000, s_wolf_hunger_start_edit)) {
+                   &m_config.wolf_hunger_start, 1, 10000, s_wolf_hunger_start_edit)) {
         s_wolf_hunger_start_edit = !s_wolf_hunger_start_edit;
     }
 
     static bool s_wolf_hunger_stop_edit = false;
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
-                   &m_config.wolf_hunger_stop, 1, 1000, s_wolf_hunger_stop_edit)) {
+                   &m_config.wolf_hunger_stop, 1, 10000, s_wolf_hunger_stop_edit)) {
         s_wolf_hunger_stop_edit = !s_wolf_hunger_stop_edit;
     }
 

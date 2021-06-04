@@ -102,6 +102,6 @@ void Map::remove_dead() {
     }
 }
 
-Agent* Map::add(AgentType type, Vec2 pos, int energy, Tick last_update) {
-    return &m_chunks.at(get_chunk(pos)).emplace_back(type, pos, energy, last_update);
+Agent* Map::add(AgentType type, AgentGenes genes, Vec2 pos, int energy, Tick last_update) {
+    return &m_chunks.at(get_chunk(pos)).emplace_back(type, genes, pos, energy, last_update);
 }

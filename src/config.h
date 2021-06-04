@@ -26,6 +26,9 @@ class Config {
     int seed_manual{};
     char seed[SEED_SIZE]{};
 
+    int genes_max_offsprings{};
+    int genes_max_sensor_range{};
+
     int sim_width{};
     int sim_height{};
     int sim_chunk_width{};

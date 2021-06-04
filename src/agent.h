@@ -4,10 +4,15 @@
 
 enum class AgentType { None, Wolf, Chicken, Grass };
 
+struct AgentGenes {
+    int offsprings;
+    int sensor_range;
+};
+
 class Agent {
    public:
-    Agent(AgentType type, Vec2 pos, int energy, Tick last_update)
-        : type(type), pos(pos), energy(energy), last_update(last_update) {}
+    Agent(AgentType type, AgentGenes genes, Vec2 pos, int energy, Tick last_update)
+        : type(type), genes(genes), pos(pos), energy(energy), last_update(last_update) {}
 
     bool is_none() const { return type == AgentType::None; }
     bool is_dead() const { return energy <= 0; }
@@ -24,6 +29,8 @@ class Agent {
     }
 
     AgentType type;
+    AgentGenes genes;
+
     Vec2 pos;
     int energy;
     bool hungry = false;

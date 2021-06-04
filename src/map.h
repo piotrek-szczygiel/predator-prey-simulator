@@ -28,7 +28,7 @@ class Map {
     void remove_dead();
     void move(Agent* agent, Vec2 pos);
 
-    Agent* add(AgentType type, Vec2 pos, int energy, Tick last_update);
+    Agent* add(AgentType type, AgentGenes genes, Vec2 pos, int energy, Tick last_update);
     int count(AgentType type) const;
 
     SmallVector<Agent*> get_nearby_to(const Agent* agent);

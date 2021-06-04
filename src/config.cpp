@@ -51,6 +51,9 @@ bool Config::load() {
     set(seed_manual, "seed", "manual");
     std::snprintf(seed, SEED_SIZE, "%s", m_ini.get("seed").get("seed").c_str());
 
+    set(genes_max_offsprings, "genes", "max_offsprings");
+    set(genes_max_sensor_range, "genes", "max_sensor_range");
+
     set(sim_width, "simulation", "width");
     set(sim_height, "simulation", "height");
     set(sim_chunk_width, "simulation", "chunk_width");

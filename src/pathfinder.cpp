@@ -1,4 +1,5 @@
 #include "pathfinder.h"
+#include <cstring>
 
 Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const Grid& grid) {
     std::memset(&m_nodes[0], 0, sizeof(PathfinderNode) * m_nodes.size());

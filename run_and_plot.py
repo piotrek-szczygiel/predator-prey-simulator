@@ -28,7 +28,7 @@ def plot(file):
     plt.figure()
     plt.plot(x, df["chicken"], label="chicken")
     plt.plot(x, df["wolf"], label="wolf")
-    plt.plot(x, df["grass"], label="grass")
+    # plt.plot(x, df["grass"], label="grass")
 
     plt.xlabel("simulation step")
     plt.ylabel("population")

@@ -1,5 +1,6 @@
 #include "util.h"
 #include <CRC.h>
+#include <algorithm>
 #include <filesystem>
 
 bool cd_assets() {

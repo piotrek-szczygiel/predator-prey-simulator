@@ -86,7 +86,7 @@ class Simulation {
     std::vector<Vec2> m_possible_spawn_offsets{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
                                                {0, 1},   {1, -1}, {1, 0},  {1, 1}};
 
-    int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
+    int random(int min, int max) { return (int)(m_mt19937() % (abs(max - min) + 1) + min); }
     Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
     AgentGenes mutate_genes(AgentGenes mom, AgentGenes dad);
 

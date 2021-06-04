@@ -10,6 +10,8 @@ import functools
 import matplotlib.pyplot as plt
 import pandas as pd
 
+plt.style.use("seaborn")
+
 
 def plot(file):
     with open(file, "r") as f:
@@ -59,8 +61,6 @@ def main():
 
     os.mkdir("csv")
     os.mkdir("png")
-
-    plt.style.use("seaborn")
 
     files = [f"csv/{i}.csv" for i in range(iterations)]
 

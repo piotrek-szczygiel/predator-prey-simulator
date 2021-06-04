@@ -11,7 +11,6 @@ class Platform {
     void start();
     void stop();
     void reload();
-    void interact();
     void start_drawing(Simulation& sim);
     void draw_debug(Simulation& sim) const;
     void update_gui_end_drawing(const Simulation& sim);
@@ -32,6 +31,9 @@ class Platform {
     Texture2D m_tex_wolf{};
 
     Vector2 m_prev_mouse_pos{};
+
+    Vec2 m_hl_pos{};
+    const Agent* m_hl_agent{};
 
     Texture2D texture_for_type(AgentType type);
     Color color_for_type(AgentType type);

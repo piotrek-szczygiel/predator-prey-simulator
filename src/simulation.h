@@ -50,8 +50,11 @@ class Simulation {
     unsigned int seed() const { return m_seed; }
 
     int count(AgentType type) const;
+    inline bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
 
-    std::vector<std::deque<Agent>>& chunks() { return m_map.chunks(); }
+    const Agent* at(Vec2 pos) const { return m_grid.at(pos); }
+
+    std::vector<std::list<Agent>>& chunks() { return m_map.chunks(); }
     Vec2 chunk_count() const { return m_map.chunk_count(); }
     Vec2 chunk_size() const { return m_map.chunk_size(); }
 
@@ -90,7 +93,6 @@ class Simulation {
     void move_agent_around(Agent* agent, Vec2 pos);
     void move_agent_random(Agent* agent);
 
-    inline bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
     inline bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
 
     void spawn_random_agents(AgentType type, int count);

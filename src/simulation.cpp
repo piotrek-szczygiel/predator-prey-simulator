@@ -203,7 +203,7 @@ void Simulation::update_wolf(Agent* wolf) {
         }
     }
 
-    if (wolf->random_direction.x == 0 && wolf->random_direction.y == 0) {
+    if (wolf->random_direction == Vec2{0, 0}) {
         wolf->random_direction = random_position();
     }
 

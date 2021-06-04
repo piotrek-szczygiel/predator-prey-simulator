@@ -1,20 +1,20 @@
 #include "pathfinder.h"
 
 Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const Grid& grid) {
-    m_nodes.assign(m_nodes.size(), Node{});
+    std::memset(&m_nodes[0], 0, sizeof(PathfinderNode) * m_nodes.size());
 
-    at(start).f_cost = 0;
-    at(start).g_cost = 0;
+    at(start).f_cost = 1;
+    at(start).g_cost = 1;
     at(start).parent = start;
 
     std::priority_queue<AStarNode, std::vector<AStarNode>, AStarNodeComparator> open_queue;
 
-    open_queue.push({0, start});
+    open_queue.push({1, start});
     while (!open_queue.empty()) {
         Vec2 p = open_queue.top().pos;
         open_queue.pop();
 
-        at(p).closed = true;
+        at(p).visited = true;
 
         Vec2 available_movements[] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
         for (const auto& movement : available_movements) {
@@ -24,13 +24,12 @@ Vec2 Pathfinder::get_next_step(Vec2 start, Vec2 target, const Grid& grid) {
                 if (neighbour == target) {
                     at(neighbour).parent = p;
                     return trace(start, target);
-                } else if (!at(neighbour).closed && !is_blocked(neighbour, grid)) {
+                } else if (!at(neighbour).visited && !is_blocked(neighbour, grid)) {
                     int g_new = at(p).g_cost + 1;
                     int f_new = g_new + distance(target, neighbour);
 
-                    if (at(neighbour).f_cost == -1 || at(neighbour).f_cost > f_new) {
+                    if (at(neighbour).f_cost == 0 || f_new < at(neighbour).f_cost) {
                         open_queue.push({f_new, neighbour});
-
                         at(neighbour).g_cost = g_new;
                         at(neighbour).f_cost = f_new;
                         at(neighbour).parent = p;

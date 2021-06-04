@@ -14,6 +14,15 @@ class Agent {
 
     void kill() { energy = 0; }
 
+    const char *type_str() const {
+        switch (type) {
+            case AgentType::Wolf: return "wolf";
+            case AgentType::Chicken: return "chicken";
+            case AgentType::Grass: return "grass";
+            default: return "INVALID";
+        }
+    }
+
     AgentType type;
     Vec2 pos;
     int energy;

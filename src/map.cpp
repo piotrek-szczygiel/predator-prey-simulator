@@ -12,13 +12,13 @@ void Map::move(Agent* agent, Vec2 pos) {
 }
 
 int Map::count(AgentType type) const {
-    int count = 0;
+    size_t count = 0;
     for (const auto& chunk : m_chunks) {
         for (const auto& agent : chunk) {
-            if (agent.type == type) ++count;
+            count += std::count_if(chunk.begin(), chunk.end(), [type](const auto& a) { return a.type == type; });
         }
     }
-    return count;
+    return (int)count;
 }
 
 SmallVector<Agent*> Map::get_nearby_to(const Agent* agent) {
@@ -78,8 +78,7 @@ SmallVector<Agent*> Map::update_chunks() {
         auto& new_chunk = m_chunks.at(update.new_chunk);
         for (auto it = old_chunk.begin(); it != old_chunk.end(); ++it) {
             if (&*it == update.agent) {
-                new_chunk.push_back(*it);
-                old_chunk.erase(it);
+                new_chunk.splice(new_chunk.end(), old_chunk, it);
                 updates.push_back(&new_chunk.back());
                 break;
             }
@@ -103,13 +102,7 @@ void Map::clear() {
 
 void Map::remove_dead() {
     for (auto& chunk : m_chunks) {
-        for (auto it = chunk.begin(); it != chunk.end();) {
-            if (it->is_dead()) {
-                it = chunk.erase(it);
-            } else {
-                ++it;
-            }
-        }
+        chunk.remove_if([](const auto& agent) { return agent.is_dead(); });
     }
 }
 

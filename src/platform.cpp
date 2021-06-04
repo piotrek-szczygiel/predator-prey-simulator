@@ -10,6 +10,7 @@ void Platform::start() {
     InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetWindowMinSize(510, 930);
+    SetExitKey(KEY_Q);
     if (m_config.window_maximized) MaximizeWindow();
 
     m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
@@ -58,44 +59,6 @@ bool Platform::should_tick() {
     return IsKeyPressed(KEY_SPACE);
 }
 
-void Platform::interact() {
-    if (m_gui_closed) {
-        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
-    } else {
-        m_camera.offset = {(float)(GetScreenWidth() - m_gui_width) / 2.0f, (float)(GetScreenHeight() - 20) / 2.0f};
-    }
-    m_gui_width = GetScreenWidth() / 3;
-    if (m_gui_width < 500) m_gui_width = 500;
-
-    m_config.window_width = GetScreenWidth();
-    m_config.window_height = GetScreenHeight();
-    m_config.window_maximized = IsWindowMaximized() ? 1 : 0;
-
-    if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
-    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) m_gui_closed = !m_gui_closed;
-
-    float mouse_delta = GetMouseWheelMove();
-    float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
-    if (new_zoom <= 0.1f) new_zoom = 0.1f;
-    if (new_zoom >= 4.0f) new_zoom = 4.0f;
-    m_camera.zoom = new_zoom;
-
-    Vector2 current_mouse_pos = GetMousePosition();
-    Vector2 delta = Vector2Subtract(m_prev_mouse_pos, current_mouse_pos);
-    m_prev_mouse_pos = current_mouse_pos;
-
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        (m_gui_closed || (int)current_mouse_pos.x < GetScreenWidth() - m_gui_width)) {
-        m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
-    }
-
-    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
-        m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
-                           (float)m_config.sim_height * m_config.tile_size / 2.0f};
-        m_camera.zoom = 1.0f;
-    }
-}
-
 TimePoint Platform::time_now() {
     return std::chrono::high_resolution_clock::now();
 }
@@ -136,6 +99,18 @@ void Platform::start_drawing(Simulation& sim) {
                           (float)sim.size().y * m_config.tile_size + 8.0f},
                          4.0f, BEIGE);
 
+    if (m_hl_agent) {
+        DrawRectangleLinesEx({(float)m_hl_agent->pos.x * m_config.tile_size,
+                              (float)m_hl_agent->pos.y * m_config.tile_size, m_config.tile_size, m_config.tile_size},
+                             1.0f, RED);
+    }
+
+    if (m_hl_pos != Vec2{-1, -1}) {
+        DrawRectangleRec({(float)m_hl_pos.x * m_config.tile_size, (float)m_hl_pos.y * m_config.tile_size,
+                          m_config.tile_size, m_config.tile_size},
+                         Fade(YELLOW, 0.5f));
+    }
+
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
             if (m_camera.zoom >= 0.75f) {
@@ -143,9 +118,10 @@ void Platform::start_drawing(Simulation& sim) {
                                {(float)agent.pos.x * m_config.tile_size, (float)agent.pos.y * m_config.tile_size},
                                WHITE);
             } else {
-                DrawRectangleRec({(float)agent.pos.x * m_config.tile_size, (float)agent.pos.y * m_config.tile_size,
-                                  m_config.tile_size, m_config.tile_size},
-                                 color_for_type(agent.type));
+                DrawRectangleRec(
+                    {(float)agent.pos.x * m_config.tile_size + 1, (float)agent.pos.y * m_config.tile_size + 1,
+                     m_config.tile_size - 2, m_config.tile_size - 2},
+                    color_for_type(agent.type));
             }
         }
     }
@@ -153,7 +129,7 @@ void Platform::start_drawing(Simulation& sim) {
 
 void Platform::update_gui_end_drawing(const Simulation& sim) {
     EndMode2D();
-    if (!m_gui_closed) update_gui(sim);
+    update_gui(sim);
     EndDrawing();
 }
 
@@ -197,9 +173,6 @@ void Platform::draw_debug(Simulation& sim) const {
 }
 
 void Platform::update_gui(const Simulation& sim) {
-    static bool s_style_edit = false;
-    if (s_style_edit) GuiLock();
-
     auto width = (float)m_gui_width;
     float margin = 5.0f;
     float padding = 10.0f;
@@ -208,6 +181,89 @@ void Platform::update_gui(const Simulation& sim) {
     float button_height = 40.0f;
     float entry_height = 25.0f;
     float checkbox_size = 15.0f;
+
+    if (m_gui_closed) {
+        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+    } else {
+        m_camera.offset = {(float)(GetScreenWidth() - m_gui_width) / 2.0f, (float)(GetScreenHeight() - 20) / 2.0f};
+    }
+    m_gui_width = GetScreenWidth() / 3;
+    if (m_gui_width < 500) m_gui_width = 500;
+
+    m_config.window_width = GetScreenWidth();
+    m_config.window_height = GetScreenHeight();
+    m_config.window_maximized = IsWindowMaximized() ? 1 : 0;
+
+    if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
+    if (IsKeyPressed(KEY_ESCAPE)) m_gui_closed = !m_gui_closed;
+
+    float mouse_delta = GetMouseWheelMove();
+    float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
+    if (new_zoom <= 0.1f) new_zoom = 0.1f;
+    if (new_zoom >= 4.0f) new_zoom = 4.0f;
+    m_camera.zoom = new_zoom;
+
+    Vector2 current_mouse_pos = GetMousePosition();
+    Vector2 delta = Vector2Subtract(m_prev_mouse_pos, current_mouse_pos);
+    m_prev_mouse_pos = current_mouse_pos;
+
+    m_hl_pos = {-1, -1};
+    if (m_gui_closed || (int)current_mouse_pos.x < GetScreenWidth() - m_gui_width) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+            m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
+        }
+
+        Vector2 ms = GetScreenToWorld2D(current_mouse_pos, m_camera);
+        Vec2 mw = {(int)(ms.x / m_config.tile_size), (int)(ms.y / m_config.tile_size)};
+        if (!sim.out_of_map(mw)) {
+            m_hl_pos = mw;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                m_hl_agent = sim.at(m_hl_pos);
+            }
+        }
+    }
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
+                           (float)m_config.sim_height * m_config.tile_size / 2.0f};
+        m_camera.zoom = 1.0f;
+    }
+
+    if (m_hl_agent && m_hl_agent->is_dead()) m_hl_agent = nullptr;
+    if (m_hl_agent) {
+        float i_width = 150.0f;
+        float i_height = 150.0f;
+
+        if (GuiWindowBox({margin, margin, i_width, i_height}, GuiIconText(RICON_INFO, "Agent info"))) {
+            m_hl_agent = nullptr;
+        } else {
+            float x = margin + padding;
+            float y = margin + 20;
+
+            GuiLabel({x, y, i_width, entry_height}, TextFormat("Type: %s", m_hl_agent->type_str()));
+            y += entry_height;
+
+            GuiLabel({x, y, i_width, entry_height},
+                     TextFormat("Position: %d, %d", m_hl_agent->pos.x, m_hl_agent->pos.y));
+            y += entry_height;
+
+            GuiLabel({x, y, i_width, entry_height}, TextFormat("Energy: %d", m_hl_agent->energy));
+            y += entry_height;
+
+            GuiLabel({x, y, i_width, entry_height}, TextFormat("Hungry: %s", m_hl_agent->hungry ? "yes" : "no"));
+            y += entry_height;
+
+            if (m_hl_agent->type == AgentType::Wolf && m_hl_agent->random_direction != Vec2{}) {
+                GuiLabel({x, y, i_width, entry_height}, TextFormat("Random dir: %d, %d", m_hl_agent->random_direction.x,
+                                                                   m_hl_agent->random_direction.y));
+            }
+        }
+    }
+
+    if (m_gui_closed) return;
+
+    static bool s_style_edit = false;
+    if (s_style_edit) GuiLock();
 
     float x = (float)GetScreenWidth() - width;
     float y = margin;
@@ -286,13 +342,13 @@ void Platform::update_gui(const Simulation& sim) {
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolves: %d", sim.count(AgentType::Wolf)));
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolf count: %d", sim.count(AgentType::Wolf)));
     y += entry_height;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Chickens: %d", sim.count(AgentType::Chicken)));
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Chicken count: %d", sim.count(AgentType::Chicken)));
     y += entry_height;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Grasses: %d", sim.count(AgentType::Grass)));
+    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Grass count: %d", sim.count(AgentType::Grass)));
     y += entry_height + padding * 4.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Simulation");
@@ -398,7 +454,7 @@ void Platform::update_gui(const Simulation& sim) {
 
     static bool s_wolf_spawn_count_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
-                   &m_config.wolf_spawn_count, 1, 1000, s_wolf_spawn_count_edit))
+                   &m_config.wolf_spawn_count, 0, 1000, s_wolf_spawn_count_edit))
         s_wolf_spawn_count_edit = !s_wolf_spawn_count_edit;
 
     static bool s_wolf_sensor_range_edit = false;

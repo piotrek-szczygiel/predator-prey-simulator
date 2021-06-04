@@ -23,7 +23,6 @@ int run_graphics() {
 
         while (!p.should_close() && !restart) {
             restart = p.should_restart();
-            p.interact();
             p.start_drawing(sim);
 
             if (!config.runtime_manual_stepping) {

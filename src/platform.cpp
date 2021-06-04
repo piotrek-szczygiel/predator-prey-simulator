@@ -353,7 +353,8 @@ void Platform::update_gui(const Simulation& sim) {
         reload();
     }
 
-    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f, entry_height};
+    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f,
+                                 entry_height};
     GuiLabel({x + width / 2.0f + padding, y + entry_height + padding, width / 2.0f, entry_height}, "GUI Style");
 
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Current tick: %u", sim.ticks()));
@@ -362,7 +363,8 @@ void Platform::update_gui(const Simulation& sim) {
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;
 
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Wolves: %d  Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
+    GuiLabel({x + padding, y, width, entry_height},
+             TextFormat("Wolves: %d  Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
     y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Genes");

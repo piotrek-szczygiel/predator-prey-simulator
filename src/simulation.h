@@ -100,7 +100,7 @@ class Simulation {
 
     void spawn_random_agents(AgentType type, AgentGenes genes, int count);
     Agent* spawn_around(AgentType type, AgentGenes genes, Vec2 p);
-    void breed(Agent *mom, Agent *dad);
+    void breed(Agent* mom, Agent* dad);
 
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);

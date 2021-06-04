@@ -16,14 +16,14 @@ class Config {
     int window_width{};
     int window_height{};
     int window_style{};
-    int window_maximized{};
+    bool window_maximized{};
     int window_fps{};
 
     int runtime_tick_time_ms{};
-    int runtime_manual_stepping{};
-    int runtime_debug_draw{};
+    bool runtime_manual_stepping{};
+    bool runtime_debug_draw{};
 
-    int seed_manual{};
+    bool seed_manual{};
     char seed[SEED_SIZE]{};
 
     int genes_max_offsprings{};
@@ -62,12 +62,19 @@ class Config {
     mINI::INIFile m_file;
     mINI::INIStructure m_ini;
 
+    enum class LinkType { Int, Bool };
+
     struct Link {
-        int& output;
+        LinkType type;
+        union {
+            int* out_int;
+            bool* out_bool;
+        };
         const char* section;
         const char* name;
     };
     std::vector<Link> m_links;
 
     void set(int& output, const char* section, const char* name);
+    void set(bool& output, const char* section, const char* name);
 };

@@ -207,8 +207,7 @@ void Simulation::update_wolf(Agent* wolf) {
     }
 
     if (wolf->energy >= m_config.sim_energy_breed_needed) {
-        auto partner =
-            get_path_to_nearest(wolf, AgentType::Wolf, m_config.sim_energy_breed_needed);
+        auto partner = get_path_to_nearest(wolf, AgentType::Wolf, m_config.sim_energy_breed_needed);
 
         if (partner.agent) {
             wolf->random_direction = {};

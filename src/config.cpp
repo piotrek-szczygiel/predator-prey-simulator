@@ -2,10 +2,11 @@
 
 bool Config::write() {
     for (const auto& link : m_links) {
-        m_ini[link.section][link.name] = std::to_string(link.output);
+        m_ini[link.section][link.name] =
+            link.type == LinkType::Int ? std::to_string(*link.out_int) : (*link.out_bool ? "true" : "false");
     }
     m_ini["seed"]["seed"] = seed;
-    return m_file.write(m_ini, true);
+    return m_file.write(m_ini, false);
 }
 
 void Config::set(int& output, const char* section, const char* name) {
@@ -28,7 +29,24 @@ void Config::set(int& output, const char* section, const char* name) {
     }
 
     output = n;
-    m_links.push_back({output, section, name});
+
+    Link link{};
+    link.type = LinkType::Int;
+    link.out_int = &output;
+    link.section = section;
+    link.name = name;
+    m_links.push_back(link);
+}
+
+void Config::set(bool& output, const char* section, const char* name) {
+    output = m_ini.get(section).get(name) == "true";
+
+    Link link{};
+    link.type = LinkType::Bool;
+    link.out_bool = &output;
+    link.section = section;
+    link.name = name;
+    m_links.push_back(link);
 }
 
 bool Config::load() {

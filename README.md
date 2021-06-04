@@ -27,5 +27,6 @@ cmake --build .
 
 ./sim 1000 # Run simulation 1000 times and output CSV statistics to stdout
 
-python run_and_plot.py 10 1000 build/sim # Helper script to create 10 plots of 1000 tick simulations 
+# Helper script to create 10 plots of 1000 tick simulations and launch them as 4 parallel processes
+python run_and_plot.py build/sim 1000 10 4
 ```

@@ -67,8 +67,8 @@ AgentGenes Simulation::mutate_genes(AgentGenes mom, AgentGenes dad) {
     int new_sensor_range = random(0, 1) ? mom.sensor_range : dad.sensor_range;
     new_sensor_range += random(-1, 1);
 
-    return {std::clamp(new_offsprings, 1, m_config.genes_max_sensor_range),
-            std::clamp(new_sensor_range, 1, m_config.genes_max_offsprings)};
+    return {std::clamp(new_offsprings, 1, m_config.genes_max_offsprings),
+            std::clamp(new_sensor_range, 1, m_config.genes_max_sensor_range)};
 }
 
 void Simulation::add_agent(AgentType type, AgentGenes genes, Vec2 pos) {

@@ -2,6 +2,7 @@
 #include <CRC.h>
 #include <algorithm>
 #include <filesystem>
+#include <string>
 
 bool cd_assets() {
     bool assets_found = false;

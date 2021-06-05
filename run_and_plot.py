@@ -32,6 +32,7 @@ def plot(file):
 
     outfile = f"png/{seed}.png"
     plt.savefig(outfile, dpi=300)
+    plt.clf()
     return outfile
 
 

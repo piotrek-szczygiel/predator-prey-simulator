@@ -104,6 +104,7 @@ bool Config::load() {
     set(window_maximized, "window", "maximized");
     set(window_zoom, "window", "zoom");
     set(window_fps, "window", "fps");
+    set(window_help, "window", "help");
 
     set(runtime_tick_time_ms, "runtime", "tick_time_ms");
     set(runtime_manual_stepping, "runtime", "manual_stepping");

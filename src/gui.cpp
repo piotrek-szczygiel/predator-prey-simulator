@@ -13,11 +13,15 @@ void Gui::load_style(int window_style) {
         m_status = std::string(TextFormat("Loaded style: %s", m_styles[window_style]));
     }
     GuiSetStyle(SPINNER, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
+    GuiFade(0.9f);
+}
+
+bool Gui::on_gui(Vector2 pos) const {
+    if (!m_closed && CheckCollisionPointRec(pos, m_bounds)) return true;
+    return (m_config.window_help || m_about) && CheckCollisionPointRec(pos, m_bounds_msg);
 }
 
 void Gui::update(const Simulation& sim) {
-    if (m_closed) return;
-
     auto screen_h = (float)GetScreenHeight();
     auto screen_w = (float)GetScreenWidth();
 
@@ -32,10 +36,28 @@ void Gui::update(const Simulation& sim) {
     const float GUI_P = 10.0f;
     m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_H};
 
-    Rectangle view = GuiScrollPanel(m_bounds, {0, 0, GUI_W - GUI_BORDER, GUI_H}, &m_scroll);
-    BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
-    draw_controls(sim, view.x + m_scroll.x + GUI_P, view.y + m_scroll.y + GUI_P, view.width - 2 * GUI_P);
-    EndScissorMode();
+    const float MSG_W = 350;
+    const float MSG_H = 420;
+    m_bounds_msg = {(screen_w - (m_closed ? 0 : GUI_W + GUI_M) - MSG_W) / 2, (screen_h - STATUS_H - MSG_H) / 2, MSG_W,
+                    MSG_H};
+    Vector2 msg_offset = {m_bounds_msg.x + GUI_P, m_bounds_msg.y + GUI_P + GUI_BORDER};
+
+    if (!m_closed) {
+        Rectangle view = GuiScrollPanel(m_bounds, {0, 0, GUI_W - GUI_BORDER, GUI_H}, &m_scroll);
+        BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
+        draw_controls(sim, view.x + m_scroll.x + GUI_P, view.y + m_scroll.y + GUI_P, view.width - 2 * GUI_P);
+        EndScissorMode();
+    }
+
+    if (m_config.window_help) {
+        m_config.window_help ^= GuiWindowBox(m_bounds_msg, GuiIconText(RICON_HELP, "Help"));
+        GuiLabel({msg_offset.x, msg_offset.y, 0, 0}, m_help_text);
+    }
+
+    if (m_about) {
+        m_about ^= GuiWindowBox(m_bounds_msg, GuiIconText(RICON_INFO, "About"));
+        GuiLabel({msg_offset.x, msg_offset.y, 0, 0}, m_about_text);
+    }
 }
 
 bool Gui::draw_observed_agent() {
@@ -88,12 +110,26 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     GuiLine({x, y, w, 1}, "Settings");
     y += AFTER_LINE;
 
-    if (GuiButton({x, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_SAVE, "Save"))) {
-        m_status = m_config.write() ? "Configuration saved" : "Unable to save configuration!";
-    }
+    {
+        float yy = y;
+        if (GuiButton({x, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_SAVE, "Save"))) {
+            m_status = m_config.write() ? "Configuration saved" : "Unable to save configuration!";
+        }
 
-    if (GuiButton({x + w / 4, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_OPEN, "Load"))) {
-        m_status = m_config.load() ? "Configuration loaded" : "Unable to load configuration!";
+        if (GuiButton({x + w / 4, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_OPEN, "Load"))) {
+            m_status = m_config.load() ? "Configuration loaded" : "Unable to load configuration!";
+        }
+        yy += ROW_H + P;
+
+        if (GuiButton({x, yy, BTN_W, ROW_H}, GuiIconText(RICON_HELP, "Help"))) {
+            m_config.window_help ^= 1;
+            m_about = false;
+        }
+
+        if (GuiButton({x + w / 4, yy, BTN_W, ROW_H}, GuiIconText(RICON_INFO, "About"))) {
+            m_about ^= 1;
+            m_config.window_help = false;
+        }
     }
 
     GuiLabel({x + w / 2, y, w / 4, ROW_H}, TextFormat("FPS: %d", GetFPS()));
@@ -131,6 +167,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
         if (GuiButton({x, y, ROW_H, ROW_H}, GuiIconText(RICON_FILE_COPY, nullptr))) {
             std::snprintf(m_config.seed, Config::SEED_SIZE, "%u", sim.seed());
             SetClipboardText(m_config.seed);
+            m_status = "Seed copied to clipboard";
         }
     } else {
         m_edit.seed ^= GuiTextBox({x, y, 100 + ROW_H + P, ROW_H}, m_config.seed, Config::SEED_SIZE, m_edit.seed);
@@ -150,20 +187,20 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
 
     {
         float yy = y;
-        m_edit.grid_width ^=
-            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid width", &m_config.sim_width, 10, 500, m_edit.grid_width);
+        m_edit.sim_width ^=
+            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid width", &m_config.sim_width, 10, 500, m_edit.sim_width);
         yy += ROW_H + P;
 
-        m_edit.grid_width ^=
-            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid height", &m_config.sim_height, 10, 500, m_edit.grid_height);
+        m_edit.sim_height ^=
+            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid height", &m_config.sim_height, 10, 500, m_edit.sim_height);
         yy += ROW_H + P;
 
-        m_edit.grid_width ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk width", &m_config.sim_chunk_width, 10,
-                                        500, m_edit.chunk_width);
+        m_edit.chunk_width ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk width", &m_config.sim_chunk_width, 2,
+                                         100, m_edit.chunk_width);
         yy += ROW_H + P;
 
-        m_edit.grid_width ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk height", &m_config.sim_chunk_height, 10,
-                                        500, m_edit.chunk_height);
+        m_edit.chunk_height ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk height", &m_config.sim_chunk_height, 2,
+                                          100, m_edit.chunk_height);
     }
 
     GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Current tick: %u", sim.ticks()));
@@ -192,7 +229,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     m_edit.genes_offsprings ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Max offsprings", &m_config.genes_max_offsprings, 1, 8,
                                           m_edit.genes_offsprings);
     m_edit.genes_sensor_range ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Max sensor range",
-                                            &m_config.genes_max_offsprings, 1, 100, m_edit.genes_sensor_range);
+                                            &m_config.genes_max_sensor_range, 1, 100, m_edit.genes_sensor_range);
     y += ROW_H;
 
     y += BEFORE_LINE;
@@ -200,7 +237,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.grass_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 8, m_edit.grass_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 100, m_edit.grass_spawn);
     m_edit.grass_nutrition ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Nutritional value",
                                          &m_config.grass_nutritional_value, 1, 100, m_edit.grass_nutrition);
     y += ROW_H;
@@ -210,7 +247,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.chicken_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.chicken_spawn_count, 1, 8, m_edit.chicken_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.chicken_spawn_count, 1, 100, m_edit.chicken_spawn);
     m_edit.chicken_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.chicken_sensor_range, 1,
                                         100, m_edit.chicken_sensor);
     y += ROW_H + P;
@@ -238,7 +275,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.wolf_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.wolf_spawn_count, 1, 8, m_edit.wolf_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.wolf_spawn_count, 1, 100, m_edit.wolf_spawn);
     m_edit.wolf_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.wolf_sensor_range, 1, 100,
                                      m_edit.wolf_sensor);
     y += ROW_H + P;

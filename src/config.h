@@ -19,6 +19,7 @@ class Config {
     bool window_maximized{};
     float window_zoom{};
     int window_fps{};
+    bool window_help{};
 
     int runtime_tick_time_ms{};
     bool runtime_manual_stepping{};

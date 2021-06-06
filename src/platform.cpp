@@ -4,7 +4,7 @@
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
-    InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulation");
+    InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulator");
     SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(KEY_Q);
     if (m_config.window_maximized) MaximizeWindow();
@@ -74,11 +74,12 @@ void Platform::interact(const Simulation& sim) {
 
     if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
     if (IsKeyPressed(KEY_ESCAPE)) m_gui.toggle();
-    if (IsKeyPressed(KEY_ENTER)) m_config.runtime_manual_stepping = !m_config.runtime_manual_stepping;
+    if (IsKeyPressed(KEY_P)) m_config.runtime_manual_stepping ^= 1;
+    if (IsKeyPressed(KEY_H)) m_config.window_help ^= 1;
 
     Vector2 mouse = GetMousePosition();
 
-    if (m_gui.closed() || !CheckCollisionPointRec(mouse, m_gui.bounds())) {
+    if (!m_gui.on_gui(mouse)) {
         m_camera.zoom = std::clamp(m_camera.zoom + GetMouseWheelMove() * 0.1f, 0.1f, 2.0f);
 
         Vector2 delta = Vector2Subtract(m_prev_mouse_pos, mouse);
@@ -90,7 +91,6 @@ void Platform::interact(const Simulation& sim) {
         if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
             m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                                (float)m_config.sim_height * m_config.tile_size / 2.0f};
-            m_camera.zoom = 1.0f;
         }
 
         Vector2 ms = GetScreenToWorld2D(mouse, m_camera);

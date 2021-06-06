@@ -34,6 +34,7 @@ std::tuple<double, double> Map::avg_genes() const {
         }
     }
 
+    if (count == 0) return {};
     return {sum_offsprings / (double)count, sum_sensor_range / (double)count};
 }
 

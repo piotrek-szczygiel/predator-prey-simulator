@@ -1,0 +1,266 @@
+#include "gui.h"
+#include <string>
+
+#define RAYGUI_IMPLEMENTATION
+#define RAYGUI_SUPPORT_ICONS
+#include <raygui.h>
+
+void Gui::load_style(int window_style) {
+    if (window_style == 0) {
+        GuiLoadStyleDefault();
+    } else {
+        GuiLoadStyle(m_styles[window_style]);
+        m_status = std::string(TextFormat("Loaded style: %s", m_styles[window_style]));
+    }
+    GuiSetStyle(SPINNER, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
+}
+
+void Gui::update(const Simulation& sim) {
+    if (m_closed) return;
+
+    auto screen_h = (float)GetScreenHeight();
+    auto screen_w = (float)GetScreenWidth();
+
+    const float STATUS_H = 20.0f;
+    GuiStatusBar({0, screen_h - STATUS_H, screen_w, STATUS_H}, m_status.c_str());
+
+    const float GUI_W = 500.0f;
+    const float GUI_H = 1000.0f;
+    const float GUI_M = 15.0f;
+    const float GUI_BORDER =
+        20.f * (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) + (float)GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);
+    const float GUI_P = 10.0f;
+    m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_H};
+
+    Rectangle view = GuiScrollPanel(m_bounds, {0, 0, GUI_W - GUI_BORDER, GUI_H}, &m_scroll);
+    BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
+    draw_controls(sim, view.x + m_scroll.x + GUI_P, view.y + m_scroll.y + GUI_P, view.width - 2 * GUI_P);
+    EndScissorMode();
+}
+
+bool Gui::draw_observed_agent() {
+    if (!m_agent) return false;
+
+    const float W = 150.0f;
+    const float H = m_agent->type == AgentType::Grass ? 95.0f : 170.0f;
+    const float M = 20.0f;
+    const float P = 10.0f;
+    const float ROW_H = 25.0f;
+
+    if (GuiWindowBox({M, M, W, H}, GuiIconText(RICON_INFO, "Agent info"))) {
+        return false;
+    }
+
+    float x = M + P;
+    float y = M + 20;
+
+    GuiLabel({x, y, W, ROW_H}, TextFormat("Type: %s", m_agent->type_str()));
+    y += ROW_H;
+
+    GuiLabel({x, y, W, ROW_H}, TextFormat("Position: %d, %d", m_agent->pos.x, m_agent->pos.y));
+    y += ROW_H;
+
+    GuiLabel({x, y, W, ROW_H}, TextFormat("Energy: %d", m_agent->energy));
+    y += ROW_H;
+
+    if (m_agent->type != AgentType::Grass) {
+        GuiLabel({x, y, W, ROW_H}, TextFormat("Hungry: %s", m_agent->hungry ? "yes" : "no"));
+        y += ROW_H;
+
+        GuiLabel({x, y, W, ROW_H}, TextFormat("Offsprings: %d", m_agent->genes.offsprings));
+        y += ROW_H;
+
+        GuiLabel({x, y, W, ROW_H}, TextFormat("Sensor range: %d", m_agent->genes.sensor_range));
+    }
+
+    return true;
+}
+
+void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
+    const float P = 10.0f;
+    const float BEFORE_LINE = P * 4;
+    const float AFTER_LINE = P * 2;
+    const float ROW_H = 25.0f;
+    const float BTN_W = w / 5;
+
+    if (m_edit.style) GuiLock();
+
+    GuiLine({x, y, w, 1}, "Settings");
+    y += AFTER_LINE;
+
+    if (GuiButton({x, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_SAVE, "Save"))) {
+        m_status = m_config.write() ? "Configuration saved" : "Unable to save configuration!";
+    }
+
+    if (GuiButton({x + w / 4, y, BTN_W, ROW_H}, GuiIconText(RICON_FILE_OPEN, "Load"))) {
+        m_status = m_config.load() ? "Configuration loaded" : "Unable to load configuration!";
+    }
+
+    GuiLabel({x + w / 2, y, w / 4, ROW_H}, TextFormat("FPS: %d", GetFPS()));
+    if (GuiSpinner({x + 3 * w / 4, y, BTN_W, ROW_H}, "Max", &m_config.window_fps, 0, 999, m_edit.fps)) {
+        m_edit.fps ^= 1;
+        SetTargetFPS(m_config.window_fps);
+        m_status = "Max FPS set to " + std::to_string(m_config.window_fps);
+    }
+    y += ROW_H + P;
+
+    GuiLabel({x + w / 2, y, w / 4, ROW_H}, "GUI Style:");
+    Rectangle style_dropdown_position = {x + 3 * w / 4, y, BTN_W, ROW_H};
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w, 1}, "Control");
+    y += AFTER_LINE;
+
+    m_restart = GuiButton({x, y, BTN_W, ROW_H}, GuiIconText(RICON_REDO_FILL, "Restart"));
+    if (GuiButton({x + w / 4, y, BTN_W, ROW_H}, GuiIconText(RICON_EXIT, "Exit"))) {
+        CloseWindow();
+    }
+
+    m_config.runtime_manual_stepping =
+        GuiCheckBox({x + w / 2, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Pause", m_config.runtime_manual_stepping);
+
+    m_config.runtime_debug_draw =
+        GuiCheckBox({x + 3 * w / 4, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Debug draw", m_config.runtime_debug_draw);
+    y += ROW_H + P;
+
+    if (!m_config.seed_manual) {
+        GuiSetState(GUI_STATE_DISABLED);
+        GuiTextBox({x + ROW_H + P, y, 100, ROW_H}, (char*)TextFormat("%u", sim.seed()), 0, false);
+        GuiSetState(GUI_STATE_NORMAL);
+        if (GuiButton({x, y, ROW_H, ROW_H}, GuiIconText(RICON_FILE_COPY, nullptr))) {
+            std::snprintf(m_config.seed, Config::SEED_SIZE, "%u", sim.seed());
+            SetClipboardText(m_config.seed);
+        }
+    } else {
+        m_edit.seed ^= GuiTextBox({x, y, 100 + ROW_H + P, ROW_H}, m_config.seed, Config::SEED_SIZE, m_edit.seed);
+    }
+
+    m_config.seed_manual =
+        GuiCheckBox({x + 100 + ROW_H + 2 * P, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Seed", m_config.seed_manual);
+
+    m_edit.tick ^=
+        GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Tick (ms)", &m_config.runtime_tick_time_ms, 0, 5000, m_edit.tick);
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w / 2, 1}, "Statistics");
+    GuiLine({x + w / 2, y, w / 2, 1}, "Dimensions");
+    y += AFTER_LINE;
+
+    {
+        float yy = y;
+        m_edit.grid_width ^=
+            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid width", &m_config.sim_width, 10, 500, m_edit.grid_width);
+        yy += ROW_H + P;
+
+        m_edit.grid_width ^=
+            GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Grid height", &m_config.sim_height, 10, 500, m_edit.grid_height);
+        yy += ROW_H + P;
+
+        m_edit.grid_width ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk width", &m_config.sim_chunk_width, 10,
+                                        500, m_edit.chunk_width);
+        yy += ROW_H + P;
+
+        m_edit.grid_width ^= GuiSpinner({x + w / 2, yy, BTN_W, ROW_H}, "Chunk height", &m_config.sim_chunk_height, 10,
+                                        500, m_edit.chunk_height);
+    }
+
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Current tick: %u", sim.ticks()));
+    y += ROW_H;
+
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
+    y += ROW_H;
+
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Chicken count: %d", sim.count(AgentType::Chicken)));
+    y += ROW_H;
+
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Wolf count: %d", sim.count(AgentType::Wolf)));
+    y += ROW_H;
+
+    auto [avg_offsprings, avg_sensor_range] = sim.avg_genes();
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Avg. offsprings: %.1f", avg_offsprings));
+    y += ROW_H;
+
+    GuiLabel({x, y, w / 2, ROW_H}, TextFormat("Avg. sensor range: %.1f", avg_sensor_range));
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w, 1}, "Genes");
+    y += AFTER_LINE;
+
+    m_edit.genes_offsprings ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Max offsprings", &m_config.genes_max_offsprings, 1, 8,
+                                          m_edit.genes_offsprings);
+    m_edit.genes_sensor_range ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Max sensor range",
+                                            &m_config.genes_max_offsprings, 1, 100, m_edit.genes_sensor_range);
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w, 1}, "Grass");
+    y += AFTER_LINE;
+
+    m_edit.grass_spawn ^=
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 8, m_edit.grass_spawn);
+    m_edit.grass_nutrition ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Nutritional value",
+                                         &m_config.grass_nutritional_value, 1, 100, m_edit.grass_nutrition);
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w, 1}, "Chicken");
+    y += AFTER_LINE;
+
+    m_edit.chicken_spawn ^=
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.chicken_spawn_count, 1, 8, m_edit.chicken_spawn);
+    m_edit.chicken_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.chicken_sensor_range, 1,
+                                        100, m_edit.chicken_sensor);
+    y += ROW_H + P;
+
+    m_edit.chicken_energy_start ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Energy start", &m_config.chicken_energy_start, 100,
+                                              10000, m_edit.chicken_energy_start);
+    m_edit.chicken_energy_loss ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Energy loss", &m_config.chicken_energy_loss,
+                                             1, 100, m_edit.chicken_energy_loss);
+    y += ROW_H + P;
+
+    m_edit.chicken_hunger_start ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Hunger start", &m_config.chicken_hunger_start, 1,
+                                              10000, m_edit.chicken_hunger_start);
+    m_edit.chicken_hunger_stop ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Hunger stop", &m_config.chicken_hunger_stop,
+                                             1, 10000, m_edit.chicken_hunger_stop);
+    y += ROW_H + P;
+
+    m_edit.chicken_breed ^=
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Breed cost", &m_config.chicken_breed_cost, 1, 10000, m_edit.chicken_breed);
+    m_edit.chicken_nutrition ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Nutritional value",
+                                           &m_config.chicken_nutritional_value, 1, 10000, m_edit.chicken_nutrition);
+    y += ROW_H;
+
+    y += BEFORE_LINE;
+    GuiLine({x, y, w, 1}, "Wolf");
+    y += AFTER_LINE;
+
+    m_edit.wolf_spawn ^=
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.wolf_spawn_count, 1, 8, m_edit.wolf_spawn);
+    m_edit.wolf_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.wolf_sensor_range, 1, 100,
+                                     m_edit.wolf_sensor);
+    y += ROW_H + P;
+
+    m_edit.wolf_energy_start ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Energy start", &m_config.wolf_energy_start, 100,
+                                           10000, m_edit.wolf_energy_start);
+    m_edit.wolf_energy_loss ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Energy loss", &m_config.wolf_energy_loss, 1,
+                                          100, m_edit.wolf_energy_loss);
+    y += ROW_H + P;
+
+    m_edit.wolf_hunger_start ^= GuiSpinner({x, y, BTN_W, ROW_H}, "Hunger start", &m_config.wolf_hunger_start, 1, 10000,
+                                           m_edit.wolf_hunger_start);
+    m_edit.wolf_hunger_stop ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Hunger stop", &m_config.wolf_hunger_stop, 1,
+                                          10000, m_edit.wolf_hunger_stop);
+    y += ROW_H + P;
+
+    m_edit.wolf_breed ^=
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Breed cost", &m_config.wolf_breed_cost, 1, 10000, m_edit.wolf_breed);
+
+    GuiUnlock();
+    if (GuiDropdownBox(style_dropdown_position, m_style_names, &m_config.window_style, m_edit.style)) {
+        m_edit.style ^= 1;
+        load_style(m_config.window_style);
+    }
+}

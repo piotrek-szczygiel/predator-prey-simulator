@@ -22,6 +22,7 @@ int run_graphics() {
         auto last_update = p.time_now();
 
         while (!p.should_close() && !restart) {
+            p.interact(sim);
             restart = p.should_restart();
             p.start_drawing(sim);
 

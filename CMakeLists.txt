@@ -31,6 +31,8 @@ add_executable(
     "src/config.h"
     "src/config.cpp"
     "src/grid.h"
+    "src/gui.h"
+    "src/gui.cpp"
     "src/main.cpp"
     "src/map.h"
     "src/map.cpp"
@@ -43,5 +45,5 @@ add_executable(
     "src/util.h"
     "src/util.cpp")
 
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "third_party")
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC "third_party")
 target_link_libraries(${PROJECT_NAME} raylib)

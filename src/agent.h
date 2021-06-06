@@ -23,6 +23,7 @@ class Agent {
             case AgentType::Wolf: return "wolf";
             case AgentType::Chicken: return "chicken";
             case AgentType::Grass: return "grass";
+            default: return "";
         }
     }
 

@@ -780,7 +780,7 @@ void GuiGroupBox(Rectangle bounds, const char *text)
 // Line control
 void GuiLine(Rectangle bounds, const char *text)
 {
-    #define LINE_TEXT_PADDING  10
+    #define LINE_TEXT_PADDING  20
 
     GuiControlState state = guiState;
 

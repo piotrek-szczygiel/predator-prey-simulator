@@ -1,9 +1,6 @@
 #include "platform.h"
+#include <raylib.h>
 #include <raymath.h>
-
-#define RAYGUI_IMPLEMENTATION
-#define RAYGUI_SUPPORT_ICONS
-#include <raygui.h>
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
@@ -37,12 +34,7 @@ void Platform::reload() {
         }
 
         SetTargetFPS(m_config.window_fps);
-        if (m_config.window_style == 0) {
-            GuiLoadStyleDefault();
-        } else {
-            GuiLoadStyle(m_styles[m_config.window_style]);
-        }
-        GuiFade(0.95f);
+        m_gui.load_style(m_config.window_style);
     }
 }
 
@@ -51,7 +43,7 @@ bool Platform::should_close() {
 }
 
 bool Platform::should_restart() const {
-    return m_gui_restart || IsKeyPressed(KEY_R);
+    return m_gui.should_restart() || IsKeyPressed(KEY_R);
 }
 
 bool Platform::should_tick() {
@@ -65,6 +57,54 @@ TimePoint Platform::time_now() {
 double Platform::time_diff_ms(TimePoint t1, TimePoint t2) {
     std::chrono::duration<double, std::milli> diff = t1 - t2;
     return diff.count();
+}
+
+void Platform::interact(const Simulation& sim) {
+    if (m_gui.closed()) {
+        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+    } else {
+        m_camera.offset = {m_gui.bounds().x / 2.0f, ((float)GetScreenHeight() - 20.0f) / 2.0f};
+    }
+
+    m_hl_pos = {-1, -1};
+    m_config.window_width = GetScreenWidth();
+    m_config.window_height = GetScreenHeight();
+    m_config.window_maximized = IsWindowMaximized();
+    m_config.window_zoom = m_camera.zoom;
+
+    if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
+    if (IsKeyPressed(KEY_ESCAPE)) m_gui.toggle();
+    if (IsKeyPressed(KEY_ENTER)) m_config.runtime_manual_stepping = !m_config.runtime_manual_stepping;
+
+    Vector2 mouse = GetMousePosition();
+
+    if (m_gui.closed() || !CheckCollisionPointRec(mouse, m_gui.bounds())) {
+        m_camera.zoom = std::clamp(m_camera.zoom + GetMouseWheelMove() * 0.1f, 0.1f, 2.0f);
+
+        Vector2 delta = Vector2Subtract(m_prev_mouse_pos, mouse);
+        m_prev_mouse_pos = mouse;
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+            m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
+        }
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+            m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
+                               (float)m_config.sim_height * m_config.tile_size / 2.0f};
+            m_camera.zoom = 1.0f;
+        }
+
+        Vector2 ms = GetScreenToWorld2D(mouse, m_camera);
+        Vec2 mw = {(int)(ms.x / m_config.tile_size), (int)(ms.y / m_config.tile_size)};
+        if (!sim.out_of_map(mw)) {
+            m_hl_pos = mw;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                m_hl_agent = sim.at(m_hl_pos);
+            }
+        }
+
+        if (m_hl_agent && m_hl_agent->is_dead()) m_hl_agent = nullptr;
+        m_gui.set_observed_agent(m_hl_agent);
+    }
 }
 
 Texture2D Platform::texture_for_type(AgentType type) {
@@ -134,7 +174,8 @@ void Platform::start_drawing(Simulation& sim) {
 
 void Platform::update_gui_end_drawing(const Simulation& sim) {
     EndMode2D();
-    update_gui(sim);
+    m_gui.update(sim);
+    if (!m_gui.draw_observed_agent()) m_hl_agent = nullptr;
     EndDrawing();
 }
 
@@ -173,378 +214,5 @@ void Platform::draw_debug(Simulation& sim) const {
         draw_rect(breed.mom, VIOLET);
         draw_rect(breed.dad, MAGENTA);
         draw_rect(breed.kid, YELLOW);
-    }
-}
-
-void Platform::update_gui(const Simulation& sim) {
-    auto width = (float)m_gui_width;
-    float margin = 5.0f;
-    float padding = 10.0f;
-
-    float status_bar_height = 20.0f;
-    float button_height = 40.0f;
-    float entry_height = 25.0f;
-    float checkbox_size = 15.0f;
-
-    if (m_gui_closed) {
-        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
-    } else {
-        m_camera.offset = {(float)(GetScreenWidth() - m_gui_width) / 2.0f, (float)(GetScreenHeight() - 20) / 2.0f};
-    }
-    m_gui_width = GetScreenWidth() / 3;
-    if (m_gui_width < 500) m_gui_width = 500;
-
-    m_config.window_width = GetScreenWidth();
-    m_config.window_height = GetScreenHeight();
-    m_config.window_maximized = IsWindowMaximized();
-
-    if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
-    if (IsKeyPressed(KEY_ESCAPE)) m_gui_closed = !m_gui_closed;
-    if (IsKeyPressed(KEY_ENTER)) m_config.runtime_manual_stepping = !m_config.runtime_manual_stepping;
-
-    float mouse_delta = GetMouseWheelMove();
-    float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
-    if (new_zoom <= 0.1f) new_zoom = 0.1f;
-    if (new_zoom >= 2.0f) new_zoom = 2.0f;
-    m_camera.zoom = m_config.window_zoom = new_zoom;
-
-    Vector2 current_mouse_pos = GetMousePosition();
-    Vector2 delta = Vector2Subtract(m_prev_mouse_pos, current_mouse_pos);
-    m_prev_mouse_pos = current_mouse_pos;
-
-    m_hl_pos = {-1, -1};
-    if (m_gui_closed || (int)current_mouse_pos.x < GetScreenWidth() - m_gui_width) {
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-            m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
-        }
-
-        Vector2 ms = GetScreenToWorld2D(current_mouse_pos, m_camera);
-        Vec2 mw = {(int)(ms.x / m_config.tile_size), (int)(ms.y / m_config.tile_size)};
-        if (!sim.out_of_map(mw)) {
-            m_hl_pos = mw;
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                m_hl_agent = sim.at(m_hl_pos);
-            }
-        }
-    }
-
-    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
-        m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
-                           (float)m_config.sim_height * m_config.tile_size / 2.0f};
-        m_camera.zoom = 1.0f;
-    }
-
-    if (m_hl_agent && m_hl_agent->is_dead()) m_hl_agent = nullptr;
-    if (m_hl_agent) {
-        float i_width = 150.0f;
-        float i_height = 180.0f;
-
-        if (GuiWindowBox({margin, margin, i_width, i_height}, GuiIconText(RICON_INFO, "Agent info"))) {
-            m_hl_agent = nullptr;
-        } else {
-            float x = margin + padding;
-            float y = margin + 20;
-
-            GuiLabel({x, y, i_width, entry_height}, TextFormat("Type: %s", m_hl_agent->type_str()));
-            y += entry_height;
-
-            GuiLabel({x, y, i_width, entry_height},
-                     TextFormat("Position: %d, %d", m_hl_agent->pos.x, m_hl_agent->pos.y));
-            y += entry_height;
-
-            GuiLabel({x, y, i_width, entry_height}, TextFormat("Energy: %d", m_hl_agent->energy));
-            y += entry_height;
-
-            GuiLabel({x, y, i_width, entry_height}, TextFormat("Hungry: %s", m_hl_agent->hungry ? "yes" : "no"));
-            y += entry_height;
-
-            GuiLabel({x, y, i_width, entry_height}, TextFormat("Offsprings: %d", m_hl_agent->genes.offsprings));
-            y += entry_height;
-
-            GuiLabel({x, y, i_width, entry_height}, TextFormat("Sensor range: %d", m_hl_agent->genes.sensor_range));
-            y += entry_height;
-        }
-    }
-
-    if (m_gui_closed) return;
-
-    static bool s_style_edit = false;
-    if (s_style_edit) GuiLock();
-
-    float x = (float)GetScreenWidth() - width;
-    float y = margin;
-    static const char* s_status = "";
-    GuiStatusBar({0, (float)GetScreenHeight() - status_bar_height, (float)GetScreenWidth(), status_bar_height},
-                 s_status);
-
-    m_gui_closed =
-        GuiWindowBox({x, y, width - margin, (float)GetScreenHeight() - status_bar_height - margin * 2.0f}, "Settings");
-
-    x += padding;
-    y += 20 + padding * 2.0f;
-    width -= padding * 2.0f;
-
-    if (GuiButton({x + 2.0f * padding, y, width / 2.0f - 4.0f * padding, button_height},
-                  GuiIconText(RICON_FILE_SAVE, "Save config"))) {
-        if (m_config.write()) {
-            s_status = "Configuration saved successfully!";
-        } else {
-            s_status = "Error while saving configuration!";
-        }
-    }
-    if (GuiButton({x + width / 2.0f + 2.0f * padding, y, width / 2.0f - 4.0f * padding, button_height},
-                  GuiIconText(RICON_FILE_OPEN, "Reload config"))) {
-        if (m_config.load()) {
-            s_status = "Configuration loaded successfully!";
-            reload();
-        } else {
-            s_status = "Error while loading configuration!";
-        }
-    }
-    y += button_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Runtime");
-    y += padding * 2.0f;
-
-    m_gui_restart = GuiButton({x + 2.0f * padding, y, width / 2.0f - 4.0f * padding, button_height},
-                              GuiIconText(RICON_REDO, "Restart"));
-
-    m_config.runtime_debug_draw = GuiCheckBox({x + width / 2.0f + 2.0f * padding, y, checkbox_size, checkbox_size},
-                                              "Debug draw", m_config.runtime_debug_draw);
-    y += entry_height;
-
-    m_config.runtime_manual_stepping = GuiCheckBox({x + width / 2.0f + 2.0f * padding, y, checkbox_size, checkbox_size},
-                                                   "Manual stepping", m_config.runtime_manual_stepping);
-    y += entry_height;
-
-    static bool s_seed_edit = false;
-    if (!m_config.seed_manual) {
-        GuiSetState(GUI_STATE_DISABLED);
-        GuiTextBox({x + 3.0f * padding + entry_height, y, 100, entry_height}, (char*)TextFormat("%u", sim.seed()), 0,
-                   false);
-        GuiSetState(GUI_STATE_NORMAL);
-        if (GuiButton({x + 2.0f * padding, y, entry_height, entry_height}, GuiIconText(RICON_FILE_COPY, nullptr))) {
-            std::snprintf(m_config.seed, Config::SEED_SIZE, "%u", sim.seed());
-            SetClipboardText(m_config.seed);
-        }
-    } else if (GuiTextBox({x + 2.0f * padding, y, 100 + padding + entry_height, entry_height}, m_config.seed,
-                          Config::SEED_SIZE, s_seed_edit)) {
-        s_seed_edit = !s_seed_edit;
-    }
-
-    m_config.seed_manual =
-        GuiCheckBox({x + 4.0f * padding + entry_height + 100, y + entry_height / 4.0f, checkbox_size, checkbox_size},
-                    "Seed", m_config.seed_manual);
-
-    static bool s_tick_edit = false;
-    if (!m_config.runtime_manual_stepping) {
-        if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Tick (ms)",
-                       &m_config.runtime_tick_time_ms, 0, 1000, s_tick_edit)) {
-            s_tick_edit = !s_tick_edit;
-        }
-    }
-
-    y += button_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, (width + padding * 2.0f - margin) / 2.0f, 1}, "Statistics");
-    GuiLine({x - padding + (width + padding * 2.0f - margin) / 2.0f, y, (width + padding * 2.0f - margin) / 2.0f, 1},
-            "Graphics");
-    y += padding * 2.0f;
-
-    GuiLabel({x + width / 2.0f + padding, y + 1.0f, width / 2.0f, entry_height}, TextFormat("FPS: %d", GetFPS()));
-    static bool s_fps_edit = false;
-    if (GuiSpinner({x + 5.0f * width / 6.0f - 2.0f * padding, y, width / 6.0f, entry_height}, "Max",
-                   &m_config.window_fps, 0, 999, s_fps_edit)) {
-        s_fps_edit = !s_fps_edit;
-        reload();
-    }
-
-    Rectangle styles_position = {x + width * 3.0f / 4.0f - 2.0f * padding, y + entry_height + padding, width / 4.0f,
-                                 entry_height};
-    GuiLabel({x + width / 2.0f + padding, y + entry_height + padding, width / 2.0f, entry_height}, "GUI Style");
-
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Current tick: %u", sim.ticks()));
-    y += entry_height;
-
-    GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
-    y += entry_height;
-
-    auto [avg_offsprings, avg_sensor_range] = sim.avg_genes();
-    GuiLabel({x + padding, y, width, entry_height},
-             TextFormat("Avg. offsprings: %.1f    Avg. sensor: %.1f", avg_offsprings, avg_sensor_range));
-    y += entry_height;
-
-    GuiLabel({x + padding, y, width, entry_height},
-             TextFormat("Wolves: %d    Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
-    y += entry_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Genes");
-    y += padding * 2.0f;
-
-    static bool s_genes_max_offsprings = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Max offsprings",
-                   &m_config.genes_max_offsprings, 1, 8, s_genes_max_offsprings)) {
-        s_genes_max_offsprings = !s_genes_max_offsprings;
-    }
-
-    static bool s_genes_max_sensor_range = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Max sensor",
-                   &m_config.genes_max_sensor_range, 1, 100, s_genes_max_sensor_range)) {
-        s_genes_max_sensor_range = !s_genes_max_sensor_range;
-    }
-    y += entry_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Simulation");
-    y += padding * 2.0f;
-
-    static bool s_grid_width_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Grid width",
-                   &m_config.sim_width, 10, 500, s_grid_width_edit)) {
-        s_grid_width_edit = !s_grid_width_edit;
-    }
-
-    static bool s_chunk_width_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Chunk width",
-                   &m_config.sim_chunk_width, 4, 100, s_chunk_width_edit)) {
-        s_chunk_width_edit = !s_chunk_width_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_grid_height_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Grid height",
-                   &m_config.sim_height, 10, 500, s_grid_height_edit)) {
-        s_grid_height_edit = !s_grid_height_edit;
-    }
-
-    static bool s_chunk_height_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Chunk height",
-                   &m_config.sim_chunk_height, 4, 100, s_chunk_height_edit)) {
-        s_chunk_height_edit = !s_chunk_height_edit;
-    }
-    y += entry_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Grass");
-    y += padding * 2.0f;
-
-    static bool s_grass_spawn_count_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
-                   &m_config.grass_spawn_count, 1, 1000, s_grass_spawn_count_edit)) {
-        s_grass_spawn_count_edit = !s_grass_spawn_count_edit;
-    }
-
-    static bool s_grass_nutrition_value_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
-                   &m_config.grass_nutritional_value, 1, 10000, s_grass_nutrition_value_edit)) {
-        s_grass_nutrition_value_edit = !s_grass_nutrition_value_edit;
-    }
-    y += entry_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Chicken");
-    y += padding * 2.0f;
-
-    static bool s_chicken_spawn_count_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
-                   &m_config.chicken_spawn_count, 1, 1000, s_chicken_spawn_count_edit)) {
-        s_chicken_spawn_count_edit = !s_chicken_spawn_count_edit;
-    }
-
-    static bool s_chicken_sensor_range_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Sensor range",
-                   &m_config.chicken_sensor_range, 1, 1000, s_chicken_sensor_range_edit)) {
-        s_chicken_sensor_range_edit = !s_chicken_sensor_range_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_chicken_energy_start_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
-                   &m_config.chicken_energy_start, 1, 1000, s_chicken_energy_start_edit)) {
-        s_chicken_energy_start_edit = !s_chicken_energy_start_edit;
-    }
-
-    static bool s_chicken_energy_loss_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
-                   &m_config.chicken_energy_loss, 1, 1000, s_chicken_energy_loss_edit)) {
-        s_chicken_energy_loss_edit = !s_chicken_energy_loss_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_chicken_hunger_start_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
-                   &m_config.chicken_hunger_start, 1, 10000, s_chicken_hunger_start_edit)) {
-        s_chicken_hunger_start_edit = !s_chicken_hunger_start_edit;
-    }
-
-    static bool s_chicken_hunger_stop_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
-                   &m_config.chicken_hunger_stop, 1, 10000, s_chicken_hunger_stop_edit)) {
-        s_chicken_hunger_stop_edit = !s_chicken_hunger_stop_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_chicken_breed_cost_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed cost",
-                   &m_config.chicken_breed_cost, 1, 10000, s_chicken_breed_cost_edit)) {
-        s_chicken_breed_cost_edit = !s_chicken_breed_cost_edit;
-    }
-
-    static bool s_chicken_nutritional_value_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutritional value",
-                   &m_config.chicken_nutritional_value, 1, 10000, s_chicken_nutritional_value_edit)) {
-        s_chicken_nutritional_value_edit = !s_chicken_nutritional_value_edit;
-    }
-    y += entry_height + padding * 2.0f;
-
-    GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Wolf");
-    y += padding * 2.0f;
-
-    static bool s_wolf_spawn_count_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
-                   &m_config.wolf_spawn_count, 0, 1000, s_wolf_spawn_count_edit)) {
-        s_wolf_spawn_count_edit = !s_wolf_spawn_count_edit;
-    }
-
-    static bool s_wolf_sensor_range_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Sensor range",
-                   &m_config.wolf_sensor_range, 1, 1000, s_wolf_sensor_range_edit)) {
-        s_wolf_sensor_range_edit = !s_wolf_sensor_range_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_wolf_energy_start_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
-                   &m_config.wolf_energy_start, 0, 1000, s_wolf_energy_start_edit)) {
-        s_wolf_energy_start_edit = !s_wolf_energy_start_edit;
-    }
-
-    static bool s_wolf_energy_loss_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
-                   &m_config.wolf_energy_loss, 1, 1000, s_wolf_energy_loss_edit)) {
-        s_wolf_energy_loss_edit = !s_wolf_energy_loss_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_wolf_hunger_start_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
-                   &m_config.wolf_hunger_start, 1, 10000, s_wolf_hunger_start_edit)) {
-        s_wolf_hunger_start_edit = !s_wolf_hunger_start_edit;
-    }
-
-    static bool s_wolf_hunger_stop_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
-                   &m_config.wolf_hunger_stop, 1, 10000, s_wolf_hunger_stop_edit)) {
-        s_wolf_hunger_stop_edit = !s_wolf_hunger_stop_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_wolf_breed_cost_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed cost",
-                   &m_config.wolf_breed_cost, 1, 10000, s_wolf_breed_cost_edit)) {
-        s_wolf_breed_cost_edit = !s_wolf_breed_cost_edit;
-    }
-
-    GuiUnlock();
-    if (GuiDropdownBox(styles_position, m_style_names, &m_config.window_style, s_style_edit)) {
-        s_style_edit = !s_style_edit;
-        reload();
     }
 }

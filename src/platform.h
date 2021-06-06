@@ -1,16 +1,18 @@
 #pragma once
 #include <raylib.h>
 #include <chrono>
+#include "gui.h"
 #include "simulation.h"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::duration<double>>;
 
 class Platform {
    public:
-    explicit Platform(Config& config) : m_config(config) {}
+    explicit Platform(Config& config) : m_config(config), m_gui(config) {}
     void start();
     void stop();
     void reload();
+    void interact(const Simulation& sim);
     void start_drawing(Simulation& sim);
     void draw_debug(Simulation& sim) const;
     void update_gui_end_drawing(const Simulation& sim);
@@ -35,26 +37,8 @@ class Platform {
     Vec2 m_hl_pos{};
     const Agent* m_hl_agent{};
 
+    Gui m_gui;
+
     Texture2D texture_for_type(AgentType type);
     Color color_for_type(AgentType type);
-
-    int m_gui_width{};
-    bool m_gui_closed = false;
-    bool m_gui_restart = false;
-
-    void update_gui(const Simulation& sim);
-
-    const char* m_styles[9] = {
-        "",
-        "assets/styles/ashes.rgs",
-        "assets/styles/bluish.rgs",
-        "assets/styles/candy.rgs",
-        "assets/styles/cherry.rgs",
-        "assets/styles/cyber.rgs",
-        "assets/styles/jungle.rgs",
-        "assets/styles/lavanda.rgs",
-        "assets/styles/terminal.rgs",
-    };
-
-    const char* m_style_names = "Default;Ashes;Bluish;Candy;Cherry;Cyber;Jungle;Lavanda;Terminal";
 };

@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
-project(sim)
+project(sim VERSION "1.1.0")
+
+configure_file("src/version.h.in" "version.h" @ONLY)
+include_directories(${PROJECT_BINARY_DIR})
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)

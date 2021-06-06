@@ -1,10 +1,11 @@
 #include "platform.h"
 #include <raylib.h>
 #include <raymath.h>
+#include "version.h"
 
 void Platform::start() {
     SetTraceLogLevel(LOG_WARNING);
-    InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulator");
+    InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulator v" PROJECT_VERSION);
     SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(KEY_Q);
     if (m_config.window_maximized) MaximizeWindow();

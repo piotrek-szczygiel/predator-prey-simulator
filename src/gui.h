@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <deque>
 #include "simulation.h"
+#include "version.h"
 
 class Gui {
    public:
@@ -85,36 +86,36 @@ class Gui {
 
     const char* m_style_names = "Default;Ashes;Bluish;Candy;Cherry;Cyber;Jungle;Lavanda;Terminal";
 
-    const char* m_help_text =
-        "Welcome to Predator-Prey simulator!\n\n"
-        "Keybindings:\n"
-        "  [ESC] - toggle settings window\n"
-        "  [H] - toggle help\n"
-        "  [Q] - quit program\n"
-        "  [F11] - toggle maximize window\n"
-        "  [R] - restart simulation\n"
-        "  [P] - control_pause simulation\n"
-        "  [SPACE] - next tick when paused\n"
-        "  [F12] - screenshot\n"
-        "  [CTRL]+[F12] - record gif\n\n"
-        "Mouse controls:\n"
-        "  Left click - select agent to observe\n"
-        "  Right click - panning\n"
-        "  Middle click - center camera\n"
-        "  Scroll wheel - zoom in and out";
+    const char* m_help_text = "Welcome to Predator-Prey simulator v" PROJECT_VERSION
+                              "!\n\n"
+                              "Keybindings:\n"
+                              "  [ESC] - toggle settings window\n"
+                              "  [H] - toggle help\n"
+                              "  [Q] - quit program\n"
+                              "  [F11] - toggle maximize window\n"
+                              "  [R] - restart simulation\n"
+                              "  [P] - control_pause simulation\n"
+                              "  [SPACE] - next tick when paused\n"
+                              "  [F12] - screenshot\n"
+                              "  [CTRL]+[F12] - record gif\n\n"
+                              "Mouse controls:\n"
+                              "  Left click - select agent to observe\n"
+                              "  Right click - panning\n"
+                              "  Middle click - center camera\n"
+                              "  Scroll wheel - zoom in and out";
 
-    const char* m_about_text =
-        "Predator-Prey simulator is a project made for\n"
-        "System Modeling and Simulation class\n"
-        "at AGH University by:\n\n"
-        "\t- Piotr Szczygiel\n"
-        "\t- Marcin Wojsik\n\n"
-        "Third party libraries used:\n"
-        "\t- raylib  (github.com/raysan5/raylib)\n"
-        "\t- raygui  (github.com/raysan5/raygui)\n"
-        "\t- mINI    (github.com/pulzed/mINI)\n"
-        "\t- CRCpp   (github.com/d-bahr/CRCpp)\n"
-        "\t- itlib   (github.com/iboB/itlib)";
+    const char* m_about_text = "Predator-Prey simulator v" PROJECT_VERSION
+                               "\n\n"
+                               "It's a project made for System Modeling and\n"
+                               "Simulation class at AGH University by:\n\n"
+                               "\t- Piotr Szczygiel\n"
+                               "\t- Marcin Wojsik\n\n"
+                               "Third party libraries used:\n"
+                               "\t- raylib  (github.com/raysan5/raylib)\n"
+                               "\t- raygui  (github.com/raysan5/raygui)\n"
+                               "\t- mINI    (github.com/pulzed/mINI)\n"
+                               "\t- CRCpp   (github.com/d-bahr/CRCpp)\n"
+                               "\t- itlib   (github.com/iboB/itlib)";
 
     void draw_controls(const Simulation& sim, float x, float y, float w);
 };

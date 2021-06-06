@@ -17,6 +17,7 @@ class Config {
     int window_height{};
     int window_style{};
     bool window_maximized{};
+    float window_zoom{};
     int window_fps{};
 
     int runtime_tick_time_ms{};
@@ -34,25 +35,25 @@ class Config {
     int sim_chunk_width{};
     int sim_chunk_height{};
 
-    int sim_energy_start{};
-    int sim_energy_tick_loss{};
-    int sim_energy_breed_needed{};
-    int sim_energy_breed_loss{};
-
-    int grass_spawn_time{};
     int grass_spawn_count{};
-    int grass_nutrition_value{};
+    int grass_nutritional_value{};
 
     int chicken_spawn_count{};
     int chicken_sensor_range{};
-    int chicken_nutrition_value{};
+    int chicken_energy_start{};
+    int chicken_energy_loss{};
     int chicken_hunger_start{};
     int chicken_hunger_stop{};
+    int chicken_breed_cost{};
+    int chicken_nutritional_value{};
 
     int wolf_spawn_count{};
     int wolf_sensor_range{};
+    int wolf_energy_start{};
+    int wolf_energy_loss{};
     int wolf_hunger_start{};
     int wolf_hunger_stop{};
+    int wolf_breed_cost{};
 
     bool valid = false;
 
@@ -62,12 +63,13 @@ class Config {
     mINI::INIFile m_file;
     mINI::INIStructure m_ini;
 
-    enum class LinkType { Int, Bool };
+    enum class LinkType { Int, Float, Bool };
 
     struct Link {
         LinkType type;
         union {
             int* out_int;
+            float* out_float;
             bool* out_bool;
         };
         const char* section;
@@ -75,6 +77,9 @@ class Config {
     };
     std::vector<Link> m_links;
 
+    std::string get(const char* section, const char* name);
+
     void set(int& output, const char* section, const char* name);
+    void set(float& output, const char* section, const char* name);
     void set(bool& output, const char* section, const char* name);
 };

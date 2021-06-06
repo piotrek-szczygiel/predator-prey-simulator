@@ -14,7 +14,7 @@ void Platform::start() {
 
     m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                        (float)m_config.sim_height * m_config.tile_size / 2.0f};
-    m_camera.zoom = 1.0;
+    m_camera.zoom = m_config.window_zoom;
 
     m_tex_grass = LoadTexture("assets/grass.png");
     m_tex_chicken = LoadTexture("assets/chicken.png");
@@ -79,8 +79,8 @@ Texture2D Platform::texture_for_type(AgentType type) {
 Color Platform::color_for_type(AgentType type) {
     switch (type) {
         case AgentType::Grass: return LIME;
-        case AgentType::Chicken: return ORANGE;
-        case AgentType::Wolf: return DARKGRAY;
+        case AgentType::Chicken: return YELLOW;
+        case AgentType::Wolf: return RED;
         default: return BLACK;
     }
 }
@@ -90,10 +90,10 @@ void Platform::start_drawing(Simulation& sim) {
     ClearBackground({230, 230, 230, 255});
     BeginMode2D(m_camera);
 
-    const Color GRASS_COLOR = {99, 171, 63, 255};
-    const Rectangle GRASS_REC = {0, 0, (float)sim.size().x * m_config.tile_size,
-                                 (float)sim.size().y * m_config.tile_size};
-    DrawRectangleRec(GRASS_REC, GRASS_COLOR);
+    const Color grass_color = {99, 171, 63, 255};
+    const Rectangle grass_rectangle = {0, 0, (float)sim.size().x * m_config.tile_size,
+                                       (float)sim.size().y * m_config.tile_size};
+    DrawRectangleRec(grass_rectangle, grass_color);
     DrawRectangleLinesEx({-4.0f, -4.0f, (float)sim.size().x * m_config.tile_size + 8.0f,
                           (float)sim.size().y * m_config.tile_size + 8.0f},
                          4.0f, BEIGE);
@@ -113,6 +113,12 @@ void Platform::start_drawing(Simulation& sim) {
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
             if (m_camera.zoom >= 0.75f) {
+                if (m_config.runtime_debug_draw && agent.type != AgentType::Grass && !agent.hungry) {
+                    DrawRectangleRec(
+                        {(float)agent.pos.x * m_config.tile_size + 1, (float)agent.pos.y * m_config.tile_size + 1,
+                         m_config.tile_size - 2, m_config.tile_size - 2},
+                        Color{173, 216, 230, 128});
+                }
                 DrawTextureRec(texture_for_type(agent.type), {0, 0, m_config.tile_size, m_config.tile_size},
                                {(float)agent.pos.x * m_config.tile_size, (float)agent.pos.y * m_config.tile_size},
                                WHITE);
@@ -148,17 +154,16 @@ void Platform::draw_debug(Simulation& sim) const {
 
     for (const auto& line : sim.debug_lines()) {
         if (line.from->is_dead() || line.to->is_dead()) continue;
-        Color color;
-        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Grass)
-            color = ORANGE;
-        else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf)
-            color = BLACK;
-        else if (line.from->type == AgentType::Wolf && line.to->type == AgentType::Chicken)
+        auto color = BLACK;
+        if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Grass) {
+            color = GREEN;
+        } else if (line.from->type == AgentType::Chicken && line.to->type == AgentType::Wolf) {
+            color = DARKGRAY;
+        } else if (line.from->type == AgentType::Wolf && line.to->type == AgentType::Chicken) {
             color = RED;
-        else if (line.from->type == line.to->type)
-            color = VIOLET;
-        else
-            color = WHITE;
+        } else if (line.from->type == line.to->type) {
+            color = PINK;
+        }
         Vector2 from = {(float)line.from->pos.x * 16 + 8, (float)line.from->pos.y * 16 + 8};
         Vector2 to = {(float)line.to->pos.x * 16 + 8, (float)line.to->pos.y * 16 + 8};
         DrawLineEx(from, to, 2.0f, Fade(color, 0.5f));
@@ -191,16 +196,17 @@ void Platform::update_gui(const Simulation& sim) {
 
     m_config.window_width = GetScreenWidth();
     m_config.window_height = GetScreenHeight();
-    m_config.window_maximized = IsWindowMaximized() ? 1 : 0;
+    m_config.window_maximized = IsWindowMaximized();
 
     if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
     if (IsKeyPressed(KEY_ESCAPE)) m_gui_closed = !m_gui_closed;
+    if (IsKeyPressed(KEY_ENTER)) m_config.runtime_manual_stepping = !m_config.runtime_manual_stepping;
 
     float mouse_delta = GetMouseWheelMove();
     float new_zoom = m_camera.zoom + mouse_delta * 0.1f;
     if (new_zoom <= 0.1f) new_zoom = 0.1f;
-    if (new_zoom >= 4.0f) new_zoom = 4.0f;
-    m_camera.zoom = new_zoom;
+    if (new_zoom >= 2.0f) new_zoom = 2.0f;
+    m_camera.zoom = m_config.window_zoom = new_zoom;
 
     Vector2 current_mouse_pos = GetMousePosition();
     Vector2 delta = Vector2Subtract(m_prev_mouse_pos, current_mouse_pos);
@@ -267,9 +273,9 @@ void Platform::update_gui(const Simulation& sim) {
 
     float x = (float)GetScreenWidth() - width;
     float y = margin;
-    static std::string s_status{};
+    static const char* s_status = "";
     GuiStatusBar({0, (float)GetScreenHeight() - status_bar_height, (float)GetScreenWidth(), status_bar_height},
-                 s_status.c_str());
+                 s_status);
 
     m_gui_closed =
         GuiWindowBox({x, y, width - margin, (float)GetScreenHeight() - status_bar_height - margin * 2.0f}, "Settings");
@@ -363,8 +369,13 @@ void Platform::update_gui(const Simulation& sim) {
     GuiLabel({x + padding, y, width, entry_height}, TextFormat("Update time: %.3fms", sim.avg_update_time()));
     y += entry_height;
 
+    auto [avg_offsprings, avg_sensor_range] = sim.avg_genes();
     GuiLabel({x + padding, y, width, entry_height},
-             TextFormat("Wolves: %d  Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
+             TextFormat("Avg. offsprings: %.1f    Avg. sensor: %.1f", avg_offsprings, avg_sensor_range));
+    y += entry_height;
+
+    GuiLabel({x + padding, y, width, entry_height},
+             TextFormat("Wolves: %d    Chickens: %d", sim.count(AgentType::Wolf), sim.count(AgentType::Chicken)));
     y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Genes");
@@ -392,17 +403,17 @@ void Platform::update_gui(const Simulation& sim) {
         s_grid_width_edit = !s_grid_width_edit;
     }
 
-    static bool s_grid_height_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Grid height",
-                   &m_config.sim_height, 10, 500, s_grid_height_edit)) {
-        s_grid_height_edit = !s_grid_height_edit;
+    static bool s_chunk_width_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Chunk width",
+                   &m_config.sim_chunk_width, 4, 100, s_chunk_width_edit)) {
+        s_chunk_width_edit = !s_chunk_width_edit;
     }
     y += entry_height + padding;
 
-    static bool s_chunk_width_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Chunk width",
-                   &m_config.sim_chunk_width, 4, 100, s_chunk_width_edit)) {
-        s_chunk_width_edit = !s_chunk_width_edit;
+    static bool s_grid_height_edit = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Grid height",
+                   &m_config.sim_height, 10, 500, s_grid_height_edit)) {
+        s_grid_height_edit = !s_grid_height_edit;
     }
 
     static bool s_chunk_height_edit = false;
@@ -410,53 +421,20 @@ void Platform::update_gui(const Simulation& sim) {
                    &m_config.sim_chunk_height, 4, 100, s_chunk_height_edit)) {
         s_chunk_height_edit = !s_chunk_height_edit;
     }
-    y += entry_height + padding;
-
-    static bool s_energy_start_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
-                   &m_config.sim_energy_start, 1, 10000, s_energy_start_edit)) {
-        s_energy_start_edit = !s_energy_start_edit;
-    }
-
-    static bool s_energy_loss_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
-                   &m_config.sim_energy_tick_loss, 1, 10000, s_energy_loss_edit)) {
-        s_energy_loss_edit = !s_energy_loss_edit;
-    }
-    y += entry_height + padding;
-
-    static bool s_energy_breed_needed_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed energy",
-                   &m_config.sim_energy_breed_needed, 1, 10000, s_energy_breed_needed_edit)) {
-        s_energy_breed_needed_edit = !s_energy_breed_needed_edit;
-    }
-
-    static bool s_energy_breed_loss_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed loss",
-                   &m_config.sim_energy_breed_loss, 1, 10000, s_energy_breed_loss_edit)) {
-        s_energy_breed_loss_edit = !s_energy_breed_loss_edit;
-    }
     y += entry_height + padding * 2.0f;
 
     GuiLine({x - padding, y, width + padding * 2.0f - margin, 1}, "Grass");
     y += padding * 2.0f;
 
-    static bool s_grass_spawn_time_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Frequency",
-                   &m_config.grass_spawn_time, 1, 1000, s_grass_spawn_time_edit)) {
-        s_grass_spawn_time_edit = !s_grass_spawn_time_edit;
-    }
-
     static bool s_grass_spawn_count_edit = false;
-    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Spawn count",
                    &m_config.grass_spawn_count, 1, 1000, s_grass_spawn_count_edit)) {
         s_grass_spawn_count_edit = !s_grass_spawn_count_edit;
     }
-    y += entry_height + padding;
 
     static bool s_grass_nutrition_value_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
-                   &m_config.grass_nutrition_value, 1, 10000, s_grass_nutrition_value_edit)) {
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
+                   &m_config.grass_nutritional_value, 1, 10000, s_grass_nutrition_value_edit)) {
         s_grass_nutrition_value_edit = !s_grass_nutrition_value_edit;
     }
     y += entry_height + padding * 2.0f;
@@ -477,6 +455,19 @@ void Platform::update_gui(const Simulation& sim) {
     }
     y += entry_height + padding;
 
+    static bool s_chicken_energy_start_edit = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
+                   &m_config.chicken_energy_start, 1, 1000, s_chicken_energy_start_edit)) {
+        s_chicken_energy_start_edit = !s_chicken_energy_start_edit;
+    }
+
+    static bool s_chicken_energy_loss_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
+                   &m_config.chicken_energy_loss, 1, 1000, s_chicken_energy_loss_edit)) {
+        s_chicken_energy_loss_edit = !s_chicken_energy_loss_edit;
+    }
+    y += entry_height + padding;
+
     static bool s_chicken_hunger_start_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
                    &m_config.chicken_hunger_start, 1, 10000, s_chicken_hunger_start_edit)) {
@@ -490,10 +481,16 @@ void Platform::update_gui(const Simulation& sim) {
     }
     y += entry_height + padding;
 
-    static bool s_chicken_nutrition_value_edit = false;
-    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutrition",
-                   &m_config.chicken_nutrition_value, 1, 10000, s_chicken_nutrition_value_edit)) {
-        s_chicken_nutrition_value_edit = !s_chicken_nutrition_value_edit;
+    static bool s_chicken_breed_cost_edit = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed cost",
+                   &m_config.chicken_breed_cost, 1, 10000, s_chicken_breed_cost_edit)) {
+        s_chicken_breed_cost_edit = !s_chicken_breed_cost_edit;
+    }
+
+    static bool s_chicken_nutritional_value_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Nutritional value",
+                   &m_config.chicken_nutritional_value, 1, 10000, s_chicken_nutritional_value_edit)) {
+        s_chicken_nutritional_value_edit = !s_chicken_nutritional_value_edit;
     }
     y += entry_height + padding * 2.0f;
 
@@ -513,6 +510,19 @@ void Platform::update_gui(const Simulation& sim) {
     }
     y += entry_height + padding;
 
+    static bool s_wolf_energy_start_edit = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy start",
+                   &m_config.wolf_energy_start, 0, 1000, s_wolf_energy_start_edit)) {
+        s_wolf_energy_start_edit = !s_wolf_energy_start_edit;
+    }
+
+    static bool s_wolf_energy_loss_edit = false;
+    if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Energy loss",
+                   &m_config.wolf_energy_loss, 1, 1000, s_wolf_energy_loss_edit)) {
+        s_wolf_energy_loss_edit = !s_wolf_energy_loss_edit;
+    }
+    y += entry_height + padding;
+
     static bool s_wolf_hunger_start_edit = false;
     if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger start",
                    &m_config.wolf_hunger_start, 1, 10000, s_wolf_hunger_start_edit)) {
@@ -523,6 +533,13 @@ void Platform::update_gui(const Simulation& sim) {
     if (GuiSpinner({x + width * 3.0f / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Hunger stop",
                    &m_config.wolf_hunger_stop, 1, 10000, s_wolf_hunger_stop_edit)) {
         s_wolf_hunger_stop_edit = !s_wolf_hunger_stop_edit;
+    }
+    y += entry_height + padding;
+
+    static bool s_wolf_breed_cost_edit = false;
+    if (GuiSpinner({x + width / 4.0f - 2.0f * padding, y, width / 4.0f, entry_height}, "Breed cost",
+                   &m_config.wolf_breed_cost, 1, 10000, s_wolf_breed_cost_edit)) {
+        s_wolf_breed_cost_edit = !s_wolf_breed_cost_edit;
     }
 
     GuiUnlock();

@@ -20,6 +20,23 @@ int Map::count(AgentType type) const {
     return (int)count;
 }
 
+std::tuple<double, double> Map::avg_genes() const {
+    size_t count = 0;
+    double sum_offsprings = 0.0;
+    double sum_sensor_range = 0.0;
+    for (const auto& chunk : m_chunks) {
+        for (const auto& agent : chunk) {
+            if (!agent.is_dead() && agent.type != AgentType::Grass) {
+                ++count;
+                sum_offsprings += agent.genes.offsprings;
+                sum_sensor_range += agent.genes.sensor_range;
+            }
+        }
+    }
+
+    return {sum_offsprings / (double)count, sum_sensor_range / (double)count};
+}
+
 SmallVector<Agent*> Map::get_nearby_to(const Agent* agent) {
     int c = get_chunk(agent->pos);
     SmallVector<int> chunks;

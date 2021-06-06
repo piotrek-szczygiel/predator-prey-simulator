@@ -1,34 +1,49 @@
 #include "config.h"
+#include <iomanip>
 
 bool Config::write() {
     for (const auto& link : m_links) {
-        m_ini[link.section][link.name] =
-            link.type == LinkType::Int ? std::to_string(*link.out_int) : (*link.out_bool ? "true" : "false");
+        std::string v;
+        if (link.type == LinkType::Int) {
+            v = std::to_string(*link.out_int);
+        } else if (link.type == LinkType::Float) {
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(1) << *link.out_float;
+            v = oss.str();
+        } else if (link.type == LinkType::Bool) {
+            v = *link.out_bool ? "true" : "false";
+        }
+
+        m_ini[link.section][link.name] = v;
     }
     m_ini["seed"]["seed"] = seed;
     return m_file.write(m_ini, false);
 }
 
-void Config::set(int& output, const char* section, const char* name) {
-    std::string str_value = m_ini.get(section).get(name);
-    if (str_value.empty()) {
+std::string Config::get(const char* section, const char* name) {
+    std::string value = m_ini.get(section).get(name);
+    if (value.empty()) {
         fprintf(stderr, "unable to find property '[%s] %s' in %s\n", section, name, m_filename);
         valid = false;
-        return;
     }
+    return value;
+}
+
+void Config::set(int& output, const char* section, const char* name) {
+    auto str_value = get(section, name);
+    if (str_value.empty()) return;
 
     const char* value = str_value.c_str();
     char* end;
-    long n = std::strtol(value, &end, 0);
+    long result = std::strtol(value, &end, 10);
 
     if (end <= value) {
-        fprintf(stderr, "invalid value '%s' for property '[%s] %s' in %s\n", str_value.c_str(), section, name,
-                m_filename);
+        fprintf(stderr, "invalid integer '%s' for property '[%s] %s' in %s\n", value, section, name, m_filename);
         valid = false;
         return;
     }
 
-    output = n;
+    output = result;
 
     Link link{};
     link.type = LinkType::Int;
@@ -38,8 +53,35 @@ void Config::set(int& output, const char* section, const char* name) {
     m_links.push_back(link);
 }
 
+void Config::set(float& output, const char* section, const char* name) {
+    std::string str_value = m_ini.get(section).get(name);
+    if (str_value.empty()) return;
+
+    const char* value = str_value.c_str();
+    char* end;
+    float result = std::strtof(value, &end);
+
+    if (end <= value) {
+        fprintf(stderr, "invalid float '%s' for property '[%s] %s' in %s\n", value, section, name, m_filename);
+        valid = false;
+        return;
+    }
+
+    output = result;
+
+    Link link{};
+    link.type = LinkType::Float;
+    link.out_float = &output;
+    link.section = section;
+    link.name = name;
+    m_links.push_back(link);
+}
+
 void Config::set(bool& output, const char* section, const char* name) {
-    output = m_ini.get(section).get(name) == "true";
+    auto str_value = get(section, name);
+    if (str_value.empty()) return;
+
+    output = str_value == "true";
 
     Link link{};
     link.type = LinkType::Bool;
@@ -60,6 +102,7 @@ bool Config::load() {
     set(window_height, "window", "height");
     set(window_style, "window", "style");
     set(window_maximized, "window", "maximized");
+    set(window_zoom, "window", "zoom");
     set(window_fps, "window", "fps");
 
     set(runtime_tick_time_ms, "runtime", "tick_time_ms");
@@ -77,25 +120,25 @@ bool Config::load() {
     set(sim_chunk_width, "simulation", "chunk_width");
     set(sim_chunk_height, "simulation", "chunk_height");
 
-    set(sim_energy_start, "simulation", "energy_start");
-    set(sim_energy_tick_loss, "simulation", "energy_tick_loss");
-    set(sim_energy_breed_needed, "simulation", "energy_breed_needed");
-    set(sim_energy_breed_loss, "simulation", "energy_breed_loss");
-
-    set(grass_spawn_time, "grass", "spawn_time");
     set(grass_spawn_count, "grass", "spawn_count");
-    set(grass_nutrition_value, "grass", "nutrition_value");
+    set(grass_nutritional_value, "grass", "nutritional_value");
 
     set(chicken_spawn_count, "chicken", "spawn_count");
     set(chicken_sensor_range, "chicken", "sensor_range");
-    set(chicken_nutrition_value, "chicken", "nutrition_value");
+    set(chicken_energy_start, "chicken", "energy_start");
+    set(chicken_energy_loss, "chicken", "energy_loss");
     set(chicken_hunger_start, "chicken", "hunger_start");
     set(chicken_hunger_stop, "chicken", "hunger_stop");
+    set(chicken_breed_cost, "chicken", "breed_cost");
+    set(chicken_nutritional_value, "chicken", "nutritional_value");
 
     set(wolf_spawn_count, "wolf", "spawn_count");
     set(wolf_sensor_range, "wolf", "sensor_range");
+    set(wolf_energy_start, "wolf", "energy_start");
+    set(wolf_energy_loss, "wolf", "energy_loss");
     set(wolf_hunger_start, "wolf", "hunger_start");
     set(wolf_hunger_stop, "wolf", "hunger_stop");
+    set(wolf_breed_cost, "wolf", "breed_cost");
 
     return valid;
 }

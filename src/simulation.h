@@ -51,6 +51,7 @@ class Simulation {
     unsigned int seed() const { return m_seed; }
 
     int count(AgentType type) const;
+    std::tuple<double, double> avg_genes() const;
     inline bool out_of_map(Vec2 pos) const { return pos.x < 0 || pos.y < 0 || pos.x >= m_size.x || pos.y >= m_size.y; }
 
     const Agent* at(Vec2 pos) const { return m_grid.at(pos); }
@@ -72,8 +73,6 @@ class Simulation {
 
     const Config& m_config;
 
-    Tick m_last_grass_spawn = 0;
-
     Map m_map;
     Grid m_grid;
     Pathfinder m_pathfinder;
@@ -88,6 +87,7 @@ class Simulation {
 
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
     Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
+    Vec2 random_position_around(Vec2 pos, int distance);
     AgentGenes mutate_genes(AgentGenes mom, AgentGenes dad);
 
     void add_agent(AgentType type, AgentGenes genes, Vec2 pos);
@@ -105,7 +105,7 @@ class Simulation {
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);
 
-    Path get_path_to_nearest(Agent* from, AgentType to, int to_min_energy = 0);
+    Path get_path_to_nearest(Agent* from, AgentType to, bool fed = false);
 
     std::vector<DebugLine> m_debug_lines{};
     std::vector<DebugBreed> m_debug_breeds{};

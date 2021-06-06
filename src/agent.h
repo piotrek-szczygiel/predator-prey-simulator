@@ -2,7 +2,7 @@
 #include "config.h"
 #include "util.h"
 
-enum class AgentType { None, Wolf, Chicken, Grass };
+enum class AgentType { Wolf, Chicken, Grass };
 
 struct AgentGenes {
     int offsprings;
@@ -14,7 +14,6 @@ class Agent {
     Agent(AgentType type, AgentGenes genes, Vec2 pos, int energy, Tick last_update)
         : type(type), genes(genes), pos(pos), energy(energy), last_update(last_update) {}
 
-    bool is_none() const { return type == AgentType::None; }
     bool is_dead() const { return energy <= 0; }
 
     void kill() { energy = 0; }
@@ -24,7 +23,6 @@ class Agent {
             case AgentType::Wolf: return "wolf";
             case AgentType::Chicken: return "chicken";
             case AgentType::Grass: return "grass";
-            default: return "INVALID";
         }
     }
 

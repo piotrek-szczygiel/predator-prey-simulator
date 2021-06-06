@@ -19,14 +19,16 @@ void Simulation::update() {
     m_map.update_chunks();
     m_map.remove_dead();
 
-    if (m_tick - m_last_grass_spawn > m_config.grass_spawn_time) {
-        spawn_random_agents(AgentType::Grass, {}, m_config.grass_spawn_count);
-        m_last_grass_spawn = m_tick;
-    }
+    spawn_random_agents(AgentType::Grass, {}, m_config.grass_spawn_count);
 
     for (auto& chunk : m_map.chunks()) {
         for (auto& agent : chunk) {
-            agent.energy -= m_config.sim_energy_tick_loss + agent.genes.sensor_range;
+            switch (agent.type) {
+                case AgentType::Chicken: agent.energy -= m_config.chicken_energy_loss + agent.genes.sensor_range; break;
+                case AgentType::Wolf: agent.energy -= m_config.wolf_energy_loss + agent.genes.sensor_range; break;
+                case AgentType::Grass: break;
+            }
+
             if (agent.energy <= 0) {
                 if (&agent == m_grid.at(agent.pos)) m_grid.at_mut(agent.pos) = nullptr;
                 continue;
@@ -35,7 +37,7 @@ void Simulation::update() {
             switch (agent.type) {
                 case AgentType::Chicken: update_chicken(&agent); break;
                 case AgentType::Wolf: update_wolf(&agent); break;
-                default: break;
+                case AgentType::Grass: break;
             }
         }
     }
@@ -60,6 +62,10 @@ int Simulation::count(AgentType type) const {
     return m_map.count(type);
 }
 
+std::tuple<double, double> Simulation::avg_genes() const {
+    return m_map.avg_genes();
+}
+
 AgentGenes Simulation::mutate_genes(AgentGenes mom, AgentGenes dad) {
     int new_offsprings = random(0, 1) ? mom.offsprings : dad.offsprings;
     new_offsprings += random(-1, 1);
@@ -71,8 +77,20 @@ AgentGenes Simulation::mutate_genes(AgentGenes mom, AgentGenes dad) {
             std::clamp(new_sensor_range, 1, m_config.genes_max_sensor_range)};
 }
 
+Vec2 Simulation::random_position_around(Vec2 pos, int distance) {
+    Vec2 min = {std::max(0, pos.x - distance), std::max(0, pos.y - distance)};
+    Vec2 max = {std::min(m_size.x - 1, pos.x + distance), std::min(m_size.y - 1, pos.y + distance)};
+    return {random(min.x, max.x), random(min.y, max.y)};
+}
+
 void Simulation::add_agent(AgentType type, AgentGenes genes, Vec2 pos) {
-    Agent* agent = m_map.add(type, genes, pos, m_config.sim_energy_start, m_tick - random(0, 2));
+    int energy = 1;
+    if (type == AgentType::Chicken) {
+        energy = m_config.chicken_energy_start;
+    } else if (type == AgentType::Wolf) {
+        energy = m_config.wolf_energy_start;
+    }
+    Agent* agent = m_map.add(type, genes, pos, energy, m_tick - random(0, 2));
     m_grid.at_mut(pos) = agent;
 }
 
@@ -97,15 +115,21 @@ bool Simulation::move_agent_if_empty(Agent* agent, Vec2 pos) {
 }
 
 void Simulation::move_agent_random(Agent* agent) {
-    std::shuffle(m_possible_random_moves.begin(), m_possible_random_moves.end(), m_mt19937);
-    for (const auto& pos : m_possible_random_moves) {
-        if (move_agent_if_empty(agent, agent->pos + pos)) break;
+    if (agent->random_direction == Vec2{0, 0}) {
+        agent->random_direction = random_position_around(agent->pos, agent->genes.sensor_range * 2);
     }
+
+    auto path = m_pathfinder.get_next_step(agent->pos, agent->random_direction, m_grid);
+    if (distance(agent->pos, agent->random_direction) == 1) agent->random_direction = {};
+    move_agent_around(agent, agent->pos + path);
 }
 
 void Simulation::move_agent_around(Agent* agent, Vec2 pos) {
     if (!move_agent_if_empty(agent, pos)) {
-        move_agent_random(agent);
+        std::shuffle(m_possible_random_moves.begin(), m_possible_random_moves.end(), m_mt19937);
+        for (const auto& move : m_possible_random_moves) {
+            if (move_agent_if_empty(agent, agent->pos + move)) break;
+        }
     }
 }
 
@@ -128,8 +152,16 @@ Agent* Simulation::spawn_around(AgentType type, AgentGenes genes, Vec2 pos) {
 }
 
 void Simulation::breed(Agent* mom, Agent* dad) {
+    int breed_cost = 0;
+    if (mom->type == AgentType::Chicken) {
+        breed_cost = m_config.chicken_breed_cost;
+    } else if (mom->type == AgentType::Wolf) {
+        breed_cost = m_config.wolf_breed_cost;
+    }
+
+    if (mom->energy < breed_cost || dad->energy < breed_cost) return;
     int offsprings = random(1, mom->genes.offsprings);
-    int kid_energy = m_config.sim_energy_breed_loss / offsprings;
+    int kid_energy = breed_cost / offsprings;
 
     for (int i = 0; i < offsprings; ++i) {
         if (auto kid = spawn_around(mom->type, mutate_genes(mom->genes, dad->genes), mom->pos)) {
@@ -159,19 +191,21 @@ void Simulation::update_chicken(Agent* chicken) {
     if (chicken->hungry) {
         auto grass = get_path_to_nearest(chicken, AgentType::Grass);
         if (grass.agent) {
+            chicken->random_direction = {};
+
             if (grass.dist == 1) {
                 grass.agent->kill();
-                chicken->energy += m_config.grass_nutrition_value;
+                chicken->energy += m_config.grass_nutritional_value;
             }
             move_agent_around(chicken, chicken->pos + grass.step);
             return;
         }
-    }
-
-    if (chicken->energy >= m_config.sim_energy_breed_needed) {
-        auto partner = get_path_to_nearest(chicken, AgentType::Chicken, m_config.sim_energy_breed_needed);
+    } else {
+        auto partner = get_path_to_nearest(chicken, AgentType::Chicken, true);
 
         if (partner.agent) {
+            chicken->random_direction = {};
+
             if (partner.dist == 1) {
                 breed(chicken, partner.agent);
             } else {
@@ -197,20 +231,20 @@ void Simulation::update_wolf(Agent* wolf) {
         auto chicken = get_path_to_nearest(wolf, AgentType::Chicken);
         if (chicken.agent) {
             wolf->random_direction = {};
+
             if (chicken.dist == 1) {
                 chicken.agent->kill();
-                wolf->energy += m_config.chicken_nutrition_value;
+                wolf->energy += m_config.chicken_nutritional_value;
             }
             move_agent_around(wolf, wolf->pos + chicken.step);
             return;
         }
-    }
-
-    if (wolf->energy >= m_config.sim_energy_breed_needed) {
-        auto partner = get_path_to_nearest(wolf, AgentType::Wolf, m_config.sim_energy_breed_needed);
+    } else {
+        auto partner = get_path_to_nearest(wolf, AgentType::Wolf, true);
 
         if (partner.agent) {
             wolf->random_direction = {};
+
             if (partner.dist == 1) {
                 breed(wolf, partner.agent);
             } else {
@@ -220,23 +254,17 @@ void Simulation::update_wolf(Agent* wolf) {
         }
     }
 
-    if (wolf->random_direction == Vec2{0, 0}) {
-        wolf->random_direction = random_position();
-    }
-
-    auto path = m_pathfinder.get_next_step(wolf->pos, wolf->random_direction, m_grid);
-    if (distance(wolf->pos, wolf->random_direction) == 1) wolf->random_direction = {};
-    move_agent_around(wolf, wolf->pos + path);
+    move_agent_random(wolf);
 }
 
-Path Simulation::get_path_to_nearest(Agent* from, AgentType to, int to_min_energy) {
+Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {
     int min_distance = INT32_MAX;
     Agent* min_agent = nullptr;
 
     for (const auto& other : m_map.get_nearby_to(from)) {
         int dist = distance(from->pos, other->pos);
         if (dist <= from->genes.sensor_range * from->genes.sensor_range) {
-            if (other->type == to && other->energy >= to_min_energy && dist < min_distance) {
+            if (other->type == to && (!fed || !other->hungry) && dist < min_distance) {
                 min_distance = dist;
                 min_agent = other;
             }

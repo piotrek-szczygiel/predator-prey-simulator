@@ -3,6 +3,7 @@
 #include <cmath>
 #include <list>
 #include <numeric>
+#include <tuple>
 #include "agent.h"
 
 struct ChunkUpdate {
@@ -30,6 +31,7 @@ class Map {
 
     Agent* add(AgentType type, AgentGenes genes, Vec2 pos, int energy, Tick last_update);
     int count(AgentType type) const;
+    std::tuple<double, double> avg_genes() const;
 
     SmallVector<Agent*> get_nearby_to(const Agent* agent);
     void update_chunks();

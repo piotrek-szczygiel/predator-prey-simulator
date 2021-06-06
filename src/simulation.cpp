@@ -168,7 +168,7 @@ void Simulation::breed(Agent* mom, Agent* dad) {
             kid->energy = kid_energy * 2;
             mom->energy -= kid_energy;
             dad->energy -= kid_energy;
-            if (m_config.runtime_debug_draw) m_debug_breeds.push_back({mom, dad, kid});
+            if (m_config.control_debug) m_debug_breeds.push_back({mom, dad, kid});
         }
     }
 }
@@ -272,7 +272,7 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {
     }
 
     if (min_agent) {
-        if (m_config.runtime_debug_draw) m_debug_lines.push_back({from, min_agent});
+        if (m_config.control_debug) m_debug_lines.push_back({from, min_agent});
         return {m_pathfinder.get_next_step(from->pos, min_agent->pos, m_grid), min_agent, min_distance};
     }
 

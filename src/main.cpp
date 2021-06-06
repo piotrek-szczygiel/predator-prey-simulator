@@ -26,8 +26,8 @@ int run_graphics() {
             restart = p.should_restart();
             p.start_drawing(sim);
 
-            if (!config.runtime_manual_stepping) {
-                if (p.time_diff_ms(p.time_now(), last_update) >= (double)config.runtime_tick_time_ms) {
+            if (!config.control_pause) {
+                if (p.time_diff_ms(p.time_now(), last_update) >= (double)config.control_tick_time) {
                     sim.update();
                     last_update = p.time_now();
                 }
@@ -35,7 +35,11 @@ int run_graphics() {
                 sim.update();
             }
 
-            if (config.runtime_debug_draw) p.draw_debug(sim);
+            int chicken = sim.count(AgentType::Chicken);
+            int wolf = sim.count(AgentType::Wolf);
+            p.plot_add(chicken, wolf);
+
+            if (config.control_debug) p.draw_debug(sim);
             p.update_gui_end_drawing(sim);
         }
     } while (restart);
@@ -54,14 +58,15 @@ int run_csv(Tick sim_ticks) {
     Simulation sim(config);
 
     printf("%u\n", sim.seed());
-    printf("chicken,wolf\n");
+    printf("chicken,wolf,avg_offsprings,avg_sensor_range\n");
 
     while (sim.ticks() < sim_ticks) {
         sim.update();
 
         int chicken = sim.count(AgentType::Chicken);
         int wolf = sim.count(AgentType::Wolf);
-        printf("%d,%d\n", chicken, wolf);
+        auto [avg_offsprings, avg_sensor_range] = sim.avg_genes();
+        printf("%d,%d,%f,%f\n", chicken, wolf, avg_offsprings, avg_sensor_range);
 
         if (wolf < 2) break;
     }

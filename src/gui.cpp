@@ -8,6 +8,7 @@
 void Gui::load_style(int window_style) {
     if (window_style == 0) {
         GuiLoadStyleDefault();
+        m_status = "Loaded default style";
     } else {
         GuiLoadStyle(m_styles[window_style]);
         m_status = std::string(TextFormat("Loaded style: %s", m_styles[window_style]));
@@ -18,15 +19,20 @@ void Gui::load_style(int window_style) {
 
 bool Gui::on_gui(Vector2 pos) const {
     if (!m_closed && CheckCollisionPointRec(pos, m_bounds)) return true;
+    if (m_config.control_plot && CheckCollisionPointRec(pos, m_bounds_plot)) return true;
     return (m_config.window_help || m_about) && CheckCollisionPointRec(pos, m_bounds_msg);
+}
+
+void Gui::plot_add(int chicken, int wolf) {
+    if (m_plot_data.size() == 10000) m_plot_data.pop_front();
+    m_plot_data.emplace_back(chicken, wolf);
 }
 
 void Gui::update(const Simulation& sim) {
     auto screen_h = (float)GetScreenHeight();
     auto screen_w = (float)GetScreenWidth();
 
-    const float STATUS_H = 20.0f;
-    GuiStatusBar({0, screen_h - STATUS_H, screen_w, STATUS_H}, m_status.c_str());
+    GuiStatusBar({0, screen_h - STATUS_HEIGHT, screen_w, STATUS_HEIGHT}, m_status.c_str());
 
     const float GUI_W = 500.0f;
     const float GUI_H = 1000.0f;
@@ -34,12 +40,13 @@ void Gui::update(const Simulation& sim) {
     const float GUI_BORDER =
         20.f * (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) + (float)GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);
     const float GUI_P = 10.0f;
-    m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_H};
+    m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_HEIGHT};
 
     const float MSG_W = 350;
-    const float MSG_H = 420;
-    m_bounds_msg = {(screen_w - (m_closed ? 0 : GUI_W + GUI_M) - MSG_W) / 2, (screen_h - STATUS_H - MSG_H) / 2, MSG_W,
-                    MSG_H};
+    const float MSG_H = 480;
+    m_bounds_msg = {(screen_w - (m_closed ? 0 : GUI_W + GUI_M) - MSG_W) / 2,
+                    (screen_h - (m_config.control_plot ? m_bounds_plot.height + GUI_M : 0) - STATUS_HEIGHT - MSG_H) / 2,
+                    MSG_W, MSG_H};
     Vector2 msg_offset = {m_bounds_msg.x + GUI_P, m_bounds_msg.y + GUI_P + GUI_BORDER};
 
     if (!m_closed) {
@@ -47,6 +54,31 @@ void Gui::update(const Simulation& sim) {
         BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
         draw_controls(sim, view.x + m_scroll.x + GUI_P, view.y + m_scroll.y + GUI_P, view.width - 2 * GUI_P);
         EndScissorMode();
+    }
+
+    if (m_config.control_plot) {
+        const float PLOT_H = screen_h / 4;
+        m_bounds_plot = {GUI_M, screen_h - PLOT_H - STATUS_HEIGHT - GUI_M + 1, m_bounds.x - 2 * GUI_M, PLOT_H};
+
+        float x = m_bounds_plot.x + 1;
+        float y = m_bounds_plot.y + 25;
+        float w = m_bounds_plot.width - 2;
+        float h = m_bounds_plot.height - 30;
+
+        int max = 0;
+        for (const auto& [chicken, wolf] : m_plot_data) max = std::max(max, std::max(chicken, wolf));
+
+        m_config.control_plot ^=
+            GuiWindowBox(m_bounds_plot, GuiIconText(RICON_PENCIL, TextFormat("Population plot (max y=%d)", max)));
+
+        float dx = w / (float)m_plot_data.size();
+        float dy = h / (float)max;
+
+        for (int i = 0; i < m_plot_data.size(); ++i) {
+            auto [chicken, wolf] = m_plot_data[i];
+            DrawPixelV({x + dx * (float)i, y + h - dy * (float)chicken}, BLUE);
+            DrawPixelV({x + dx * (float)i, y + h - dy * (float)wolf}, RED);
+        }
     }
 
     if (m_config.window_help) {
@@ -153,11 +185,14 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
         CloseWindow();
     }
 
-    m_config.runtime_manual_stepping =
-        GuiCheckBox({x + w / 2, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Pause", m_config.runtime_manual_stepping);
+    m_config.control_pause =
+        GuiCheckBox({x + w / 2, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Pause", m_config.control_pause);
 
-    m_config.runtime_debug_draw =
-        GuiCheckBox({x + 3 * w / 4, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Debug draw", m_config.runtime_debug_draw);
+    m_config.control_plot =
+        GuiCheckBox({x + 4 * w / 6, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Plot", m_config.control_plot);
+
+    m_config.control_debug =
+        GuiCheckBox({x + 5 * w / 6, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Debug", m_config.control_debug);
     y += ROW_H + P;
 
     if (!m_config.seed_manual) {
@@ -177,7 +212,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
         GuiCheckBox({x + 100 + ROW_H + 2 * P, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Seed", m_config.seed_manual);
 
     m_edit.tick ^=
-        GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Tick (ms)", &m_config.runtime_tick_time_ms, 0, 5000, m_edit.tick);
+        GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Tick (ms)", &m_config.control_tick_time, 0, 5000, m_edit.tick);
     y += ROW_H;
 
     y += BEFORE_LINE;
@@ -239,7 +274,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     m_edit.grass_spawn ^=
         GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 100, m_edit.grass_spawn);
     m_edit.grass_nutrition ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Nutritional value",
-                                         &m_config.grass_nutritional_value, 1, 100, m_edit.grass_nutrition);
+                                         &m_config.grass_nutritional_value, 1, 1000, m_edit.grass_nutrition);
     y += ROW_H;
 
     y += BEFORE_LINE;

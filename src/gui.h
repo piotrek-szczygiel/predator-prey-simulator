@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include <deque>
 #include "simulation.h"
 
 class Gui {
@@ -7,6 +8,8 @@ class Gui {
     explicit Gui(Config& config) : m_config(config) {}
 
     Rectangle bounds() const { return m_bounds; }
+    Rectangle bounds_plot() const { return m_bounds_plot; }
+    float status_height() const { return STATUS_HEIGHT; }
     bool closed() const { return m_closed; }
     bool draw_observed_agent();
     void load_style(int window_style);
@@ -15,6 +18,8 @@ class Gui {
     bool should_restart() const { return m_restart; }
     void set_observed_agent(const Agent* agent) { m_agent = agent; }
     bool on_gui(Vector2 pos) const;
+    void plot_add(int chicken, int wolf);
+    void plot_clear() { m_plot_data.clear(); }
 
    private:
     Config& m_config;
@@ -23,10 +28,16 @@ class Gui {
 
     Rectangle m_bounds{};
     Rectangle m_bounds_msg{};
+    Rectangle m_bounds_plot{};
     Vector2 m_scroll{};
+
+    const float STATUS_HEIGHT = 20.0f;
+
     std::string m_status{};
     bool m_about = false;
     bool m_restart = false;
+
+    std::deque<std::pair<int, int>> m_plot_data{};
 
     const Agent* m_agent{};
 
@@ -82,8 +93,10 @@ class Gui {
         "  [Q] - quit program\n"
         "  [F11] - toggle maximize window\n"
         "  [R] - restart simulation\n"
-        "  [P] - pause simulation\n"
-        "  [SPACE] - next tick when paused\n\n"
+        "  [P] - control_pause simulation\n"
+        "  [SPACE] - next tick when paused\n"
+        "  [F12] - screenshot\n"
+        "  [CTRL]+[F12] - record gif\n\n"
         "Mouse controls:\n"
         "  Left click - select agent to observe\n"
         "  Right click - panning\n"

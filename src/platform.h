@@ -15,6 +15,7 @@ class Platform {
     void interact(const Simulation& sim);
     void start_drawing(Simulation& sim);
     void draw_debug(Simulation& sim) const;
+    void plot_add(int chicken, int wolf) { m_gui.plot_add(chicken, wolf); }
     void update_gui_end_drawing(const Simulation& sim);
 
     bool should_close();

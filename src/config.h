@@ -21,9 +21,10 @@ class Config {
     int window_fps{};
     bool window_help{};
 
-    int runtime_tick_time_ms{};
-    bool runtime_manual_stepping{};
-    bool runtime_debug_draw{};
+    int control_tick_time{};
+    bool control_pause{};
+    bool control_plot{};
+    bool control_debug{};
 
     bool seed_manual{};
     char seed[SEED_SIZE]{};

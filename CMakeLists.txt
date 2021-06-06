@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(sim)
 
-function(message)
-    if(NOT MESSAGE_QUIET)
-        _message(${ARGN})
-    endif()
-endfunction()
-
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -29,9 +23,7 @@ if(NOT raylib_FOUND) # If there's none, fetch and build raylib
             CACHE BOOL "" FORCE) # don't build the supplied examples
 
         # build raylib
-        set(MESSAGE_QUIET ON)
         add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
-        unset(MESSAGE_QUIET)
     endif()
 endif()
 

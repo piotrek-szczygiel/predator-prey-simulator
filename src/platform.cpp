@@ -35,6 +35,7 @@ void Platform::reload() {
 
         SetTargetFPS(m_config.window_fps);
         m_gui.load_style(m_config.window_style);
+        m_gui.plot_clear();
     }
 }
 
@@ -61,9 +62,15 @@ double Platform::time_diff_ms(TimePoint t1, TimePoint t2) {
 
 void Platform::interact(const Simulation& sim) {
     if (m_gui.closed()) {
-        m_camera.offset = {(float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f};
+        m_camera.offset.x = (float)GetScreenWidth() / 2.0f;
     } else {
-        m_camera.offset = {m_gui.bounds().x / 2.0f, ((float)GetScreenHeight() - 20.0f) / 2.0f};
+        m_camera.offset.x = m_gui.bounds().x / 2.0f;
+    }
+
+    if (m_config.control_plot) {
+        m_camera.offset.y = m_gui.bounds_plot().y / 2.0f;
+    } else {
+        m_camera.offset.y = ((float)GetScreenHeight() - m_gui.status_height()) / 2.0f;
     }
 
     m_hl_pos = {-1, -1};
@@ -74,7 +81,7 @@ void Platform::interact(const Simulation& sim) {
 
     if (IsKeyPressed(KEY_F11)) IsWindowMaximized() ? RestoreWindow() : MaximizeWindow();
     if (IsKeyPressed(KEY_ESCAPE)) m_gui.toggle();
-    if (IsKeyPressed(KEY_P)) m_config.runtime_manual_stepping ^= 1;
+    if (IsKeyPressed(KEY_P)) m_config.control_pause ^= 1;
     if (IsKeyPressed(KEY_H)) m_config.window_help ^= 1;
 
     Vector2 mouse = GetMousePosition();
@@ -153,7 +160,7 @@ void Platform::start_drawing(Simulation& sim) {
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
             if (m_camera.zoom >= 0.75f) {
-                if (m_config.runtime_debug_draw && agent.type != AgentType::Grass && !agent.hungry) {
+                if (m_config.control_debug && agent.type != AgentType::Grass && !agent.hungry) {
                     DrawRectangleRec(
                         {(float)agent.pos.x * m_config.tile_size + 1, (float)agent.pos.y * m_config.tile_size + 1,
                          m_config.tile_size - 2, m_config.tile_size - 2},

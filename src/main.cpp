@@ -26,18 +26,20 @@ int run_graphics() {
             restart = p.should_restart();
             p.start_drawing(sim);
 
+            bool update = false;
             if (!config.control_pause) {
                 if (p.time_diff_ms(p.time_now(), last_update) >= (double)config.control_tick_time) {
-                    sim.update();
+                    update = true;
                     last_update = p.time_now();
                 }
             } else if (p.should_tick()) {
-                sim.update();
+                update = true;
             }
 
-            int chicken = sim.count(AgentType::Chicken);
-            int wolf = sim.count(AgentType::Wolf);
-            p.plot_add(chicken, wolf);
+            if (update) {
+                sim.update();
+                p.plot_add(sim.count(AgentType::Chicken), sim.count(AgentType::Wolf));
+            }
 
             if (config.control_debug) p.draw_debug(sim);
             p.update_gui_end_drawing(sim);

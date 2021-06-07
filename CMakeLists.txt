@@ -4,18 +4,6 @@ project(sim VERSION "1.1.3")
 configure_file("src/version.h.in" "version.h" @ONLY)
 include_directories(${PROJECT_BINARY_DIR})
 
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
-if(MINGW)
-    set(CMAKE_CXX_STANDARD_LIBRARIES
-        "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
-    set(CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive"
-    )
-endif()
-
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(raylib 3.0 QUIET)
@@ -60,3 +48,20 @@ add_executable(
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC "third_party")
 target_link_libraries(${PROJECT_NAME} raylib)
+
+if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    find_program(RESOURCE_HACKER "ResourceHacker.exe")
+    if(RESOURCE_HACKER)
+        add_custom_command(
+            TARGET ${PROJECT_NAME}
+            POST_BUILD
+            COMMAND powershell.exe ${CMAKE_CURRENT_SOURCE_DIR}/release.ps1 ${PROJECT_VERSION}
+                    $<TARGET_FILE:sim>
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Packing release...")
+        message("ResourceHacker.exe found - release package will be built")
+    else()
+        message(WARNING "ResourceHacker.exe is not in PATH - unable to make release package")
+    endif()
+endif()

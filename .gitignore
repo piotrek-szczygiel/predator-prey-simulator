@@ -7,5 +7,6 @@ cmake-build-*/
 csv/
 out/
 png/
+release/
 CMakeSettings.json
 compile_commands.json

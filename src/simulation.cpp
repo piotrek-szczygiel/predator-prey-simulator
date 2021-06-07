@@ -77,9 +77,9 @@ AgentGenes Simulation::mutate_genes(AgentGenes mom, AgentGenes dad) {
             std::clamp(new_sensor_range, 1, m_config.genes_max_sensor_range)};
 }
 
-Vec2 Simulation::random_position_around(Vec2 pos, int distance) {
-    Vec2 min = {std::max(0, pos.x - distance), std::max(0, pos.y - distance)};
-    Vec2 max = {std::min(m_size.x - 1, pos.x + distance), std::min(m_size.y - 1, pos.y + distance)};
+Vec2 Simulation::random_position_around(Vec2 pos, int dist) {
+    Vec2 min = {std::max(0, pos.x - dist), std::max(0, pos.y - dist)};
+    Vec2 max = {std::min(m_size.x - 1, pos.x + dist), std::min(m_size.y - 1, pos.y + dist)};
     return {random(min.x, max.x), random(min.y, max.y)};
 }
 
@@ -114,9 +114,13 @@ bool Simulation::move_agent_if_empty(Agent* agent, Vec2 pos) {
     return false;
 }
 
-void Simulation::move_agent_random(Agent* agent) {
+void Simulation::move_agent_random(Agent* agent, int dist) {
     if (agent->random_direction == Vec2{0, 0}) {
-        agent->random_direction = random_position_around(agent->pos, agent->genes.sensor_range * 2);
+        if (dist == -1) {
+            agent->random_direction = random_position();
+        } else {
+            agent->random_direction = random_position_around(agent->pos, dist);
+        }
     }
 
     auto path = m_pathfinder.get_next_step(agent->pos, agent->random_direction, m_grid);
@@ -215,7 +219,7 @@ void Simulation::update_chicken(Agent* chicken) {
         }
     }
 
-    move_agent_random(chicken);
+    move_agent_random(chicken, chicken->genes.sensor_range);
 }
 
 void Simulation::update_wolf(Agent* wolf) {
@@ -254,7 +258,7 @@ void Simulation::update_wolf(Agent* wolf) {
         }
     }
 
-    move_agent_random(wolf);
+    move_agent_random(wolf, -1);
 }
 
 Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {

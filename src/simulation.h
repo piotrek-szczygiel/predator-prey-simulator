@@ -87,14 +87,14 @@ class Simulation {
 
     int random(int min, int max) { return std::uniform_int_distribution(min, max)(m_mt19937); }
     Vec2 random_position() { return {random(0, m_size.x - 1), random(0, m_size.y - 1)}; }
-    Vec2 random_position_around(Vec2 pos, int distance);
+    Vec2 random_position_around(Vec2 pos, int dist);
     AgentGenes mutate_genes(AgentGenes mom, AgentGenes dad);
 
     void add_agent(AgentType type, AgentGenes genes, Vec2 pos);
     void move_agent(Agent* agent, Vec2 pos);
     bool move_agent_if_empty(Agent* agent, Vec2 pos);
     void move_agent_around(Agent* agent, Vec2 pos);
-    void move_agent_random(Agent* agent);
+    void move_agent_random(Agent* agent, int dist);
 
     inline bool empty(Vec2 pos) const { return !out_of_map(pos) && (!m_grid.at(pos) || m_grid.at(pos)->is_dead()); }
 

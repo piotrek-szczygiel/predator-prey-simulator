@@ -115,7 +115,8 @@ class Gui {
                                "\t- raygui  (github.com/raysan5/raygui)\n"
                                "\t- mINI    (github.com/pulzed/mINI)\n"
                                "\t- CRCpp   (github.com/d-bahr/CRCpp)\n"
-                               "\t- itlib   (github.com/iboB/itlib)";
+                               "\t- itlib   (github.com/iboB/itlib)\n\n"
+                               "Icon made by Freepik (https://www.freepik.com)";
 
     void draw_controls(const Simulation& sim, float x, float y, float w);
 };

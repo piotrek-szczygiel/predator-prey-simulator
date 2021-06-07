@@ -43,7 +43,7 @@ void Gui::update(const Simulation& sim) {
     m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_HEIGHT};
 
     const float MSG_W = 350;
-    const float MSG_H = m_config.window_help ? 470.0f : 370.0f;
+    const float MSG_H = m_config.window_help ? 470.0f : 420.0f;
     m_bounds_msg = {(screen_w - (m_closed ? 0 : GUI_W + GUI_M) - MSG_W) / 2,
                     (screen_h - (m_config.control_plot ? m_bounds_plot.height + GUI_M : 0) - STATUS_HEIGHT - MSG_H) / 2,
                     MSG_W, MSG_H};

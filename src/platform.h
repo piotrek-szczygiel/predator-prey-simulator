@@ -32,6 +32,7 @@ class Platform {
     Texture2D m_tex_grass{};
     Texture2D m_tex_chicken{};
     Texture2D m_tex_wolf{};
+    Image m_icon{};
 
     Vector2 m_prev_mouse_pos{};
 

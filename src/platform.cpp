@@ -18,6 +18,9 @@ void Platform::start() {
     m_tex_chicken = LoadTexture("assets/chicken.png");
     m_tex_wolf = LoadTexture("assets/wolf.png");
 
+    m_icon = LoadImage("assets/icon32.png");
+    SetWindowIcon(m_icon);
+
     reload();
 }
 
@@ -25,6 +28,7 @@ void Platform::stop() {
     UnloadTexture(m_tex_grass);
     UnloadTexture(m_tex_chicken);
     UnloadTexture(m_tex_wolf);
+    UnloadImage(m_icon);
     CloseWindow();
 }
 

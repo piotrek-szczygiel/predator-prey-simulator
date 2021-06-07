@@ -37,6 +37,7 @@ void Platform::start() {
     m_icon = LoadImage("assets/icon32.png");
     SetWindowIcon(m_icon);
 
+    m_gui.load_style(m_config.window_style);
     reload();
 }
 
@@ -55,7 +56,6 @@ void Platform::reload() {
         }
 
         SetTargetFPS(m_config.window_fps);
-        m_gui.load_style(m_config.window_style);
         m_gui.plot_clear();
     }
 }

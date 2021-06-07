@@ -1,11 +1,19 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.15)
 project(sim VERSION "1.1.3")
 
 configure_file("src/version.h.in" "version.h" @ONLY)
 include_directories(${PROJECT_BINARY_DIR})
 
 if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+if(MINGW)
+    set(CMAKE_CXX_STANDARD_LIBRARIES
+        "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive"
+    )
 endif()
 
 set(CMAKE_CXX_STANDARD 17)

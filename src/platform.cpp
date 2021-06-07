@@ -202,8 +202,8 @@ void Platform::start_drawing(Simulation& sim) {
 
 void Platform::update_gui_end_drawing(const Simulation& sim) {
     EndMode2D();
-    m_gui.update(sim);
     if (!m_gui.draw_observed_agent()) m_hl_agent = nullptr;
+    m_gui.update(sim);
     EndDrawing();
 }
 

@@ -20,7 +20,9 @@ void Gui::load_style(int window_style) {
 bool Gui::on_gui(Vector2 pos) const {
     if (!m_closed && CheckCollisionPointRec(pos, m_bounds)) return true;
     if (m_config.control_plot && CheckCollisionPointRec(pos, m_bounds_plot)) return true;
-    return (m_config.window_help || m_about) && CheckCollisionPointRec(pos, m_bounds_msg);
+    if (m_agent && CheckCollisionPointRec(pos, m_bounds_agent)) return true;
+    if ((m_config.window_help || m_about) && CheckCollisionPointRec(pos, m_bounds_msg)) return true;
+    return false;
 }
 
 void Gui::plot_add(int chicken, int wolf) {
@@ -96,36 +98,38 @@ void Gui::update(const Simulation& sim) {
 bool Gui::draw_observed_agent() {
     if (!m_agent) return false;
 
-    const float W = 150.0f;
-    const float H = m_agent->type == AgentType::Grass ? 95.0f : 170.0f;
-    const float M = 20.0f;
+    const float M = 15.0f;
     const float P = 10.0f;
     const float ROW_H = 25.0f;
 
-    if (GuiWindowBox({M, M, W, H}, GuiIconText(RICON_INFO, "Agent info"))) {
+    m_bounds_agent = {M, M, 150, m_agent->type == AgentType::Grass ? 95.0f : 170.0f};
+
+    if (GuiWindowBox(m_bounds_agent, GuiIconText(RICON_INFO, "Agent info"))) {
+        m_agent = nullptr;
         return false;
     }
 
     float x = M + P;
     float y = M + 20;
+    float w = m_bounds_agent.width;
 
-    GuiLabel({x, y, W, ROW_H}, TextFormat("Type: %s", m_agent->type_str()));
+    GuiLabel({x, y, w, ROW_H}, TextFormat("Type: %s", m_agent->type_str()));
     y += ROW_H;
 
-    GuiLabel({x, y, W, ROW_H}, TextFormat("Position: %d, %d", m_agent->pos.x, m_agent->pos.y));
+    GuiLabel({x, y, w, ROW_H}, TextFormat("Position: %d, %d", m_agent->pos.x, m_agent->pos.y));
     y += ROW_H;
 
-    GuiLabel({x, y, W, ROW_H}, TextFormat("Energy: %d", m_agent->energy));
+    GuiLabel({x, y, w, ROW_H}, TextFormat("Energy: %d", m_agent->energy));
     y += ROW_H;
 
     if (m_agent->type != AgentType::Grass) {
-        GuiLabel({x, y, W, ROW_H}, TextFormat("Hungry: %s", m_agent->hungry ? "yes" : "no"));
+        GuiLabel({x, y, w, ROW_H}, TextFormat("Hungry: %s", m_agent->hungry ? "yes" : "no"));
         y += ROW_H;
 
-        GuiLabel({x, y, W, ROW_H}, TextFormat("Offsprings: %d", m_agent->genes.offsprings));
+        GuiLabel({x, y, w, ROW_H}, TextFormat("Offsprings: %d", m_agent->genes.offsprings));
         y += ROW_H;
 
-        GuiLabel({x, y, W, ROW_H}, TextFormat("Sensor range: %d", m_agent->genes.sensor_range));
+        GuiLabel({x, y, w, ROW_H}, TextFormat("Sensor range: %d", m_agent->genes.sensor_range));
     }
 
     return true;

@@ -30,6 +30,7 @@ class Gui {
     Rectangle m_bounds{};
     Rectangle m_bounds_msg{};
     Rectangle m_bounds_plot{};
+    Rectangle m_bounds_agent{};
     Vector2 m_scroll{};
 
     const float STATUS_HEIGHT = 20.0f;

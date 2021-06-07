@@ -1,5 +1,8 @@
 #include "platform.h"
 
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
+
 int run_graphics() {
     Config config("config.ini");
     if (!config.load()) {

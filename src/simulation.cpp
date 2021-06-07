@@ -5,6 +5,9 @@ void Simulation::reset() {
     m_map.clear();
     m_grid.clear();
 
+    m_lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::math);
+    m_lua.script("print('LuaJIT print test!')");
+
     spawn_random_agents(AgentType::Wolf, {1, m_config.wolf_sensor_range}, m_config.wolf_spawn_count);
     spawn_random_agents(AgentType::Chicken, {1, m_config.chicken_sensor_range}, m_config.chicken_spawn_count);
     spawn_random_agents(AgentType::Grass, {}, m_config.grass_spawn_count);

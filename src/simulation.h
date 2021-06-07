@@ -9,6 +9,9 @@
 #include "map.h"
 #include "pathfinder.h"
 
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
+
 struct Path {
     Vec2 step;
     Agent* agent;
@@ -64,6 +67,8 @@ class Simulation {
     const std::vector<DebugBreed>& debug_breeds() const { return m_debug_breeds; }
 
    private:
+    sol::state m_lua;
+
     Vec2 m_size;
 
     Tick m_tick = 0;

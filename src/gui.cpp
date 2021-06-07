@@ -277,7 +277,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.grass_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 100, m_edit.grass_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.grass_spawn_count, 1, 1000, m_edit.grass_spawn);
     m_edit.grass_nutrition ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Nutritional value",
                                          &m_config.grass_nutritional_value, 1, 1000, m_edit.grass_nutrition);
     y += ROW_H;
@@ -287,7 +287,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.chicken_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.chicken_spawn_count, 1, 100, m_edit.chicken_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.chicken_spawn_count, 1, 1000, m_edit.chicken_spawn);
     m_edit.chicken_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.chicken_sensor_range, 1,
                                         100, m_edit.chicken_sensor);
     y += ROW_H + P;
@@ -315,7 +315,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     y += AFTER_LINE;
 
     m_edit.wolf_spawn ^=
-        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.wolf_spawn_count, 1, 100, m_edit.wolf_spawn);
+        GuiSpinner({x, y, BTN_W, ROW_H}, "Spawn count", &m_config.wolf_spawn_count, 1, 1000, m_edit.wolf_spawn);
     m_edit.wolf_sensor ^= GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Sensor range", &m_config.wolf_sensor_range, 1, 100,
                                      m_edit.wolf_sensor);
     y += ROW_H + P;

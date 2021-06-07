@@ -4,7 +4,23 @@
 #include "version.h"
 
 void Platform::start() {
-    SetTraceLogLevel(LOG_WARNING);
+    SetTraceLogLevel(LOG_INFO);
+    SetTraceLogCallback([](int logLevel, const char* text, va_list args) {
+        const char* level = "";
+        switch (logLevel) {
+            case LOG_TRACE: level = "[RAYLIB TRACE]\t"; break;
+            case LOG_DEBUG: level = "[RAYLIB DEBUG]\t"; break;
+            case LOG_INFO: level = "[RAYLIB INFO]\t"; break;
+            case LOG_WARNING: level = "[RAYLIB WARNING]\t"; break;
+            case LOG_ERROR: level = "[RAYLIB ERROR]\t"; break;
+            case LOG_FATAL: level = "[RAYLIB FATAL]\t"; break;
+            default: break;
+        }
+        fprintf(stderr, "%s", level);
+        vfprintf(stderr, text, args);
+        fprintf(stderr, "\n");
+    });
+
     InitWindow(m_config.window_width, m_config.window_height, "Predator-Prey simulator v" PROJECT_VERSION);
     SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(KEY_Q);

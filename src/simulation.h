@@ -10,12 +10,6 @@
 #include "pathfinder.h"
 #include "scripting.h"
 
-struct Path {
-    Vec2 step;
-    Agent* agent;
-    int dist;
-};
-
 struct DebugLine {
     Agent* from;
     Agent* to;
@@ -107,7 +101,7 @@ class Simulation {
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);
 
-    Path get_path_to_nearest(Agent* from, AgentType to, bool fed = false);
+    std::tuple<Agent*, int, Vec2> get_path_to_nearest(Agent* from, AgentType to, bool fed = false);
 
     std::vector<DebugLine> m_debug_lines{};
     std::vector<DebugBreed> m_debug_breeds{};

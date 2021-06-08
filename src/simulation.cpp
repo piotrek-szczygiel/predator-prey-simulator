@@ -170,7 +170,7 @@ void Simulation::breed(Agent* mom, Agent* dad) {
     }
 }
 
-Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {
+std::tuple<Agent*, int, Vec2> Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {
     int min_distance = INT32_MAX;
     Agent* min_agent = nullptr;
 
@@ -186,8 +186,8 @@ Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {
 
     if (min_agent) {
         if (m_config.control_debug) m_debug_lines.push_back({from, min_agent});
-        return {m_pathfinder.get_next_step(from->pos, min_agent->pos, m_grid), min_agent, min_distance};
+        return {min_agent, min_distance, m_pathfinder.get_next_step(from->pos, min_agent->pos, m_grid)};
     }
 
-    return {{0, 0}, nullptr};
+    return {};
 }

@@ -45,6 +45,8 @@ add_executable(
     "src/pathfinder.h"
     "src/platform.h"
     "src/platform.cpp"
+    "src/scripting.h"
+    "src/scripting.cpp"
     "src/simulation.h"
     "src/simulation.cpp"
     "src/util.h"

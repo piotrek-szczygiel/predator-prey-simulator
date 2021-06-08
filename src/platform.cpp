@@ -4,7 +4,7 @@
 #include "version.h"
 
 void Platform::start() {
-    SetTraceLogLevel(LOG_INFO);
+    SetTraceLogLevel(LOG_WARNING);
     SetTraceLogCallback([](int logLevel, const char* text, va_list args) {
         const char* level = "";
         switch (logLevel) {

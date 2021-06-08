@@ -1,7 +1,5 @@
 #include "platform.h"
-
-#define SOL_ALL_SAFETIES_ON 1
-#include <sol/sol.hpp>
+#include "scripting.h"
 
 int run_graphics() {
     Config config("config.ini");
@@ -20,8 +18,19 @@ int run_graphics() {
             p.reload();
         }
 
+        Scripting scripting;
+        if (!scripting.init()) {
+            fprintf(stderr, "error while initializing scripting engine\n");
+            return 4;
+        }
+
         Simulation sim(config);
-        sim.update();
+
+        if (!scripting.load("assets/scripts/default.lua", sim)) {
+            fprintf(stderr, "unable to load script!\n");
+        }
+
+        sim.update(scripting);
         auto last_update = p.time_now();
 
         while (!p.should_close() && !restart) {
@@ -40,7 +49,7 @@ int run_graphics() {
             }
 
             if (update) {
-                sim.update();
+                sim.update(scripting);
                 p.plot_add(sim.count(AgentType::Chicken), sim.count(AgentType::Wolf));
             }
 
@@ -60,13 +69,24 @@ int run_csv(Tick sim_ticks) {
         return 3;
     }
 
+    Scripting scripting;
+    if (!scripting.init()) {
+        fprintf(stderr, "error while initializing scripting engine\n");
+        return 4;
+    }
+
     Simulation sim(config);
+
+    if (!scripting.load("assets/scripts/default.lua", sim)) {
+        fprintf(stderr, "unable to load script!\n");
+        return 4;
+    }
 
     printf("%u\n", sim.seed());
     printf("chicken,wolf,avg_offsprings,avg_sensor_range\n");
 
     while (sim.ticks() < sim_ticks) {
-        sim.update();
+        sim.update(scripting);
 
         int chicken = sim.count(AgentType::Chicken);
         int wolf = sim.count(AgentType::Wolf);

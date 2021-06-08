@@ -5,15 +5,12 @@ void Simulation::reset() {
     m_map.clear();
     m_grid.clear();
 
-    m_lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::math);
-    m_lua.script("print('LuaJIT print test!')");
-
     spawn_random_agents(AgentType::Wolf, {1, m_config.wolf_sensor_range}, m_config.wolf_spawn_count);
     spawn_random_agents(AgentType::Chicken, {1, m_config.chicken_sensor_range}, m_config.chicken_spawn_count);
     spawn_random_agents(AgentType::Grass, {}, m_config.grass_spawn_count);
 }
 
-void Simulation::update() {
+void Simulation::update(Scripting& scripting) {
     m_debug_lines.clear();
     m_debug_breeds.clear();
 
@@ -26,21 +23,14 @@ void Simulation::update() {
 
     for (auto& chunk : m_map.chunks()) {
         for (auto& agent : chunk) {
-            switch (agent.type) {
-                case AgentType::Chicken: agent.energy -= m_config.chicken_energy_loss + agent.genes.sensor_range; break;
-                case AgentType::Wolf: agent.energy -= m_config.wolf_energy_loss + agent.genes.sensor_range; break;
-                case AgentType::Grass: break;
+            if (agent.type == AgentType::Chicken) {
+                scripting.update_chicken(&agent);
+            } else if (agent.type == AgentType::Wolf) {
+                scripting.update_wolf(&agent);
             }
 
-            if (agent.energy <= 0) {
-                if (&agent == m_grid.at(agent.pos)) m_grid.at_mut(agent.pos) = nullptr;
-                continue;
-            }
-
-            switch (agent.type) {
-                case AgentType::Chicken: update_chicken(&agent); break;
-                case AgentType::Wolf: update_wolf(&agent); break;
-                case AgentType::Grass: break;
+            if (agent.is_dead() && m_grid.at(agent.pos) == &agent) {
+                m_grid.at_mut(agent.pos) = nullptr;
             }
         }
     }
@@ -178,90 +168,6 @@ void Simulation::breed(Agent* mom, Agent* dad) {
             if (m_config.control_debug) m_debug_breeds.push_back({mom, dad, kid});
         }
     }
-}
-
-void Simulation::update_chicken(Agent* chicken) {
-    if (chicken->last_update > 0 && m_tick - chicken->last_update < 3) return;
-
-    if (chicken->energy <= m_config.chicken_hunger_start) {
-        chicken->hungry = true;
-    } else if (chicken->energy >= m_config.chicken_hunger_stop) {
-        chicken->hungry = false;
-    }
-
-    auto wolf = get_path_to_nearest(chicken, AgentType::Wolf);
-    if (wolf.agent) {
-        move_agent_around(chicken, chicken->pos - wolf.step);
-        return;
-    }
-
-    if (chicken->hungry) {
-        auto grass = get_path_to_nearest(chicken, AgentType::Grass);
-        if (grass.agent) {
-            chicken->random_direction = {};
-
-            if (grass.dist == 1) {
-                grass.agent->kill();
-                chicken->energy += m_config.grass_nutritional_value;
-            }
-            move_agent_around(chicken, chicken->pos + grass.step);
-            return;
-        }
-    } else {
-        auto partner = get_path_to_nearest(chicken, AgentType::Chicken, true);
-
-        if (partner.agent) {
-            chicken->random_direction = {};
-
-            if (partner.dist == 1) {
-                breed(chicken, partner.agent);
-            } else {
-                move_agent_around(chicken, chicken->pos + partner.step);
-            }
-            return;
-        }
-    }
-
-    move_agent_random(chicken, chicken->genes.sensor_range);
-}
-
-void Simulation::update_wolf(Agent* wolf) {
-    if (wolf->last_update > 0 && m_tick - wolf->last_update < 2) return;
-
-    if (wolf->energy <= m_config.wolf_hunger_start) {
-        wolf->hungry = true;
-    } else if (wolf->energy >= m_config.wolf_hunger_stop) {
-        wolf->hungry = false;
-    }
-
-    if (wolf->hungry) {
-        auto chicken = get_path_to_nearest(wolf, AgentType::Chicken);
-        if (chicken.agent) {
-            wolf->random_direction = {};
-
-            if (chicken.dist == 1) {
-                chicken.agent->kill();
-                wolf->energy += m_config.chicken_nutritional_value;
-            }
-            move_agent_around(wolf, wolf->pos + chicken.step);
-            return;
-        }
-    } else {
-        auto partner = get_path_to_nearest(wolf, AgentType::Wolf, true);
-
-        if (partner.agent) {
-            wolf->random_direction = {};
-
-            if (partner.dist == 1) {
-                breed(wolf, partner.agent);
-            } else {
-                move_agent_around(wolf, wolf->pos + partner.step);
-            }
-            return;
-        }
-    }
-
-    move_agent_random(wolf, -1);
 }
 
 Path Simulation::get_path_to_nearest(Agent* from, AgentType to, bool fed) {

@@ -8,9 +8,7 @@
 #include "grid.h"
 #include "map.h"
 #include "pathfinder.h"
-
-#define SOL_ALL_SAFETIES_ON 1
-#include <sol/sol.hpp>
+#include "scripting.h"
 
 struct Path {
     Vec2 step;
@@ -44,7 +42,7 @@ class Simulation {
     };
 
     void reset();
-    void update();
+    void update(Scripting& scripting);
 
     Vec2 size() { return m_size; }
     Tick ticks() const { return m_tick; }
@@ -67,8 +65,6 @@ class Simulation {
     const std::vector<DebugBreed>& debug_breeds() const { return m_debug_breeds; }
 
    private:
-    sol::state m_lua;
-
     Vec2 m_size;
 
     Tick m_tick = 0;
@@ -98,6 +94,7 @@ class Simulation {
     void add_agent(AgentType type, AgentGenes genes, Vec2 pos);
     void move_agent(Agent* agent, Vec2 pos);
     bool move_agent_if_empty(Agent* agent, Vec2 pos);
+
     void move_agent_around(Agent* agent, Vec2 pos);
     void move_agent_random(Agent* agent, int dist);
 
@@ -114,4 +111,6 @@ class Simulation {
 
     std::vector<DebugLine> m_debug_lines{};
     std::vector<DebugBreed> m_debug_breeds{};
+
+    friend class Scripting;
 };

@@ -26,9 +26,7 @@ int run_graphics() {
 
         Simulation sim(config);
 
-        if (!scripting.load("assets/scripts/default.lua", sim)) {
-            fprintf(stderr, "unable to load script!\n");
-        }
+        scripting.load("assets/scripts/default.lua", sim);
 
         sim.update(scripting);
         auto last_update = p.time_now();
@@ -78,7 +76,7 @@ int run_csv(Tick sim_ticks) {
     Simulation sim(config);
 
     if (!scripting.load("assets/scripts/default.lua", sim)) {
-        fprintf(stderr, "unable to load script!\n");
+        fprintf(stderr, "Error while loading script!\n");
         return 4;
     }
 

@@ -20,4 +20,6 @@ class Scripting {
 
     sol::protected_function m_update_chicken;
     sol::protected_function m_update_wolf;
+
+    bool m_valid = false;
 };

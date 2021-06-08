@@ -10,6 +10,8 @@ bool Scripting::init() {
 }
 
 bool Scripting::load(const std::string& path, Simulation& sim) {
+    m_valid = false;
+
     m_lua["Type"] =
         m_lua.create_table_with("Chicken", AgentType::Chicken, "Wolf", AgentType::Wolf, "Grass", AgentType::Grass);
 
@@ -83,25 +85,26 @@ bool Scripting::load(const std::string& path, Simulation& sim) {
         return false;
     }
 
+    m_valid = true;
     return true;
 }
 
 void Scripting::update_chicken(Agent* chicken) {
-    if (m_update_chicken.valid()) {
+    if (m_valid) {
         sol::protected_function_result result = m_update_chicken(chicken);
         if (!result.valid()) {
             sol::error err = result;
-            fprintf(stderr, "Error while executing update_chicken:\n%s\n", err.what());
+            fprintf(stderr, "Error while executing update_chicken\n%s\n", err.what());
         }
     }
 }
 
 void Scripting::update_wolf(Agent* wolf) {
-    if (m_update_wolf.valid()) {
+    if (m_valid) {
         sol::protected_function_result result = m_update_wolf(wolf);
         if (!result.valid()) {
             sol::error err = result;
-            fprintf(stderr, "Error while executing update_wolf:\n%s\n", err.what());
+            fprintf(stderr, "Error while executing update_wolf\n%s\n", err.what());
         }
     }
 }

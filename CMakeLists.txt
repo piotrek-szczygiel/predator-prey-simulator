@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(sim VERSION "1.1.3")
+project(sim VERSION "1.2.0")
 
 configure_file("src/version.h.in" "version.h" @ONLY)
 include_directories(${PROJECT_BINARY_DIR})

@@ -16,11 +16,15 @@ class Gui {
     void load_style(int window_style);
     void toggle() { m_closed ^= 1; }
     void update(const Simulation& sim);
+    void set_status(std::string status) { m_status = std::move(status); }
     bool should_restart() const { return m_restart; }
+    bool should_reload_script() const { return m_reload_script; }
+    std::string selected_script() const;
     void set_observed_agent(const Agent* agent) { m_agent = agent; }
     bool on_gui(Vector2 pos) const;
     void plot_add(int chicken, int wolf);
     void plot_clear() { m_plot_data.clear(); }
+    void refresh_scripts();
 
    private:
     Config& m_config;
@@ -38,14 +42,18 @@ class Gui {
     std::string m_status{};
     bool m_about = false;
     bool m_restart = false;
+    bool m_reload_script = false;
 
     std::deque<std::pair<int, int>> m_plot_data{};
+    std::vector<std::string> m_scripts{};
+    std::string m_script_names{};
 
     const Agent* m_agent{};
 
     struct {
         bool fps;
         bool style;
+        bool script;
         bool seed;
         bool tick;
         bool sim_width;
@@ -97,6 +105,7 @@ class Gui {
                               "  [R] - restart simulation\n"
                               "  [P] - control_pause simulation\n"
                               "  [SPACE] - next tick when paused\n"
+                              "  [F5] - reload script\n"
                               "  [F12] - screenshot\n"
                               "  [CTRL]+[F12] - record gif\n\n"
                               "Mouse controls:\n"

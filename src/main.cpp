@@ -1,5 +1,5 @@
+#include <memory>
 #include "platform.h"
-#include "scripting.h"
 
 int run_graphics() {
     Config config("config.ini");
@@ -16,19 +16,28 @@ int run_graphics() {
         if (restart) {
             restart = false;
             p.reload();
+            p.gui().set_status("Simulation restarted!");
         }
 
-        Scripting scripting;
-        if (!scripting.init()) {
+        auto scripting = std::make_unique<Scripting>();
+        if (!scripting->init()) {
             fprintf(stderr, "error while initializing scripting engine\n");
+            p.gui().set_status("Unable to initialize scripting engine!");
             return 4;
         }
 
         Simulation sim(config);
 
-        scripting.load("assets/scripts/default.lua", sim);
+        auto current_script = p.gui().selected_script();
+        if (scripting->load(current_script, sim)) {
+            fprintf(stderr, "script %s successfully loaded\n", current_script.c_str());
+            p.gui().set_status("Script " + current_script + " successfully loaded!");
+        } else {
+            fprintf(stderr, "error while loading script %s\n", current_script.c_str());
+            p.gui().set_status("Unable to load script " + current_script + "!");
+        }
 
-        sim.update(scripting);
+        sim.update(*scripting);
         auto last_update = p.time_now();
 
         while (!p.should_close() && !restart) {
@@ -47,12 +56,25 @@ int run_graphics() {
             }
 
             if (update) {
-                sim.update(scripting);
-                p.plot_add(sim.count(AgentType::Chicken), sim.count(AgentType::Wolf));
+                sim.update(*scripting);
+                p.gui().plot_add(sim.count(AgentType::Chicken), sim.count(AgentType::Wolf));
             }
 
             if (config.control_debug) p.draw_debug(sim);
             p.update_gui_end_drawing(sim);
+
+            if (p.should_reload_script()) {
+                scripting = std::make_unique<Scripting>();
+
+                auto selected_script = p.gui().selected_script();
+                if (scripting->load(selected_script, sim)) {
+                    fprintf(stderr, "script %s successfully loaded\n", selected_script.c_str());
+                    p.gui().set_status("Script " + selected_script + " successfully loaded!");
+                } else {
+                    fprintf(stderr, "error while loading script %s\n", selected_script.c_str());
+                    p.gui().set_status("Unable to load script " + selected_script + "!");
+                }
+            }
         }
     } while (restart);
 
@@ -60,7 +82,7 @@ int run_graphics() {
     return 0;
 }
 
-int run_csv(Tick sim_ticks) {
+int run_csv(Tick sim_ticks, const char* script) {
     Config config("config.ini");
     if (!config.load()) {
         fprintf(stderr, "error while reading config.ini\n");
@@ -75,8 +97,8 @@ int run_csv(Tick sim_ticks) {
 
     Simulation sim(config);
 
-    if (!scripting.load("assets/scripts/default.lua", sim)) {
-        fprintf(stderr, "Error while loading script!\n");
+    if (!scripting.load(script, sim)) {
+        fprintf(stderr, "error while loading script!\n");
         return 4;
     }
 
@@ -100,14 +122,17 @@ int run_csv(Tick sim_ticks) {
 int main(int argc, char** argv) {
     bool graphics = argc == 1;
     Tick sim_ticks = 0;
+    const char* script = "assets/scripts/default.lua";
 
-    if (argc == 2) {
+    if (argc == 2 || argc == 3) {
         char* p_end;
         sim_ticks = std::strtoll(argv[1], &p_end, 10);
         if (p_end == argv[1]) {
-            fprintf(stderr, "usage: %s simulation_ticks\n", argv[0]);
+            fprintf(stderr, "usage: %s <simulation_ticks> [script]\n", argv[0]);
             return 1;
         }
+
+        if (argc == 3) script = argv[2];
     }
 
     if (!cd_assets()) {
@@ -118,6 +143,6 @@ int main(int argc, char** argv) {
     if (graphics) {
         return run_graphics();
     } else {
-        return run_csv(sim_ticks);
+        return run_csv(sim_ticks, script);
     }
 }

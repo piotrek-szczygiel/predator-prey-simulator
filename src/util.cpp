@@ -23,7 +23,7 @@ bool cd_assets() {
     return assets_found;
 }
 
-std::vector<std::string> files_in_dir(const std::string& path) {
+std::vector<std::string> files_in_dir(fs::path path) {
     std::vector<std::string> files{};
     for (const auto& p : fs::directory_iterator(path)) {
         if (p.is_regular_file()) files.push_back(p.path().string());

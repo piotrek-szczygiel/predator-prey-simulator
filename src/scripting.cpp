@@ -6,7 +6,9 @@ bool Scripting::init() {
     m_lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::jit);
     m_lua["print"] = [](const char* text) { fprintf(stderr, "script: %s\n", text); };
     m_lua["error_handler"] = [](const char* text) { return text; };
-    return m_lua.script("print(jit.version .. ' initialized!')").valid();
+    sol::protected_function_result result = m_lua.safe_script("return 2 + 2");
+    if (!result.valid()) return false;
+    return 4 == result.get<int>();
 }
 
 bool Scripting::load(const std::string& path, Simulation& sim) {
@@ -52,20 +54,21 @@ bool Scripting::load(const std::string& path, Simulation& sim) {
     agent_t["breed"] = [&](Agent* agent, Agent* partner) { return sim.breed(agent, partner); };
 
     const Config& c = sim.m_config;
-    m_lua["Config"] = m_lua.create_table_with(
-        "chicken",
-        m_lua.create_table_with("hungerStart", c.chicken_hunger_start, "hungerStop", c.chicken_hunger_stop,
-                                "sensorRange", c.chicken_sensor_range, "nutritionalValue", c.chicken_nutritional_value,
-                                "energyLoss", c.chicken_energy_loss),
-        "wolf",
-        m_lua.create_table_with("hungerStart", c.wolf_hunger_start, "hungerStop", c.wolf_hunger_stop, "energyLoss",
-                                c.wolf_energy_loss),
-        "grass", m_lua.create_table_with("nutritionalValue", c.grass_nutritional_value));
+    sol::table chicken_config = m_lua.create_table_with(
+        "hungerStart", c.chicken_hunger_start, "hungerStop", c.chicken_hunger_stop, "sensorRange",
+        c.chicken_sensor_range, "nutritionalValue", c.chicken_nutritional_value, "energyLoss", c.chicken_energy_loss);
+
+    sol::table wolf_config = m_lua.create_table_with("hungerStart", c.wolf_hunger_start, "hungerStop",
+                                                     c.wolf_hunger_stop, "energyLoss", c.wolf_energy_loss);
+
+    sol::table grass_config = m_lua.create_table_with("nutritionalValue", c.grass_nutritional_value);
+
+    m_lua["Config"] = m_lua.create_table_with("chicken", chicken_config, "wolf", wolf_config, "grass", grass_config);
 
     auto result = m_lua.safe_script_file(path, sol::script_pass_on_error);
     if (!result.valid()) {
         sol::error err = result;
-        fprintf(stderr, "Error while executing script '%s'\n%s\n", path.c_str(), err.what());
+        fprintf(stderr, "\nerror while executing script %s!\n%s\n", path.c_str(), err.what());
         return false;
     }
 
@@ -76,12 +79,12 @@ bool Scripting::load(const std::string& path, Simulation& sim) {
     m_update_wolf.error_handler = m_lua["error_handler"];
 
     if (!m_update_chicken.valid()) {
-        fprintf(stderr, "Unable to find function update_chicken(chicken)\n");
+        fprintf(stderr, "unable to find function update_chicken(chicken)\n");
         return false;
     }
 
     if (!m_update_wolf.valid()) {
-        fprintf(stderr, "Unable to find function update_wolf(wolf)\n");
+        fprintf(stderr, "unable to find function update_wolf(wolf)\n");
         return false;
     }
 
@@ -94,7 +97,7 @@ void Scripting::update_chicken(Agent* chicken) {
         sol::protected_function_result result = m_update_chicken(chicken);
         if (!result.valid()) {
             sol::error err = result;
-            fprintf(stderr, "Error while executing update_chicken\n%s\n", err.what());
+            fprintf(stderr, "\nerror while executing update_chicken\n%s\n", err.what());
         }
     }
 }
@@ -104,7 +107,7 @@ void Scripting::update_wolf(Agent* wolf) {
         sol::protected_function_result result = m_update_wolf(wolf);
         if (!result.valid()) {
             sol::error err = result;
-            fprintf(stderr, "Error while executing update_wolf\n%s\n", err.what());
+            fprintf(stderr, "\nerror while executing update_wolf\n%s\n", err.what());
         }
     }
 }

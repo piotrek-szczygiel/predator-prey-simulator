@@ -21,6 +21,7 @@ class Config {
     int window_fps{};
     bool window_help{};
 
+    int control_script{};
     int control_tick_time{};
     bool control_pause{};
     bool control_plot{};

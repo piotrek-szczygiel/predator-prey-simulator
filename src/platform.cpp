@@ -73,7 +73,7 @@ bool Platform::should_tick() {
 }
 
 TimePoint Platform::time_now() {
-    return std::chrono::high_resolution_clock::now();
+    return std::chrono::steady_clock::now();
 }
 
 double Platform::time_diff_ms(TimePoint t1, TimePoint t2) {

@@ -10,9 +10,15 @@ Predator-Prey simulation
 - C++ compiler
 - cmake
 
+### Submodules
+
+```bash
+git submodule update --init --recursive
+```
+
 ### Ubuntu
 
-```
+```bash
 sudo apt install \
     build-essential git cmake libasound2-dev mesa-common-dev libx11-dev \
     libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libluajit-5.1-dev

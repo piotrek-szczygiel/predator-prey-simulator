@@ -1,22 +1,27 @@
-# sim
+<h1 align="center">Predator-Prey simulator</h1>
 
-![cmake](https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg)
+<p align="center">
+    <img height=70 src="assets/icon.svg" alt="Icon">
+</p>
 
+<p align="center">
+    Predator-Prey simulator written in C++.
+</p>
 
-Predator-Prey simulation
+# Building ![cmake](https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg)
 
-## Requirements
+Required programs:
 
 - C++ compiler
 - cmake
 
-### Submodules
+## Downloading submodules
 
 ```bash
 git submodule update --init --recursive
 ```
 
-### Ubuntu
+## Installing Ubuntu dependencies
 
 ```bash
 sudo apt install \
@@ -24,14 +29,14 @@ sudo apt install \
     libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libluajit-5.1-dev
 ```
 
-## Building
+## Running CMake
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 
-## Running
+# Running Predator-Prey simulator
 ```bash
 ./sim # Launch graphical interface
 
@@ -40,3 +45,9 @@ cmake --build .
 # Helper script to create 10 plots of 1000 tick simulations and launch them as 4 parallel processes
 python run_and_plot.py sim.exe 1000 default.lua 10 4
 ```
+
+# Attributions
+
+Textures by [Franuka](https://franuka.itch.io/).
+
+Icon made by [Freepik](https://www.freepik.com/) from [Flaticon](https://www.flaticon.com/).

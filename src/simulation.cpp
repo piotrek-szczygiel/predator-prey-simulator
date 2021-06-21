@@ -14,7 +14,7 @@ void Simulation::update(Scripting& scripting) {
     m_debug_lines.clear();
     m_debug_breeds.clear();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
     m_map.update_chunks();
     m_map.remove_dead();
@@ -37,7 +37,7 @@ void Simulation::update(Scripting& scripting) {
 
     ++m_tick;
 
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::steady_clock::now();
 
     std::chrono::duration<double, std::milli> elapsed = end - start;
     m_update_times.push_back(elapsed.count());

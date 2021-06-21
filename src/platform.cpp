@@ -77,8 +77,8 @@ bool Platform::should_reload_script() const {
     return m_gui.should_reload_script() || IsKeyPressed(KEY_F5);
 }
 
-TimePoint Platform::time_now() const {
-    return std::chrono::high_resolution_clock::now();
+TimePoint Platform::time_now() {
+    return std::chrono::steady_clock::now();
 }
 
 double Platform::time_diff_ms(TimePoint t1, TimePoint t2) const {

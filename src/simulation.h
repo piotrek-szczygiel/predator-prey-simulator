@@ -64,7 +64,7 @@ class Simulation {
     Tick m_tick = 0;
     std::vector<double> m_update_times{};
     double m_avg_update_time = 0.0;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_average{};
+    std::chrono::time_point<std::chrono::steady_clock> m_last_average{};
 
     const Config& m_config;
 

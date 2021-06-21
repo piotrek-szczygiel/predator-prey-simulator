@@ -8,6 +8,14 @@
     Predator-Prey simulator written in C++.
 </p>
 
+## Screenshot
+
+![screenshot](screen.png)
+
+## Plot created with `run_and_plot.py`
+
+![plot](plot.png)
+
 # Building ![cmake](https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg)
 
 Required programs:

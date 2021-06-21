@@ -66,7 +66,7 @@ void Gui::update(const Simulation& sim) {
     GuiStatusBar({0, screen_h - STATUS_HEIGHT, screen_w, STATUS_HEIGHT}, m_status.c_str());
 
     const float GUI_W = 500.0f;
-    const float GUI_H = 1000.0f;
+    const float GUI_H = 1020.0f;
     const float GUI_M = 15.0f;
     const float GUI_BORDER =
         20.f * (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) + (float)GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);

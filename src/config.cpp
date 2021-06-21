@@ -96,10 +96,9 @@ bool Config::load() {
 
     valid = true;
 
-    tile_size = 16.0f;
-
     set(window_width, "window", "width");
     set(window_height, "window", "height");
+    set(tile_size, "window", "tile_size");
     set(window_style, "window", "style");
     set(window_maximized, "window", "maximized");
     set(window_zoom, "window", "zoom");

@@ -113,7 +113,7 @@ void Platform::interact(const Simulation& sim) {
     Vector2 mouse = GetMousePosition();
 
     if (!m_gui.on_gui(mouse)) {
-        m_camera.zoom = std::clamp(m_camera.zoom + GetMouseWheelMove() * 0.1f, 0.1f, 2.0f);
+        m_camera.zoom = std::clamp(m_camera.zoom + GetMouseWheelMove() * 0.05f, 0.05f, 2.0f);
 
         Vector2 delta = Vector2Subtract(m_prev_mouse_pos, mouse);
         m_prev_mouse_pos = mouse;
@@ -185,7 +185,7 @@ void Platform::start_drawing(Simulation& sim) {
 
     for (const auto& chunk : sim.chunks()) {
         for (const auto& agent : chunk) {
-            if (m_camera.zoom >= 0.75f) {
+            if (m_camera.zoom >= 0.75f / (m_config.tile_size / 16.0f)) {
                 if (m_config.control_debug && agent.type != AgentType::Grass && !agent.hungry) {
                     DrawRectangleRec(
                         {(float)agent.pos.x * m_config.tile_size + 1, (float)agent.pos.y * m_config.tile_size + 1,

@@ -63,8 +63,18 @@ cmake --build .
 python run_and_plot.py sim.exe 1000 default.lua 10 4
 ```
 
+# Used libraries
+
+- [raylib](https://github.com/raysan5/raylib)
+- [raygui](https://github.com/raysan5/raygui)
+- [LuaJIT](https://luajit.org/)
+- [sol3](https://github.com/ThePhD/sol2)
+- [mINI](https://github.com/pulzed/mINI)
+- [CRC++](https://github.com/d-bahr/CRCpp)
+- [itlib](https://github.com/iboB/itlib) (small_vector)
+
 # Attributions
 
 Textures by [Franuka](https://franuka.itch.io/).
 
-Icon made by [Freepik](https://www.freepik.com/) from [Flaticon](https://www.flaticon.com/).
+Icons made by [Freepik](https://www.freepik.com/) from [Flaticon](https://www.flaticon.com/).

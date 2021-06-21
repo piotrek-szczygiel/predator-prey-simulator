@@ -1,22 +1,21 @@
+<p align="center"><a href="https://github.com/piotrek-szczygiel/predator-prey-simulator"><img src="./icon.svg" height="150" alt="Icon"></a></p>
 <h1 align="center">Predator-Prey simulator</h1>
-
 <p align="center">
-    <img height=150 src="icon.svg" alt="Icon">
+    <a href="https://github.com/piotrek-szczygiel/predator-prey-simulator/actions/workflows/cmake.yml"><img src="https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg"></a>
+    <img src="https://img.shields.io/github/v/release/piotrek-szczygiel/predator-prey-simulator?include_prereleases&label=version">
+    <img src="https://img.shields.io/github/downloads/piotrek-szczygiel/predator-prey-simulator/total">
+    <img src="https://img.shields.io/github/release-date-pre/piotrek-szczygiel/predator-prey-simulator?label=last%20release">
+    <img src="https://img.shields.io/github/last-commit/piotrek-szczygiel/predator-prey-simulator">
 </p>
-
-<p align="center">
-    Predator-Prey simulator written in C++.
-</p>
-
-## Screenshot
+<hr>
 
 ![screenshot](screen.png)
 
-## Plot created with `run_and_plot.py`
+<p align="center">Population plot created with <code>run_and_plot.py</code></p>
 
 ![plot](plot.png)
 
-# Building ![cmake](https://github.com/piotrek-szczygiel/sim/actions/workflows/cmake.yml/badge.svg)
+# Building
 
 Required programs:
 

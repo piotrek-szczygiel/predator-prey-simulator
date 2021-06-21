@@ -179,14 +179,14 @@ int run_zarzecze(const char* script, const char* predator_file, const char* prey
         grass_img[i + 3] = 255;
     }
 
-    int delay = 10;
+    int delay = 5;
 
     uint8_t* frame = (uint8_t*)malloc(image_sz);
 
     GifWriter gif;
     GifBegin(&gif, "output.gif", image_w, image_h, delay);
 
-    int max = 200;
+    int max = 10000;
     for (int i = 0; i < max; ++i) {
         sim.update(scripting);
 
@@ -205,12 +205,11 @@ int run_zarzecze(const char* script, const char* predator_file, const char* prey
                 int frame_i = image_w * tile * 4 * agent.pos.y + agent.pos.x * tile * 4;
                 int skip = image_w * 4;
 
-                uint8_t* draw;
+                uint8_t* draw = nullptr;
                 switch (agent.type) {
                     case AgentType::Wolf: draw = predator_img; break;
                     case AgentType::Chicken: draw = prey_img; break;
                     case AgentType::Grass: draw = grass_img; break;
-                    default: return 10; break;
                 }
 
                 for (int y = 0; y < tile; ++y) {

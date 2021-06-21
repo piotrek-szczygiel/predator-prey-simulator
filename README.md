@@ -1,7 +1,7 @@
 <h1 align="center">Predator-Prey simulator</h1>
 
 <p align="center">
-    <img height=70 src="assets/icon.svg" alt="Icon">
+    <img height=150 src="icon.svg" alt="Icon">
 </p>
 
 <p align="center">

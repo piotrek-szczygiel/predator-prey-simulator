@@ -10,9 +10,19 @@ Predator-Prey simulation
 - C++ compiler
 - cmake
 
+### Submodules
+
+```bash
+git submodule update --init --recursive
+```
+
 ### Ubuntu
 
-`sudo apt install build-essential git cmake libasound2-dev mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev`
+```bash
+sudo apt install \
+    build-essential git cmake libasound2-dev mesa-common-dev libx11-dev \
+    libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libluajit-5.1-dev
+```
 
 ## Building
 ```bash
@@ -28,5 +38,5 @@ cmake --build .
 ./sim 1000 # Run simulation 1000 times and output CSV statistics to stdout
 
 # Helper script to create 10 plots of 1000 tick simulations and launch them as 4 parallel processes
-python run_and_plot.py build/sim 1000 10 4
+python run_and_plot.py sim.exe 1000 default.lua 10 4
 ```

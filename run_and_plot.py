@@ -44,9 +44,9 @@ def plot(file, min_ticks=0):
     return outfile
 
 
-def run(sim_exe, ticks, file):
+def run(sim_exe, ticks, script, file):
     with open(file, "w") as f:
-        subprocess.run([sim_exe, str(ticks)], stdout=f)
+        subprocess.run([sim_exe, str(ticks), script], stdout=f)
     return plot(file)
 
 
@@ -73,7 +73,7 @@ def main():
 
     if len(sys.argv) not in [4, 5]:
         print(
-            f"usage: {sys.argv[0]} <sim executable> <ticks> <iterations> [processes]",
+            f"usage: {sys.argv[0]} <sim executable> <ticks> <script> <iterations> [processes]",
             file=sys.stderr,
         )
         print(
@@ -84,10 +84,11 @@ def main():
 
     sim_exe = sys.argv[1]
     ticks = int(sys.argv[2])
-    iterations = int(sys.argv[3])
-    processes = multiprocessing.cpu_count() if len(sys.argv) == 4 else int(sys.argv[4])
+    script = "assets/scripts/" + sys.argv[3]
+    iterations = int(sys.argv[4])
+    processes = multiprocessing.cpu_count() if len(sys.argv) == 5 else int(sys.argv[5])
 
-    run_simulation = functools.partial(run, sim_exe, ticks)
+    run_simulation = functools.partial(run, sim_exe, ticks, script)
 
     shutil.rmtree("csv", ignore_errors=True)
     shutil.rmtree("png", ignore_errors=True)

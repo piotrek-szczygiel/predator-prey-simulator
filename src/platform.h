@@ -15,14 +15,15 @@ class Platform {
     void interact(const Simulation& sim);
     void start_drawing(Simulation& sim);
     void draw_debug(Simulation& sim) const;
-    void plot_add(int chicken, int wolf) { m_gui.plot_add(chicken, wolf); }
     void update_gui_end_drawing(const Simulation& sim);
+    Gui& gui() { return m_gui; }
 
-    bool should_close();
+    bool should_close() const;
     bool should_restart() const;
-    bool should_tick();
-    TimePoint time_now();
-    double time_diff_ms(TimePoint t1, TimePoint t2);
+    bool should_tick() const;
+    bool should_reload_script() const;
+    TimePoint time_now() const;
+    double time_diff_ms(TimePoint t1, TimePoint t2) const;
 
    private:
     Config& m_config;

@@ -8,12 +8,7 @@
 #include "grid.h"
 #include "map.h"
 #include "pathfinder.h"
-
-struct Path {
-    Vec2 step;
-    Agent* agent;
-    int dist;
-};
+#include "scripting.h"
 
 struct DebugLine {
     Agent* from;
@@ -41,7 +36,7 @@ class Simulation {
     };
 
     void reset();
-    void update();
+    void update(Scripting& scripting);
 
     Vec2 size() { return m_size; }
     Tick ticks() const { return m_tick; }
@@ -93,6 +88,7 @@ class Simulation {
     void add_agent(AgentType type, AgentGenes genes, Vec2 pos);
     void move_agent(Agent* agent, Vec2 pos);
     bool move_agent_if_empty(Agent* agent, Vec2 pos);
+
     void move_agent_around(Agent* agent, Vec2 pos);
     void move_agent_random(Agent* agent, int dist);
 
@@ -105,8 +101,10 @@ class Simulation {
     void update_chicken(Agent* chicken);
     void update_wolf(Agent* wolf);
 
-    Path get_path_to_nearest(Agent* from, AgentType to, bool fed = false);
+    std::tuple<Agent*, int, Vec2> get_path_to_nearest(Agent* from, AgentType to, bool fed = false);
 
     std::vector<DebugLine> m_debug_lines{};
     std::vector<DebugBreed> m_debug_breeds{};
+
+    friend class Scripting;
 };

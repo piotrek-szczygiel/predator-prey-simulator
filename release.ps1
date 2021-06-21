@@ -17,10 +17,11 @@ New-Item -ItemType Directory -Path "$ReleaseDir" | Out-Null
 
 Copy-Item "assets" -Destination "$ReleaseDir" -Recurse
 Copy-Item "config.ini" -Destination "$ReleaseDir"
+Copy-Item "bin/lua51.dll" -Destination "$ReleaseDir"
 
 $Log = "$env:TEMP/rh.log"
 $LogUTF8 = "$Log.utf8"
-ResourceHacker.exe -open $Executable -save "$ReleaseDir/sim.exe" -action addskip -res "assets/icon.ico" -mask "ICONGROUP,MAINICON," -log $Log | Out-Null
+bin/ResourceHacker.exe -open $Executable -save "$ReleaseDir/sim.exe" -action addskip -res "assets/icon.ico" -mask "ICONGROUP,MAINICON," -log $Log | Out-Null
 
 Get-Content $Log -Encoding Unicode | Set-Content $LogUTF8 -Encoding Utf8
 

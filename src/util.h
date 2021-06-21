@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <filesystem>
 #include <small_vector.hpp>
 #include <vector>
 
@@ -19,5 +20,6 @@ struct Vec2 {
 };
 
 bool cd_assets();
+std::vector<std::string> files_in_dir(std::filesystem::path path);
 int distance(Vec2 p, Vec2 v);
 uint32_t seed_from_str(const std::string& str);

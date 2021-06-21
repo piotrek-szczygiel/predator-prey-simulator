@@ -10,3 +10,4 @@ png/
 release/
 CMakeSettings.json
 compile_commands.json
+ResourceHacker.ini

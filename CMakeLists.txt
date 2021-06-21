@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(sim VERSION "1.1.3")
+project(sim VERSION "1.2.0")
 
 configure_file("src/version.h.in" "version.h" @ONLY)
 include_directories(${PROJECT_BINARY_DIR})
@@ -45,17 +45,27 @@ add_executable(
     "src/pathfinder.h"
     "src/platform.h"
     "src/platform.cpp"
+    "src/scripting.h"
+    "src/scripting.cpp"
     "src/simulation.h"
     "src/simulation.cpp"
     "src/util.h"
     "src/util.cpp")
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC "third_party")
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC "third_party" "third_party/luajit/src")
 target_link_libraries(${PROJECT_NAME} raylib)
 
-if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    find_program(RESOURCE_HACKER "ResourceHacker.exe")
-    if(RESOURCE_HACKER)
+if(MSVC)
+    target_link_directories(${PROJECT_NAME} PUBLIC "bin")
+    target_link_libraries(${PROJECT_NAME} lua51)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/bin/lua51.dll
+                ${PROJECT_BINARY_DIR}
+        COMMENT "Copying lua51.dll to output directory...")
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_custom_command(
             TARGET ${PROJECT_NAME}
             POST_BUILD
@@ -63,8 +73,7 @@ if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
                     $<TARGET_FILE:sim>
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Packing release...")
-        message("ResourceHacker.exe found - release package will be built")
-    else()
-        message(WARNING "ResourceHacker.exe is not in PATH - unable to make release package")
     endif()
+else()
+    target_link_libraries(${PROJECT_NAME} luajit-5.1)
 endif()

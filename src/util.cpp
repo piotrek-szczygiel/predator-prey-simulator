@@ -4,21 +4,31 @@
 #include <filesystem>
 #include <string>
 
+namespace fs = std::filesystem;
+
 bool cd_assets() {
     bool assets_found = false;
-    auto original_cwd = std::filesystem::current_path();
+    auto original_cwd = fs::current_path();
     for (int i = 0; i < 5; ++i) {
-        if (std::filesystem::exists("assets")) {
+        if (fs::exists("assets")) {
             assets_found = true;
             break;
         }
 
-        std::filesystem::current_path("..");
+        fs::current_path("..");
     }
     if (!assets_found) {
-        std::filesystem::current_path(original_cwd);
+        fs::current_path(original_cwd);
     }
     return assets_found;
+}
+
+std::vector<std::string> files_in_dir(fs::path path) {
+    std::vector<std::string> files{};
+    for (const auto& p : fs::directory_iterator(path)) {
+        if (p.is_regular_file()) files.push_back(p.path().string());
+    }
+    return files;
 }
 
 int distance(Vec2 p, Vec2 v) {

@@ -106,6 +106,7 @@ bool Config::load() {
     set(window_fps, "window", "fps");
     set(window_help, "window", "help");
 
+    set(control_script, "control", "script");
     set(control_tick_time, "control", "tick_time");
     set(control_pause, "control", "pause");
     set(control_plot, "control", "plot");

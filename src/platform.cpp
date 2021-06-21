@@ -4,7 +4,7 @@
 #include "version.h"
 
 void Platform::start() {
-    SetTraceLogLevel(LOG_INFO);
+    SetTraceLogLevel(LOG_WARNING);
     SetTraceLogCallback([](int logLevel, const char* text, va_list args) {
         const char* level = "";
         switch (logLevel) {
@@ -57,10 +57,11 @@ void Platform::reload() {
 
         SetTargetFPS(m_config.window_fps);
         m_gui.plot_clear();
+        m_gui.refresh_scripts();
     }
 }
 
-bool Platform::should_close() {
+bool Platform::should_close() const {
     return WindowShouldClose();
 }
 
@@ -68,15 +69,19 @@ bool Platform::should_restart() const {
     return m_gui.should_restart() || IsKeyPressed(KEY_R);
 }
 
-bool Platform::should_tick() {
+bool Platform::should_tick() const {
     return IsKeyPressed(KEY_SPACE);
 }
 
-TimePoint Platform::time_now() {
+bool Platform::should_reload_script() const {
+    return m_gui.should_reload_script() || IsKeyPressed(KEY_F5);
+}
+
+TimePoint Platform::time_now() const {
     return std::chrono::steady_clock::now();
 }
 
-double Platform::time_diff_ms(TimePoint t1, TimePoint t2) {
+double Platform::time_diff_ms(TimePoint t1, TimePoint t2) const {
     std::chrono::duration<double, std::milli> diff = t1 - t2;
     return diff.count();
 }

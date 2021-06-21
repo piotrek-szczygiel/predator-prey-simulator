@@ -1,5 +1,9 @@
 #include "gui.h"
+#include <filesystem>
 #include <string>
+#include "utils.h"
+
+namespace fs = std::filesystem;
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
@@ -15,6 +19,31 @@ void Gui::load_style(int window_style) {
     }
     GuiSetStyle(SPINNER, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
     GuiFade(0.9f);
+}
+
+void Gui::refresh_scripts() {
+    m_scripts.clear();
+    m_script_names = "";
+
+    for (const auto& p : files_in_dir(fs::path("assets") / "scripts")) {
+        m_scripts.push_back(p);
+        m_script_names += fs::path(p).filename().string() + ";";
+    }
+
+    if (m_script_names.back() == ';') m_script_names.pop_back();
+}
+
+std::string Gui::selected_script() const {
+    if (m_config.control_script < m_scripts.size()) {
+        return m_scripts[m_config.control_script];
+    }
+
+    if (!m_scripts.empty()) {
+        m_config.control_script = 0;
+        return m_scripts[0];
+    }
+
+    return "NO_SCRIPTS_FOUND";
 }
 
 bool Gui::on_gui(Vector2 pos) const {
@@ -45,7 +74,7 @@ void Gui::update(const Simulation& sim) {
     m_bounds = {screen_w - GUI_W - GUI_M, GUI_M, GUI_W, screen_h - 2 * GUI_M - STATUS_HEIGHT};
 
     const float MSG_W = 350;
-    const float MSG_H = m_config.window_help ? 470.0f : 420.0f;
+    const float MSG_H = m_config.window_help ? 490.0f : 420.0f;
     m_bounds_msg = {(screen_w - (m_closed ? 0 : GUI_W + GUI_M) - MSG_W) / 2,
                     (screen_h - (m_config.control_plot ? m_bounds_plot.height + GUI_M : 0) - STATUS_HEIGHT - MSG_H) / 2,
                     MSG_W, MSG_H};
@@ -142,7 +171,7 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     const float ROW_H = 25.0f;
     const float BTN_W = w / 5;
 
-    if (m_edit.style) GuiLock();
+    if (m_edit.style || m_edit.script) GuiLock();
 
     GuiLine({x, y, w, 1}, "Settings");
     y += AFTER_LINE;
@@ -190,19 +219,19 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
         CloseWindow();
     }
 
+    m_config.control_plot =
+        GuiCheckBox({x + w / 2, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Plot", m_config.control_plot);
+
+    m_config.control_debug =
+        GuiCheckBox({x + 3 * w / 4, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Debug", m_config.control_debug);
+    y += ROW_H + P;
+
     m_config.control_pause =
         GuiCheckBox({x + w / 2, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Pause", m_config.control_pause);
 
-    m_config.control_plot =
-        GuiCheckBox({x + 4 * w / 6, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Plot", m_config.control_plot);
-
-    m_config.control_debug =
-        GuiCheckBox({x + 5 * w / 6, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Debug", m_config.control_debug);
-    y += ROW_H + P;
-
     if (!m_config.seed_manual) {
         GuiSetState(GUI_STATE_DISABLED);
-        GuiTextBox({x + ROW_H + P, y, 100, ROW_H}, (char*)TextFormat("%u", sim.seed()), 0, false);
+        GuiTextBox({x + ROW_H + P, y, BTN_W, ROW_H}, (char*)TextFormat("%u", sim.seed()), 0, false);
         GuiSetState(GUI_STATE_NORMAL);
         if (GuiButton({x, y, ROW_H, ROW_H}, GuiIconText(RICON_FILE_COPY, nullptr))) {
             std::snprintf(m_config.seed, Config::SEED_SIZE, "%u", sim.seed());
@@ -210,14 +239,18 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
             m_status = "Seed copied to clipboard";
         }
     } else {
-        m_edit.seed ^= GuiTextBox({x, y, 100 + ROW_H + P, ROW_H}, m_config.seed, Config::SEED_SIZE, m_edit.seed);
+        m_edit.seed ^= GuiTextBox({x, y, BTN_W + ROW_H + P, ROW_H}, m_config.seed, Config::SEED_SIZE, m_edit.seed);
     }
 
     m_config.seed_manual =
-        GuiCheckBox({x + 100 + ROW_H + 2 * P, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Seed", m_config.seed_manual);
+        GuiCheckBox({x + BTN_W + ROW_H + 2 * P, y + ROW_H / 4, ROW_H / 2, ROW_H / 2}, "Seed", m_config.seed_manual);
+    y += ROW_H + P;
 
     m_edit.tick ^=
         GuiSpinner({x + w / 2, y, BTN_W, ROW_H}, "Tick (ms)", &m_config.control_tick_time, 0, 5000, m_edit.tick);
+
+    m_reload_script = GuiButton({x, y, ROW_H, ROW_H}, GuiIconText(RICON_FILE_OPEN, nullptr));
+    Rectangle script_dropdown_position = {x + ROW_H + P, y, w / 2 - ROW_H - P - w / 4 + BTN_W, ROW_H};
     y += ROW_H;
 
     y += BEFORE_LINE;
@@ -338,6 +371,11 @@ void Gui::draw_controls(const Simulation& sim, float x, float y, float w) {
     GuiUnlock();
     if (GuiDropdownBox(style_dropdown_position, m_style_names, &m_config.window_style, m_edit.style)) {
         m_edit.style ^= 1;
-        load_style(m_config.window_style);
+        if (!m_edit.style) load_style(m_config.window_style);
+    }
+
+    if (GuiDropdownBox(script_dropdown_position, m_script_names.c_str(), &m_config.control_script, m_edit.script)) {
+        m_edit.script ^= 1;
+        if (!m_edit.script) m_reload_script = true;
     }
 }

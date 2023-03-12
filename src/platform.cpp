@@ -117,11 +117,11 @@ void Platform::interact(const Simulation& sim) {
 
         Vector2 delta = Vector2Subtract(m_prev_mouse_pos, mouse);
         m_prev_mouse_pos = mouse;
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
             m_camera.target = GetScreenToWorld2D(Vector2Add(m_camera.offset, delta), m_camera);
         }
 
-        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) {
             m_camera.target = {(float)m_config.sim_width * m_config.tile_size / 2.0f,
                                (float)m_config.sim_height * m_config.tile_size / 2.0f};
         }
@@ -130,7 +130,7 @@ void Platform::interact(const Simulation& sim) {
         Vec2 mw = {(int)(ms.x / m_config.tile_size), (int)(ms.y / m_config.tile_size)};
         if (!sim.out_of_map(mw)) {
             m_hl_pos = mw;
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 m_hl_agent = sim.at(m_hl_pos);
             }
         }

@@ -10,11 +10,11 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-find_package(raylib 3.0 QUIET)
+find_package(raylib 3.5 QUIET)
 if(NOT raylib_FOUND) # If there's none, fetch and build raylib
     include(FetchContent)
 
-    FetchContent_Declare(raylib URL https://github.com/raysan5/raylib/archive/master.tar.gz)
+    FetchContent_Declare(raylib URL https://github.com/raysan5/raylib/archive/refs/tags/3.5.0.tar.gz)
 
     FetchContent_GetProperties(raylib)
     if(NOT raylib_POPULATED) # Have we downloaded raylib yet?
@@ -69,7 +69,7 @@ if(MSVC)
         add_custom_command(
             TARGET ${PROJECT_NAME}
             POST_BUILD
-            COMMAND powershell.exe ${CMAKE_CURRENT_SOURCE_DIR}/release.ps1 ${PROJECT_VERSION}
+            COMMAND powershell.exe -File "\"${CMAKE_CURRENT_SOURCE_DIR}/release.ps1\"" ${PROJECT_VERSION}
                     $<TARGET_FILE:sim>
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Packing release...")

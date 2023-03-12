@@ -1,7 +1,6 @@
 #include "gui.h"
 #include <filesystem>
 #include <string>
-#include "utils.h"
 
 namespace fs = std::filesystem;
 
